@@ -1,0 +1,239 @@
+/* =============================================================================
+   tokens.css — RentalScope / Vantage
+   Mira (shadcn) chrome + radius  ·  Vantage data-viz + map layer.
+
+   MERGE POLICY:
+   • Chrome colors + radius scale = Mira canonical (shadcn-authoritative) so
+     real components/ui/* render cohesively.
+   • Data palette, map tokens, --brand-emphasis, mono --type-metric, motion =
+     Vantage additions.
+
+   THEMING: stock shadcn. :root = light, .dark = dark. Dark-first is achieved
+   in the provider, NOT by inverting the CSS:
+     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+
+   Import AFTER shadcn's generated globals so the additions win.
+============================================================================= */
+
+:root {
+  color-scheme: light;
+
+  /* ---- Chrome — Mira light (canonical shadcn) ------------------------- */
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.148 0.004 228.8);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.148 0.004 228.8);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.148 0.004 228.8);
+  --secondary: oklch(0.967 0.001 286.375);
+  --secondary-foreground: oklch(0.21 0.006 285.885);
+  --muted: oklch(0.963 0.002 197.1);
+  --muted-foreground: oklch(0.56 0.021 213.5);
+  --accent: oklch(0.963 0.002 197.1);
+  --accent-foreground: oklch(0.218 0.008 223.9);
+  --border: oklch(0.925 0.005 214.3);
+  --input: oklch(0.925 0.005 214.3); /* control BORDER */
+  --border-strong: oklch(0.78 0.01 255);
+
+  /* ---- Interaction accent — amber. Fill = Mira --primary -------------- */
+  --primary: oklch(0.555 0.163 48.998);
+  --primary-foreground: oklch(0.987 0.022 95.277);
+  /* amber-as-foreground: on light, Mira --primary already passes AA */
+  --brand-emphasis: oklch(0.555 0.163 48.998);
+  --ring: var(--brand-emphasis);
+  --selected: var(--brand-emphasis);
+
+  /* ---- Data — sequential price ramp (low → high), light (light→dark) -- */
+  --price-1: oklch(0.9 0.045 230);
+  --price-2: oklch(0.78 0.085 226);
+  --price-3: oklch(0.64 0.11 230);
+  --price-4: oklch(0.5 0.12 236);
+  --price-5: oklch(0.38 0.105 242);
+
+  /* ---- Data — categorical room types, light -------------------------- */
+  --cat-1: oklch(0.64 0.18 42); /* entire home  */
+  --cat-2: oklch(0.74 0.12 235); /* private room */
+  --cat-3: oklch(0.62 0.13 165); /* shared room  */
+  --cat-4: oklch(0.66 0.11 350); /* hotel room   */
+  --cat-5: oklch(0.52 0.13 250); /* other        */
+
+  /* ---- Data — insufficient / below-floor ----------------------------- */
+  --data-low: oklch(0.86 0.004 255);
+  --data-low-foreground: oklch(0.45 0.01 255);
+
+  /* ---- Map chrome (over-canvas controls) + basemap, light ------------ */
+  --map-stroke: oklch(0.4 0.01 255 / 55%);
+  --scrim: oklch(1 0 0 / 82%);
+  --map-bg: oklch(0.95 0.003 255);
+  --map-grid: oklch(0.91 0.005 255);
+  --map-arterial: oklch(0.84 0.008 255);
+  --map-water: oklch(0.93 0.02 235);
+  --map-water-edge: oklch(0.8 0.04 235);
+  --map-nbhd-fill: oklch(0 0 0 / 2%);
+  --map-nbhd-stroke: oklch(0 0 0 / 11%);
+  --map-nbhd-dim-fill: oklch(0 0 0 / 1%);
+  --map-nbhd-dim-stroke: oklch(0 0 0 / 5%);
+  --map-label: oklch(0.38 0.014 255 / 82%);
+  --map-vignette: oklch(1 0 0 / 0%);
+}
+
+.dark {
+  color-scheme: dark;
+
+  /* ---- Chrome — Mira dark (canonical shadcn) ------------------------- */
+  --background: oklch(0.148 0.004 228.8);
+  --foreground: oklch(0.987 0.002 197.1);
+  --card: oklch(0.218 0.008 223.9);
+  --card-foreground: oklch(0.987 0.002 197.1);
+  --popover: oklch(0.218 0.008 223.9);
+  --popover-foreground: oklch(0.987 0.002 197.1);
+  --secondary: oklch(0.274 0.006 286.033);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.275 0.011 216.9);
+  --muted-foreground: oklch(0.723 0.014 214.4);
+  --accent: oklch(0.275 0.011 216.9);
+  --accent-foreground: oklch(0.987 0.002 197.1);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --border-strong: oklch(1 0 0 / 22%);
+
+  /* ---- Interaction accent — amber. Fill = Mira --primary ------------- */
+  --primary: oklch(0.473 0.137 46.201);
+  --primary-foreground: oklch(0.987 0.022 95.277);
+  /* amber-as-foreground (selected outline, focus, active on dark):
+     brighter, AA-verified (~10:1 on bg). Never raw amber on chrome. */
+  --brand-emphasis: oklch(0.8 0.14 70);
+  --ring: var(--brand-emphasis);
+  --selected: var(--brand-emphasis);
+
+  /* ---- Data — sequential price ramp, dark (inverts: dark→light) ------ */
+  --price-1: oklch(0.52 0.07 245);
+  --price-2: oklch(0.61 0.1 220);
+  --price-3: oklch(0.69 0.115 200);
+  --price-4: oklch(0.78 0.12 190);
+  --price-5: oklch(0.87 0.13 185);
+
+  /* ---- Data — categorical room types, dark --------------------------- */
+  --cat-1: oklch(0.68 0.18 40); /* entire home  */
+  --cat-2: oklch(0.78 0.12 235); /* private room */
+  --cat-3: oklch(0.72 0.13 165); /* shared room  */
+  --cat-4: oklch(0.72 0.11 350); /* hotel room   */
+  --cat-5: oklch(0.66 0.14 250); /* other        */
+
+  /* ---- Data — insufficient / below-floor ----------------------------- */
+  --data-low: oklch(0.3 0.006 255);
+  --data-low-foreground: oklch(0.62 0.01 255);
+
+  /* ---- Map chrome + basemap, dark ------------------------------------ */
+  --map-stroke: oklch(0.85 0.01 255 / 35%);
+  --scrim: oklch(0.16 0.008 255 / 72%);
+  --map-bg: oklch(0.135 0.008 255);
+  --map-grid: oklch(0.205 0.01 255);
+  --map-arterial: oklch(0.25 0.012 255);
+  --map-water: oklch(0.18 0.03 235);
+  --map-water-edge: oklch(0.3 0.045 235);
+  --map-nbhd-fill: oklch(1 0 0 / 1.5%);
+  --map-nbhd-stroke: oklch(1 0 0 / 9%);
+  --map-nbhd-dim-fill: oklch(1 0 0 / 0.6%);
+  --map-nbhd-dim-stroke: oklch(1 0 0 / 5%);
+  --map-label: oklch(0.96 0.004 255 / 58%);
+  --map-vignette: oklch(0.1 0.008 255);
+}
+
+/* ---- Radius — Mira canonical (derive from --radius), theme-invariant -- */
+:root {
+  --radius: 0.625rem; /* Mira base = 10px */
+  --radius-sm: calc(var(--radius) * 0.6); /*  6px — chips          */
+  --radius-md: calc(var(--radius) * 0.8); /*  8px — controls       */
+  --radius-lg: var(--radius); /* 10px — cards / panels */
+  --radius-xl: calc(var(--radius) * 1.4); /* 14px — dialogs/drawer */
+  --radius-full: 9999px;
+
+  /* ---- Spacing rhythm — 4px base + dense half-steps ------------------ */
+  --space-hair: 2px;
+  --space-tight: 4px;
+  --space-snug: 6px;
+  --space-inline: 8px;
+  --space-stack: 12px;
+  --space-gutter: 16px;
+  --space-section: 24px;
+  --space-region: 40px;
+
+  /* ---- Type families ------------------------------------------------- */
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono:
+    "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --control-font: 12px;
+
+  /* ---- Motion (reduced-motion handled in globals.css) ---------------- */
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emph: cubic-bezier(0.3, 0, 0, 1);
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 320ms;
+
+  /* ---- Focus ring composite ------------------------------------------ */
+  --focus-ring: 0 0 0 2px var(--background), 0 0 0 4px var(--ring);
+}
+
+/* ---- Expose to Tailwind (utility classes) ---------------------------- */
+@theme inline {
+  --color-price-1: var(--price-1);
+  --color-price-2: var(--price-2);
+  --color-price-3: var(--price-3);
+  --color-price-4: var(--price-4);
+  --color-price-5: var(--price-5);
+  --color-cat-1: var(--cat-1);
+  --color-cat-2: var(--cat-2);
+  --color-cat-3: var(--cat-3);
+  --color-cat-4: var(--cat-4);
+  --color-cat-5: var(--cat-5);
+  --color-data-low: var(--data-low);
+  --color-brand-emphasis: var(--brand-emphasis);
+
+  /* shadcn Chart renders on the categorical palette */
+  --color-chart-1: var(--cat-1);
+  --color-chart-2: var(--cat-2);
+  --color-chart-3: var(--cat-3);
+  --color-chart-4: var(--cat-4);
+  --color-chart-5: var(--cat-5);
+
+  --spacing-hair: var(--space-hair);
+  --spacing-tight: var(--space-tight);
+  --spacing-snug: var(--space-snug);
+  --spacing-inline: var(--space-inline);
+  --spacing-stack: var(--space-stack);
+  --spacing-gutter: var(--space-gutter);
+  --spacing-section: var(--space-section);
+  --spacing-region: var(--space-region);
+}
+
+/* ---- Type utilities — one class = full text style -------------------- */
+@utility type-display {
+  font: 600 1.75rem/1.15 var(--font-sans);
+  letter-spacing: -0.02em;
+}
+@utility type-title {
+  font: 600 1.125rem/1.2 var(--font-sans);
+  letter-spacing: -0.014em;
+}
+@utility type-heading {
+  font: 600 0.9375rem/1.3 var(--font-sans);
+  letter-spacing: -0.008em;
+}
+@utility type-body {
+  font: 400 0.875rem/1.5 var(--font-sans);
+}
+@utility type-label {
+  font: 500 0.75rem/1.35 var(--font-sans);
+}
+@utility type-caption {
+  font: 400 0.6875rem/1.4 var(--font-sans);
+  letter-spacing: 0.01em;
+}
+/* metric: big mono tabular numerals for prices/counts */
+@utility type-metric {
+  font: 500 1.375rem/1.1 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}

@@ -1,0 +1,36 @@
+<svg width="720" height="176" viewBox="0 0 720 176" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Plainsight logo</title>
+  <desc id="desc">A neutral analytical wordmark with a map-lens icon and an amber insight point.</desc>
+  <style>
+    .wordmark { font: 700 68px/1.05 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; letter-spacing: -0.055em; fill: #EFF3F8; }
+    .tag { font: 500 18px/1 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; letter-spacing: .18em; fill: #8F99A8; text-transform: uppercase; }
+  </style>
+
+  <g transform="translate(28 28)">
+    <rect x="0" y="0" width="120" height="120" rx="28" fill="#17202B"/>
+    <rect x="1" y="1" width="118" height="118" rx="27" stroke="#3A4656" stroke-width="2"/>
+
+    <clipPath id="ps-mark-clip">
+      <rect x="8" y="8" width="104" height="104" rx="22"/>
+    </clipPath>
+
+    <g clip-path="url(#ps-mark-clip)" opacity="0.86">
+      <path d="M-8 86C14 72 26 73 43 82C62 92 77 91 96 78C112 67 125 65 138 72" stroke="#596676" stroke-width="2" stroke-linecap="round" opacity="0.38"/>
+      <path d="M-2 61C18 50 34 50 52 58C69 66 82 66 101 54C116 44 129 42 143 47" stroke="#596676" stroke-width="2" stroke-linecap="round" opacity="0.34"/>
+      <path d="M-12 38C7 31 23 32 43 40C61 47 76 47 94 37C111 27 124 27 138 32" stroke="#596676" stroke-width="2" stroke-linecap="round" opacity="0.28"/>
+      <path d="M29 -8L108 118" stroke="#596676" stroke-width="1.5" opacity="0.18"/>
+      <path d="M58 -8L137 118" stroke="#596676" stroke-width="1.5" opacity="0.14"/>
+      <path d="M-12 14L67 140" stroke="#596676" stroke-width="1.5" opacity="0.14"/>
+    </g>
+
+    <path d="M21 61C31.5 43.5 45.1 35 60 35C74.9 35 88.5 43.5 99 61C88.5 78.5 74.9 87 60 87C45.1 87 31.5 78.5 21 61Z" stroke="#89D8E6" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M35 61C42.1 51.3 50.2 46.6 60 46.6C69.8 46.6 77.9 51.3 85 61C77.9 70.7 69.8 75.4 60 75.4C50.2 75.4 42.1 70.7 35 61Z" fill="#17202B" stroke="#3A4656" stroke-width="2"/>
+    <circle cx="60" cy="61" r="10" fill="#E2AA38"/>
+    <circle cx="64" cy="57" r="3" fill="#FFF5D8" opacity="0.9"/>
+  </g>
+
+  <g transform="translate(176 55)">
+    <text class="wordmark" x="0" y="61">Plainsight</text>
+    <text class="tag" x="3" y="96">rental market intelligence</text>
+  </g>
+</svg>

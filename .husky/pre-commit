@@ -1,0 +1,4 @@
+pnpm format
+pnpm lint:fix
+git update-index --again
+pnpm lint:strict

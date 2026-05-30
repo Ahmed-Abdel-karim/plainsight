@@ -1,0 +1,11 @@
+node_modules
+.agents
+.codex
+.next
+out
+build
+coverage
+next-env.d.ts
+pnpm-lock.yaml
+design
+.husky/_
