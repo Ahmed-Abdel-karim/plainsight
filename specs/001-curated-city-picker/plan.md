@@ -6,7 +6,7 @@
 
 ## Summary
 
-Replace the placeholder landing route with a data-backed city picker. The server-rendered `/` page loads the curated launch set from `data/json/cities.json`, passes it to a narrow client component for keyboard Space activation, and renders selectable cards that navigate to the root-level city slug route such as `/london`.
+Replace the placeholder landing route with a data-backed city picker. The server-rendered `/` page renders an async Server Component (`city-picker.tsx`) that loads the curated launch set from `data/json/cities.json` and renders selectable cards. Each card's link is a narrow Client Component (`card-link.tsx`) that adds keyboard Space activation. Cards navigate to the root-level city slug route such as `/london`.
 
 ## Technical Context
 
@@ -32,8 +32,8 @@ Replace the placeholder landing route with a data-backed city picker. The server
 
 _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
 
-- **Next.js App Router**: PASS. `/` remains a Server Component for data loading. A narrow Client Component is justified only for Space-key card activation.
-- **Cache Components**: PASS. `getCitiesData()` already uses `use cache` and `cacheLife("max")`; it reads static filesystem data, not request-time APIs.
+- **Next.js App Router**: PASS. `/` renders an async Server Component (`city-picker.tsx`) for data loading. A narrow Client Component (`card-link.tsx`) is justified only for Space-key card activation.
+- **Cache Components**: PASS. The landing route is cached at the page level (`app/page.tsx` declares `"use cache"`) and reads static filesystem data, not request-time APIs. The per-city dataset loader `getCityDataset()` additionally uses `"use cache"` with `cacheLife("max")`.
 - **Zustand**: PASS. This feature does not introduce request-scoped or user-scoped client store state.
 - **React Components**: PASS. City cards will compose shadcn `Card` components, consume token utilities, and follow `rules/react-components.md`; prototype code is a visual reference only.
 - **Accessibility**: PASS. The plan includes focusable cards, visible focus states, semantic link text, Enter/Space activation, responsive layout, and reduced-motion-safe transitions.
@@ -65,7 +65,10 @@ app/
 
 components/
 └── city-picker/
-    └── CityPicker.tsx
+    ├── city-picker.tsx   # async Server Component — loads data, renders cards
+    ├── city-card.tsx     # Server Component — single card markup + image
+    ├── card-link.tsx     # "use client" — Link + Space-key activation + accessible name
+    └── city-images.ts    # slug → static image asset map
 
 data/
 ├── json/cities.json
@@ -73,7 +76,7 @@ data/
 └── types.ts
 ```
 
-**Structure Decision**: Implement the landing page in `app/page.tsx`, isolate the Space-key interaction in `components/city-picker/CityPicker.tsx`, and add `app/[city]/page.tsx` so data-backed slug navigation has a valid route target during acceptance testing.
+**Structure Decision**: Implement the landing page in `app/page.tsx`, load and render the launch set in the async Server Component `components/city-picker/city-picker.tsx` (composing `city-card.tsx`), isolate the Space-key interaction in the Client Component `components/city-picker/card-link.tsx`, and add `app/[city]/page.tsx` so data-backed slug navigation has a valid route target during acceptance testing.
 
 ## Phase 0: Research
 

@@ -1,12 +1,12 @@
 /* =============================================================================
-   tokens.css — RentalScope / Vantage
-   Mira (shadcn) chrome + radius  ·  Vantage data-viz + map layer.
+   tokens.css — Plainsight
+   Mira (shadcn) chrome + radius  · Plainsight data-viz + map layer.
 
    MERGE POLICY:
    • Chrome colors + radius scale = Mira canonical (shadcn-authoritative) so
      real components/ui/* render cohesively.
    • Data palette, map tokens, --brand-emphasis, mono --type-metric, motion =
-     Vantage additions.
+     Plainsight additions.
 
    THEMING: stock shadcn. :root = light, .dark = dark. Dark-first is achieved
    in the provider, NOT by inverting the CSS:
@@ -16,8 +16,6 @@
 ============================================================================= */
 
 :root {
-  color-scheme: light;
-
   /* ---- Chrome — Mira light (canonical shadcn) ------------------------- */
   --background: oklch(1 0 0);
   --foreground: oklch(0.148 0.004 228.8);
@@ -78,8 +76,6 @@
 }
 
 .dark {
-  color-scheme: dark;
-
   /* ---- Chrome — Mira dark (canonical shadcn) ------------------------- */
   --background: oklch(0.148 0.004 228.8);
   --foreground: oklch(0.987 0.002 197.1);

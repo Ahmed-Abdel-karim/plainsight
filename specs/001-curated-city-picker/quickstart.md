@@ -29,7 +29,7 @@ pnpm build
    - Berlin
    - Amsterdam
 
-4. Confirm each card displays city name, country, market framing, tone, listing count, and snapshot label.
+4. Confirm each card displays city name, country, market framing, listing count, and snapshot label.
 
 5. Click each card and confirm it navigates to the matching route:
    - `/manchester`

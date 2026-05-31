@@ -27,7 +27,6 @@ Maya arrives at the product entry route and chooses one city from the curated la
 
 ### Edge Cases
 
-- If the launch city data set is empty, the landing page shows an empty state instead of hard-coded fallback cities.
 - If a city entry is present in the launch set, its card uses the slug from that entry as the only navigation target.
 - If a city slug contains multiple words or punctuation in future data, the route still uses the stable slug value already provided by the data source.
 - If Maya uses assistive technology, each card exposes the city name, country, market framing, listing count, and snapshot label as understandable text.
@@ -39,7 +38,8 @@ Maya arrives at the product entry route and chooses one city from the curated la
 - **FR-001**: The landing route `/` MUST present the curated launch cities as selectable cards.
 - **FR-002**: The launch city cards MUST be generated from the city index in the data directory, not from a duplicated hard-coded city list.
 - **FR-003**: The page MUST show exactly the cities present in the launch city data set: Manchester, London, Berlin, and Amsterdam.
-- **FR-004**: Each card MUST display the city name, country, market framing, descriptive tone, formatted listing count, and snapshot label from the data source.
+- **FR-004**: Each card MUST display the city name, country, market framing, formatted listing count, and snapshot label from the data source.
+- **FR-009**: Each card MUST display a representative city image resolved from the city's slug.
 - **FR-005**: Selecting a city card MUST navigate to `/${slug}`, where `slug` is the stable human-readable slug from the data source.
 - **FR-006**: City cards MUST be reachable by keyboard and selectable with Enter and Space.
 - **FR-007**: City cards MUST show a visible focus indicator when focused by keyboard.
@@ -47,7 +47,7 @@ Maya arrives at the product entry route and chooses one city from the curated la
 
 ### Key Entities _(include if feature involves data)_
 
-- **Launch City**: A curated market entry with slug, name, country, country flag, market frame, descriptive tone, snapshot label, and listing count.
+- **Launch City**: A curated market entry with slug, name, country, market frame, snapshot label, and listing count.
 - **City Card**: A selectable representation of one Launch City that communicates the market summary and navigates to the city route.
 
 ## Success Criteria _(mandatory)_
@@ -71,5 +71,5 @@ Maya arrives at the product entry route and chooses one city from the curated la
 
 - The launch city source of truth is `data/json/cities.json`.
 - The current launch set is Manchester, London, Berlin, and Amsterdam.
-- The provided design is `design/app/RentalScope Landing.html`; it is the visual target, not implementation code to copy.
+- The provided design is `design/app/Plainsight Landing.html`; it is the visual target, not implementation code to copy.
 - The city destination route for this story is the root-level slug route, for example `/london`.

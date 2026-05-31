@@ -11,11 +11,13 @@ Represents one entry in the curated launch set.
 - `slug`: stable route segment used for `/${slug}`
 - `name`: display city name
 - `country`: display country name
-- `countryFlag`: display flag marker
 - `frame`: short market classification shown on the card
-- `tone`: descriptive market summary shown on the card
 - `snapshotLabel`: dated snapshot label shown with the listing count
-- `listingCount`: numeric count formatted for display
+
+The loader (`toData()` in `data/loaders.ts`) maps the raw `CityIndexEntry` into the
+UI-facing `CityData` shape, formatting `listingCount` into a display string:
+
+- `listings`: formatted count string, e.g. `"6,562 listings"`
 
 **Validation rules**:
 
@@ -31,7 +33,12 @@ Represents one selectable city option on the landing page.
 
 - `href`: `/${slug}`
 - `accessibleName`: city name, country, frame, listing count, and snapshot label
-- visible card content: name, country, frame, tone, listing count, snapshot label
+- visible card content: city image, name, country, frame, listing count, snapshot label
+
+The city image is resolved from `slug` via a static asset map
+(`components/city-picker/city-images.ts` → `public/cities/${slug}.png`), not from the
+data source, and is rendered as decorative (`alt=""`) because the accessible name
+already conveys the city identity.
 
 **State**:
 

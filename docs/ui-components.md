@@ -1,4 +1,4 @@
-RentalScope — Build Rules (AI implementation guide)
+Plainsight — Build Rules (AI implementation guide)
 What this project is
 A map-based rental-market explorer. Dark-first, dense, analytical (Observable/Datawrapper, not a consumer app). Next.js App Router + TypeScript. One map, two lenses (Browse = renter, Analyse = investor) switched by a toggle. State: nuqs owns URL view-state; Zustand owns client store state through the constitution-required Next.js store factory/provider pattern.
 The three inputs you are working from

@@ -2,15 +2,15 @@
 
 ## Decision: Use `data/json/cities.json` through `getCitiesData()`
 
-**Rationale**: The feature requires the exact launch set from the data directory. The existing loader maps `CityIndexEntry` into UI-facing `CityData` and already caches the result for static launch data.
+**Rationale**: The feature requires the exact launch set from the data directory. The existing loader maps `CityIndexEntry` into UI-facing `CityData`. Caching is applied at the landing page level (`app/page.tsx` declares `"use cache"`) since the launch set is static filesystem data.
 
 **Alternatives considered**: Duplicating the city list in `app/page.tsx` was rejected because it can drift from the data source. Reading individual city datasets was rejected because the picker only needs index metadata.
 
-## Decision: Keep `/` server-rendered and use a narrow client boundary for cards
+## Decision: Keep `/` server-rendered and isolate a narrow client boundary on the card link
 
-**Rationale**: Server rendering keeps the data-backed launch set simple and cacheable. A small Client Component is necessary because native links activate with Enter but not Space, and the spec requires Space selection.
+**Rationale**: Server rendering keeps the data-backed launch set simple and cacheable. Following the donut pattern (`rules/react-components.md` Rule 11), the feature's async Server Component (`city-picker.tsx`) loads data and renders cards, while only the card's link (`card-link.tsx`) is a Client Component. A client boundary is necessary because native links activate with Enter but not Space, and the spec requires Space selection.
 
-**Alternatives considered**: A plain anchor-only grid was rejected because Space activation would not be guaranteed. Making the whole page a Client Component was rejected because only the key handler needs client behavior.
+**Alternatives considered**: A plain anchor-only grid was rejected because Space activation would not be guaranteed. Making the whole feature or page a Client Component was rejected because only the link's key handler needs client behavior.
 
 ## Decision: Use Next.js `Link` to navigate to `/${slug}`
 
@@ -32,6 +32,6 @@
 
 ## Decision: Rebuild the landing design with shadcn and tokens
 
-**Rationale**: The constitution and component rules require shadcn composition and token utilities. `design/app/RentalScope Landing.html` is the visual target, not implementation code.
+**Rationale**: The constitution and component rules require shadcn composition and token utilities. `design/app/Plainsight Landing.html` is the visual target, not implementation code.
 
 **Alternatives considered**: Copying prototype CSS/HTML was rejected because it violates the project component rules and risks token/theme drift.

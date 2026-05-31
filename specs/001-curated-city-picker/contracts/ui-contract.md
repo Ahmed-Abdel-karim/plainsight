@@ -12,7 +12,8 @@
 
 - One selectable card per launch city.
 - No cards beyond the launch data set.
-- Each card displays city name, country, frame, tone, formatted listing count, and snapshot label.
+- Each card displays a representative city image, city name, country, frame, formatted listing count, and snapshot label.
+- The city image is decorative (`alt=""`); the card's accessible name carries the city identity.
 
 **Interactions**:
 
