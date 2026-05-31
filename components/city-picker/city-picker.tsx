@@ -1,8 +1,13 @@
 import { getCitiesData } from "@/data";
+import type { CityData } from "@/data";
 import { CityCard } from "./city-card";
 
-export async function CityPicker() {
-  const cities = await getCitiesData();
+/**
+ * Presentational market grid. Synchronous and props-only so it is the
+ * integration surface for "the right city data is rendered" — render it with
+ * fixtures, no data mocking. Fetching lives in {@link CityPicker}.
+ */
+export function CityPickerView({ cities }: { cities: CityData[] }) {
   return (
     <nav aria-labelledby="markets-heading" className="w-full">
       <div className="mb-4 text-center">
@@ -17,4 +22,10 @@ export async function CityPicker() {
       </ul>
     </nav>
   );
+}
+
+/** Async data boundary: loads the city index and delegates rendering. Covered by E2E. */
+export async function CityPicker() {
+  const cities = await getCitiesData();
+  return <CityPickerView cities={cities} />;
 }

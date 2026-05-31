@@ -1,25 +1,18 @@
 <!--
 Sync Impact Report
-Version change: template -> 1.0.0
-Modified principles:
-- Template placeholder principles -> Next.js App Router Architecture
-- Template placeholder principles -> Component System Discipline
-- Template placeholder principles -> Cache And State Boundaries
-- Template placeholder principles -> Accessibility Is Acceptance
-- Template placeholder principles -> Type Safety And Maintainability
+Version change: 1.0.0 -> 1.1.0
+Modified principles: None (wording unchanged)
 Added sections:
-- Project Rules
-- Development Workflow
-Removed sections:
-- Unresolved template placeholder sections
+- Project Rules -> Testing Layers
+Removed sections: None
 Templates requiring updates:
-- ✅ .specify/templates/plan-template.md
-- ✅ .specify/templates/spec-template.md
-- ✅ .specify/templates/tasks-template.md
-- ✅ .specify/templates/commands/*.md (not present in this project)
-Runtime guidance updates:
-- ✅ docs/ui-components.md
+- ⚠ pending: .specify/templates/plan-template.md (Constitution Check should cite the testing-layer split)
+Runtime guidance updates: None
 Follow-up TODOs: None
+
+Prior amendment (template -> 1.0.0):
+- Established the five core principles, Project Rules, and Development Workflow.
+- Synced plan/spec/tasks templates and docs/ui-components.md.
 -->
 
 # Plainsight Constitution
@@ -127,6 +120,23 @@ duplicated business logic across server, client, and store layers.
   MUST include keyboard and responsive checks when the touched surface is
   interactive.
 
+### Testing Layers
+
+- Server Components that fetch data MUST delegate rendering to a synchronous
+  presentational component receiving plain serializable props (objects/arrays,
+  never promises). Data fetching, `await`, and `notFound()` stay in the async
+  route/loader boundary.
+- "The correct data is rendered" is split into two layers: data **selection**
+  (pure selectors, e.g. `selectScopeAggregates`) is unit-tested, and data
+  **display** (presentational components) is integration-tested by rendering
+  the component with fixtures. Neither layer mocks the data loaders.
+- Async route/loader boundaries, navigation, redirects, and `notFound()`
+  triggering are covered by E2E, not by unit/integration tests. Async Server
+  Components MUST NOT be unit-tested by awaiting and rendering their output
+  (the Next.js + Vitest unsupported pattern).
+- Component queries MUST be accessibility-first (role/name) to keep the
+  Accessibility principle enforceable through tests.
+
 ## Development Workflow
 
 Every feature plan MUST include a Constitution Check covering Next.js cache
@@ -146,4 +156,4 @@ for new or materially expanded principles or sections, and PATCH for
 clarifications that do not change obligations. All plans, reviews, and
 implementation work MUST verify compliance with this constitution.
 
-**Version**: 1.0.0 | **Ratified**: 2026-05-30 | **Last Amended**: 2026-05-30
+**Version**: 1.1.0 | **Ratified**: 2026-05-30 | **Last Amended**: 2026-05-31
