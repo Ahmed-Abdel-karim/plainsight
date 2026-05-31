@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 
-import { getCitiesData, getCityDataset } from "@/data";
+import { CityScene } from "@/components/scene/city-scene";
+import { getCitiesData, getCityDataset, selectScopeAggregates } from "@/data";
+import type { Scope } from "@/data";
 
 export async function generateStaticParams() {
   const cities = await getCitiesData();
@@ -22,15 +24,17 @@ export default async function CityPage({
     notFound();
   }
 
+  // E1-S2: the chosen city is the default analysis scope until the user narrows.
+  const scope: Scope = { type: "city" };
+  const aggregates = selectScopeAggregates(dataset, scope);
+
   return (
     <main className="flex min-h-screen flex-col bg-background px-6 py-10 text-foreground">
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-4">
-        <p className="text-muted-foreground type-label">Market selected</p>
-        <h1 className="type-display">{dataset.name}</h1>
-        <p className="max-w-2xl text-muted-foreground type-body">
-          {dataset.snapshotLabel.trim()} snapshot ·{" "}
-          {dataset.cityAggregates.listingCount.toLocaleString("en")} listings
-        </p>
+      <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6">
+        <CityScene
+          cityName={dataset.name}
+          listingCount={aggregates.listingCount}
+        />
       </div>
     </main>
   );
