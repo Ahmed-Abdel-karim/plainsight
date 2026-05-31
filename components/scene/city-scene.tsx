@@ -1,26 +1,31 @@
+import { MarketHeader } from "./market-header";
 import { MapRegion } from "./map-region";
-import { ScopeLabel } from "./scope-label";
 import { SidebarRegion } from "./sidebar-region";
 
 /**
- * E1-S2: the city-scoped scene. Composes the map region and the sidebar region
- * (which carries the scope label) against the whole-city default scope. Reflows
- * from a stacked layout on small screens to map + sidebar side-by-side on wide
- * screens, without hiding either region.
+ * City-scoped scene. Hosts the market header above the analytics sidebar and
+ * map, reflowing from stacked layout to side-by-side regions on wide screens.
  */
 export function CityScene({
   cityName,
   listingCount,
+  snapshotLabel,
 }: {
   cityName: string;
   listingCount: number;
+  snapshotLabel: string;
 }) {
   return (
-    <div className="flex w-full flex-1 flex-col gap-4 lg:flex-row">
-      <SidebarRegion>
-        <ScopeLabel cityName={cityName} count={listingCount} />
-      </SidebarRegion>
-      <MapRegion />
+    <div className="flex w-full flex-1 flex-col gap-6">
+      <MarketHeader
+        cityName={cityName}
+        listingCount={listingCount}
+        snapshotLabel={snapshotLabel}
+      />
+      <div className="flex w-full flex-1 flex-col gap-4 lg:flex-row">
+        <SidebarRegion />
+        <MapRegion />
+      </div>
     </div>
   );
 }

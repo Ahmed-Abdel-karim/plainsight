@@ -34,6 +34,7 @@ export default async function CityPage({
         <CityScene
           cityName={dataset.name}
           listingCount={aggregates.listingCount}
+          snapshotLabel={dataset.snapshotLabel}
         />
       </div>
     </main>
