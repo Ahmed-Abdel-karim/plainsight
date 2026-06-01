@@ -1,20 +1,47 @@
-import { Skeleton } from "@/components/ui/skeleton";
+import type { NeighbourhoodBoundaries } from "@/data";
+import { MapView } from "./map";
+import { MapLegend } from "./map-legend";
 
-/**
- * E1-S2: city-scoped map region shell. The interactive priced-pin map arrives
- * in a later epic (E4/E5); for now this is a non-interactive placeholder so the
- * scene always presents a map region against city scope (never blank).
- */
-export function MapRegion() {
+interface MapRegionProps {
+  boundaries: NeighbourhoodBoundaries | null;
+  bbox: [number, number, number, number];
+  center: [number, number];
+  cityName: string;
+  neighbourhoodCount: number;
+}
+
+export function MapRegion({
+  boundaries,
+  bbox,
+  center,
+  cityName,
+  neighbourhoodCount,
+}: MapRegionProps) {
+  if (!boundaries || boundaries.features.length === 0) {
+    return (
+      <section
+        aria-label="Map"
+        className="bg-map-bg relative min-h-96 flex-1 overflow-hidden lg:min-h-0"
+      >
+        <p className="text-map-label absolute inset-0 flex items-center justify-center type-label">
+          Map unavailable
+        </p>
+      </section>
+    );
+  }
+
   return (
     <section
       aria-label="Map"
-      className="relative min-h-80 flex-1 overflow-hidden rounded-lg border border-border"
+      className="bg-map-bg relative min-h-96 flex-1 overflow-hidden lg:min-h-0"
     >
-      <Skeleton className="absolute inset-0 rounded-none" />
-      <p className="absolute inset-0 flex items-center justify-center text-muted-foreground type-label">
-        Map view
-      </p>
+      <MapView
+        boundaries={boundaries}
+        bbox={bbox}
+        center={center}
+        cityName={cityName}
+      />
+      <MapLegend neighbourhoodCount={neighbourhoodCount} />
     </section>
   );
 }

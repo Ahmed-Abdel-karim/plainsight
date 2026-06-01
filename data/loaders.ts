@@ -41,6 +41,8 @@ function toData(entry: CityIndexEntry): CityData {
 
 /** E1-S1: city index for the picker page. */
 export async function getCitiesData(): Promise<CityData[]> {
+  "use cache";
+  cacheLife("max");
   const entries = await readJson<CityIndexEntry[]>("cities.json");
   if (!entries) return [];
   return entries.map(toData);

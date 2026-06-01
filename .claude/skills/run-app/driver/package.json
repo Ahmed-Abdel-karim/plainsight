@@ -1,0 +1,9 @@
+{
+  "name": "plainsight-run-driver",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "axe-core": "^4.11.4",
+    "playwright": "^1.48.0"
+  }
+}

@@ -2,6 +2,6 @@
 
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`specs/003-market-snapshot-header/plan.md`
+`specs/004-basemap-theme/plan.md`
 
 <!-- SPECKIT END -->

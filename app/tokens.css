@@ -227,6 +227,12 @@
   font: 400 0.6875rem/1.4 var(--font-sans);
   letter-spacing: 0.01em;
 }
+/* caption-mono: small mono tabular metadata — codes, dates, inline counts */
+@utility type-caption-mono {
+  font: 400 0.6875rem/1.4 var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
 /* metric: big mono tabular numerals for prices/counts */
 @utility type-metric {
   font: 500 1.375rem/1.1 var(--font-mono);

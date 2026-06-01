@@ -160,6 +160,14 @@
   border: 1px solid var(--border);
   border-radius: var(--radius);
 }
+
+/* Below the desktop split the analysis bar (scene-drawer trigger) floats at the
+   map's top-left, so push the map's top-left zoom controls clear of it. */
+@media (max-width: 1023px) {
+  .maplibregl-ctrl-top-left {
+    margin-top: 3.5rem;
+  }
+}
 :root {
   --scrim: oklch(1 0 0 / 0.78);
 }
