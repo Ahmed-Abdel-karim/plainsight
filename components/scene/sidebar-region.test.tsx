@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { axe } from "vitest-axe";
 
 import { cityFixtures } from "@/test/fixtures/cities";
+import { makeAggregates } from "@/test/fixtures/dataset";
 import { SidebarContent } from "./sidebar-region";
 
 /**
@@ -18,8 +19,10 @@ function renderContent() {
         citySlug={city.slug}
         country={city.country}
         frame={city.frame}
+        currency="GBP"
         listingCount={61963}
         snapshotLabel=" 9/2025"
+        aggregates={makeAggregates({ listingCount: 61963, meetsFloor: true })}
         cities={cityFixtures}
       />
     </aside>,

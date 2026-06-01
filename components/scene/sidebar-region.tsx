@@ -5,6 +5,7 @@ import type {
   ScopeAggregates,
 } from "@/data";
 import { CitySwitcher } from "./city-switcher";
+import { SidebarAnalysis } from "./analysis/sidebar-analysis";
 import { Logo } from "../logo";
 
 function formatNumber(value: number): string {
@@ -15,8 +16,10 @@ type SidebarContentProps = {
   citySlug: string;
   country: string;
   frame: string;
+  currency: string;
   listingCount: number;
   snapshotLabel: string;
+  aggregates: ScopeAggregates;
   cities: CityData[];
 };
 
@@ -31,8 +34,10 @@ export function SidebarContent({
   citySlug,
   country,
   frame,
+  currency,
   listingCount,
   snapshotLabel,
+  aggregates,
   cities,
 }: SidebarContentProps) {
   const snapshot = snapshotLabel.trim();
@@ -72,6 +77,8 @@ export function SidebarContent({
           Data: {snapshot}
         </div>
       </header>
+
+      <SidebarAnalysis aggregates={aggregates} currency={currency} />
     </>
   );
 }
@@ -85,8 +92,10 @@ export function SidebarRegion({
   citySlug,
   country,
   frame,
+  currency,
   listingCount,
   snapshotLabel,
+  aggregates,
   cities,
 }: {
   citySlug: string;
@@ -109,8 +118,10 @@ export function SidebarRegion({
         citySlug={citySlug}
         country={country}
         frame={frame}
+        currency={currency}
         listingCount={listingCount}
         snapshotLabel={snapshotLabel}
+        aggregates={aggregates}
         cities={cities}
       />
     </aside>

@@ -59,6 +59,10 @@
   --data-low: oklch(0.86 0.004 255);
   --data-low-foreground: oklch(0.45 0.01 255);
 
+  /* ---- Data — neutral bar (histogram / host ranks), light ------------ */
+  --data-bar: oklch(0.505 0.018 255 / 42%);
+  --data-bar-dim: oklch(0.505 0.018 255 / 14%);
+
   /* ---- Map chrome (over-canvas controls) + basemap, light ------------ */
   --map-stroke: oklch(0.4 0.01 255 / 55%);
   --scrim: oklch(1 0 0 / 82%);
@@ -119,6 +123,10 @@
   /* ---- Data — insufficient / below-floor ----------------------------- */
   --data-low: oklch(0.3 0.006 255);
   --data-low-foreground: oklch(0.62 0.01 255);
+
+  /* ---- Data — neutral bar (histogram / host ranks), dark ------------- */
+  --data-bar: oklch(0.715 0.012 255 / 55%);
+  --data-bar-dim: oklch(0.715 0.012 255 / 16%);
 
   /* ---- Map chrome + basemap, dark ------------------------------------ */
   --map-stroke: oklch(0.85 0.01 255 / 35%);
@@ -185,6 +193,8 @@
   --color-cat-4: var(--cat-4);
   --color-cat-5: var(--cat-5);
   --color-data-low: var(--data-low);
+  --color-data-bar: var(--data-bar);
+  --color-data-bar-dim: var(--data-bar-dim);
   --color-brand-emphasis: var(--brand-emphasis);
 
   /* shadcn Chart renders on the categorical palette */

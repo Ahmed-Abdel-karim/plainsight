@@ -14,7 +14,7 @@
  *    not drill-down-selectable)
  */
 
-import type { FeatureCollection, MultiPolygon } from "geojson";
+import type { BBox, LngLat } from "@/lib/geo/types";
 
 export const MIN_LISTING_FLOOR = 20;
 export const MULTI_LISTING_THRESHOLD = 2;
@@ -87,18 +87,28 @@ export interface PriceScale {
   max: number;
 }
 
-export interface CityDataset {
+/**
+ * Snapshot-varying city metadata — everything about a city EXCEPT the heavy
+ * arrays (listings) and the pre-baked aggregate cube. This is the cheap read a
+ * server component needs to frame a page; `CityDataset` extends it with the
+ * bulk. A real DB serves this from `cities` + `city_snapshot` without touching
+ * the `listings` table.
+ */
+export interface CityMeta {
   slug: string;
   name: string;
   country: string;
   frame: string;
   snapshotLabel: string;
   currency: string;
-  bbox: [number, number, number, number];
-  center: [number, number];
+  bbox: BBox;
+  center: LngLat;
   hexEnabled: boolean;
   priceScale: PriceScale;
   priceCap: number;
+}
+
+export interface CityDataset extends CityMeta {
   cityAggregates: ScopeAggregates;
   neighbourhoods: Neighbourhood[];
   neighbourhoodAggregates: Record<string, ScopeAggregates>;
@@ -113,18 +123,3 @@ export interface CityIndexEntry {
   snapshotLabel: string;
   listingCount: number;
 }
-
-/** Properties on each neighbourhood polygon feature in the boundaries GeoJSON. */
-export interface NeighbourhoodBoundaryProperties {
-  id: string; // slug — matches Neighbourhood.id and Listing.neighbourhoodId
-  name: string; // display name
-}
-
-/**
- * GeoJSON FeatureCollection emitted to /public/data/{slug}-boundaries.geojson.
- * feature.id = slug, enabling MapLibre setFeatureState for choropleth repaint.
- */
-export type NeighbourhoodBoundaries = FeatureCollection<
-  MultiPolygon,
-  NeighbourhoodBoundaryProperties
->;

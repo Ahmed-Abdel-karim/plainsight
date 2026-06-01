@@ -1,17 +1,21 @@
 import type {
+  BBox,
   CityData,
+  LngLat,
   Neighbourhood,
   NeighbourhoodBoundaries,
   PriceScale,
   ScopeAggregates,
 } from "@/data";
-import { MapRegion } from "./map-region";
+import { MapDataSync } from "../map/map-data-sync";
 import { SceneDrawer } from "./scene-drawer";
 import { SidebarContent, SidebarRegion } from "./sidebar-region";
 
 /**
- * City-scoped scene. Mirrors the RentalScope design shell: a dense analysis
- * sidebar paired with a full-height map canvas.
+ * City-scoped scene overlay. The map itself lives in the `(scene)` layout so it
+ * persists across city navigation; this renders the per-city chrome that *does*
+ * change — the desktop sidebar (grid column 1) and the mobile drawer — plus a
+ * `MapDataSync` bridge that feeds the persistent map its current-city data.
  */
 export function CityScene({
   citySlug,
@@ -42,12 +46,12 @@ export function CityScene({
   priceScale: PriceScale;
   cities: CityData[];
   boundaries: NeighbourhoodBoundaries | null;
-  bbox: [number, number, number, number];
-  center: [number, number];
+  bbox: BBox;
+  center: LngLat;
   neighbourhoodCount: number;
 }) {
   return (
-    <div className="relative flex min-h-screen w-full flex-1 flex-col bg-background text-foreground lg:grid lg:h-screen lg:grid-cols-[432px_minmax(0,1fr)] lg:overflow-hidden">
+    <>
       <SidebarRegion
         citySlug={citySlug}
         country={country}
@@ -60,23 +64,26 @@ export function CityScene({
         priceScale={priceScale}
         cities={cities}
       />
-      <MapRegion
-        boundaries={boundaries}
-        bbox={bbox}
-        center={center}
-        cityName={cityName}
-        neighbourhoodCount={neighbourhoodCount}
-      />
       <SceneDrawer cityName={cityName} listingCount={listingCount}>
         <SidebarContent
           citySlug={citySlug}
           country={country}
           frame={frame}
+          currency={currency}
           listingCount={listingCount}
           snapshotLabel={snapshotLabel}
+          aggregates={aggregates}
           cities={cities}
         />
       </SceneDrawer>
-    </div>
+      <MapDataSync
+        slug={citySlug}
+        cityName={cityName}
+        boundaries={boundaries}
+        bbox={bbox}
+        center={center}
+        neighbourhoodCount={neighbourhoodCount}
+      />
+    </>
   );
 }

@@ -1,8 +1,9 @@
-interface MapLegendProps {
-  neighbourhoodCount: number;
-}
+"use client";
 
-export function MapLegend({ neighbourhoodCount }: MapLegendProps) {
+import { useMapCity } from "@/components/map/map-store";
+
+export function MapLegend() {
+  const neighbourhoodCount = useMapCity()?.neighbourhoodCount ?? 0;
   const label =
     neighbourhoodCount === 1
       ? "1 neighbourhood"
