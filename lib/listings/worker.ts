@@ -1,14 +1,17 @@
 /**
- * Listings Web Worker. On `load` it fetches and parses the city's full listings
- * feed *on this thread* (the ~68 ms JSON.parse never blocks the UI), holds it,
- * and answers `aggregates` queries by recomputing over the in-memory rows. Only
- * the small `ScopeAggregates` result is posted back — the 62k-row array stays in
- * the worker, so the structured-clone cost of shipping it to the main thread is
- * never paid.
+ * Listings Web Worker — the scene's analytics engine. On `load` it fetches and
+ * parses the city's lightweight **analytics tier** *on this thread* (the
+ * JSON.parse never blocks the UI), holds it, and answers `aggregates` (sidebar
+ * cards) and `hexes` (the price map) queries by recomputing over the in-memory
+ * rows. Only the small result — `ScopeAggregates` or `HexCell[]` — is posted
+ * back; the per-listing rows never cross the boundary.
+ *
+ * The analytics rows are a structural subset of `Listing` (the contract's tier
+ * guarantee), so the isomorphic `lib/filters` engine runs over them unchanged.
  */
 import type { Listing } from "@/data/contract";
 
-import { aggregatesFor } from "./compute";
+import { aggregatesFor, hexesFor } from "./compute";
 import type { ListingsRequest, ListingsResponse } from "./protocol";
 
 // The worker global typed as `Worker` gives usable postMessage/onmessage
@@ -26,7 +29,7 @@ ctx.onmessage = async (event: MessageEvent<ListingsRequest>) => {
   try {
     switch (message.type) {
       case "load": {
-        const res = await fetch(`/data/${message.slug}-listings.json`);
+        const res = await fetch(`/data/${message.slug}-analytics.json`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         listings = (await res.json()) as Listing[];
         post({ type: "ready", slug: message.slug, count: listings.length });
@@ -38,6 +41,15 @@ ctx.onmessage = async (event: MessageEvent<ListingsRequest>) => {
           type: "aggregates",
           id: message.id,
           result: aggregatesFor(listings, message.scope, message.filters),
+        });
+        return;
+      }
+      case "hexes": {
+        if (!listings) throw new Error("listings not loaded");
+        post({
+          type: "hexes",
+          id: message.id,
+          cells: hexesFor(listings, message.filters, message.resolution),
         });
         return;
       }

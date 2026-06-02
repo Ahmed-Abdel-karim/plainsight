@@ -1,3 +1,4 @@
+import { HexLegend } from "@/components/scene/map/hex/hex-legend";
 import { MapView } from "@/components/scene/map/map";
 import { MapLegend } from "@/components/scene/map-legend";
 
@@ -27,7 +28,10 @@ export default function SceneLayout({
           className="bg-map-bg relative min-h-96 flex-1 overflow-hidden lg:min-h-0"
         >
           <MapView />
-          <MapLegend />
+          <div className="pointer-events-none absolute bottom-4 left-4 z-10 flex max-w-[calc(100%-2rem)] flex-col gap-2">
+            <HexLegend />
+            <MapLegend />
+          </div>
         </section>
       </div>
     </main>

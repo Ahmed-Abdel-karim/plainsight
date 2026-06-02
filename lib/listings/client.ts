@@ -8,11 +8,15 @@
  */
 import type { ScopeAggregates } from "@/data/contract";
 import type { ListingFilters, Scope } from "@/data/types";
+import type { HexCell, HexResolution } from "@/lib/hex/types";
 
 import type { ListingsRequest, ListingsResponse } from "./protocol";
 
+/** Either worker result; the awaiting method narrows it back to its own type. */
+type PendingResult = ScopeAggregates | HexCell[];
+
 type Pending = {
-  resolve: (result: ScopeAggregates) => void;
+  resolve: (result: PendingResult) => void;
   reject: (error: Error) => void;
 };
 
@@ -52,6 +56,10 @@ export class CityListingsClient {
         this.pending.get(message.id)?.resolve(message.result);
         this.pending.delete(message.id);
         return;
+      case "hexes":
+        this.pending.get(message.id)?.resolve(message.cells);
+        this.pending.delete(message.id);
+        return;
       case "error": {
         const error = new Error(message.message);
         if (message.id !== undefined) {
@@ -69,8 +77,28 @@ export class CityListingsClient {
   aggregates(scope: Scope, filters: ListingFilters): Promise<ScopeAggregates> {
     const id = this.nextId++;
     return new Promise<ScopeAggregates>((resolve, reject) => {
-      this.pending.set(id, { resolve, reject });
+      // The worker answers this id only with `aggregates` → a ScopeAggregates.
+      this.pending.set(id, {
+        resolve: (result) => resolve(result as ScopeAggregates),
+        reject,
+      });
       this.post({ type: "aggregates", id, scope, filters });
+    });
+  }
+
+  /** Recompute hex cells for the filtered set at a resolution, off-thread. */
+  hexes(
+    filters: ListingFilters,
+    resolution: HexResolution,
+  ): Promise<HexCell[]> {
+    const id = this.nextId++;
+    return new Promise<HexCell[]>((resolve, reject) => {
+      // The worker answers this id only with `hexes` → a HexCell[].
+      this.pending.set(id, {
+        resolve: (result) => resolve(result as HexCell[]),
+        reject,
+      });
+      this.post({ type: "hexes", id, filters, resolution });
     });
   }
 

@@ -20,6 +20,8 @@ function seedCity(neighbourhoodCount: number) {
     bbox: [-0.51, 51.28, 0.33, 51.69],
     center: [-0.09, 51.5],
     neighbourhoodCount,
+    priceScale: { breaks: [80, 120, 180, 280], min: 20, max: 1000 },
+    currency: "GBP",
   };
   useMapStore.setState({ city });
 }

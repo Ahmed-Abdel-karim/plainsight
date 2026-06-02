@@ -2,6 +2,6 @@
 
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan:
-`specs/004-basemap-theme/plan.md`
+`specs/006-h3-hex-layer/plan.md`
 
 <!-- SPECKIT END -->

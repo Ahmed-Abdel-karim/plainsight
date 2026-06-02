@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import type { BBox, LngLat, Scope } from "@/data";
+import type { BBox, LngLat, PriceScale, Scope } from "@/data";
 import { MapDataFeeder } from "./map/map-data-feeder";
 import { ListingCount } from "./listing-count";
 import { SceneDrawer } from "./scene-drawer";
@@ -28,6 +28,7 @@ export function CityScene({
   scope,
   bbox,
   center,
+  priceScale,
 }: {
   citySlug: string;
   cityName: string;
@@ -38,6 +39,7 @@ export function CityScene({
   scope: Scope;
   bbox: BBox;
   center: LngLat;
+  priceScale: PriceScale;
 }) {
   return (
     <>
@@ -79,6 +81,8 @@ export function CityScene({
           cityName={cityName}
           bbox={bbox}
           center={center}
+          priceScale={priceScale}
+          currency={currency}
         />
       </Suspense>
     </>

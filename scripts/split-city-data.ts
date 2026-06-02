@@ -6,6 +6,13 @@
  *     ->  public/data/{slug}-meta.json        (CityMeta — framing)
  *     ->  public/data/{slug}-aggregates.json  (CityAggregates — materialised cube)
  *     ->  public/data/{slug}-listings.json    (Listing[] — full, dual-read feed)
+ *     ->  public/data/{slug}-analytics.json   (AnalyticsListing[] — hex + cards tier)
+ *
+ * The analytics tier is a lightweight projection of each `Listing` carrying only
+ * the fields the scene's worker needs for the hex price map and the sidebar
+ * cards (h3, price, roomType + the host/review/neighbourhood card fields). It
+ * omits the map/drawer-only fields (id, name, lat, lng, minNights, imageVariant)
+ * so the worker fetches ~1.4 MB gz instead of the full listings feed.
  *
  * `cities.json` and the `*-boundaries.geojson` files are moved verbatim. The
  * destination is `public/data` (served at `/data/`) so the client map/browse can
@@ -28,11 +35,48 @@ import {
   readdir,
 } from "node:fs/promises";
 import { join } from "node:path";
+import { argv } from "node:process";
+import { fileURLToPath } from "node:url";
 
-import type { CityDataset, CityIndexEntry } from "../data/contract";
+import type { CityDataset, CityIndexEntry, Listing } from "../data/contract";
 
 const SRC_DIR = join(process.cwd(), "data", "json");
 const OUT_DIR = join(process.cwd(), "public", "data");
+
+/**
+ * Lightweight projection of `Listing` the scene worker fetches: enough for the
+ * hex price map (`h3, price, roomType`) and the sidebar cards (host/review/
+ * neighbourhood fields). A structural subset of `Listing`, so `lib/filters`
+ * runs over it unchanged.
+ */
+export type AnalyticsListing = Pick<
+  Listing,
+  | "h3"
+  | "price"
+  | "roomType"
+  | "numberOfReviews"
+  | "reviewsPerMonth"
+  | "hostId"
+  | "hostName"
+  | "hostListingsCount"
+  | "neighbourhoodId"
+>;
+
+export function projectAnalytics(
+  listings: readonly Listing[],
+): AnalyticsListing[] {
+  return listings.map((l) => ({
+    h3: l.h3,
+    price: l.price,
+    roomType: l.roomType,
+    numberOfReviews: l.numberOfReviews,
+    reviewsPerMonth: l.reviewsPerMonth,
+    hostId: l.hostId,
+    hostName: l.hostName,
+    hostListingsCount: l.hostListingsCount,
+    neighbourhoodId: l.neighbourhoodId,
+  }));
+}
 
 async function readJson<T>(dir: string, file: string): Promise<T> {
   return JSON.parse(await readFile(join(dir, file), "utf8")) as T;
@@ -65,6 +109,7 @@ async function splitCity(slug: string) {
     true,
   );
   await writeJson(`${slug}-listings.json`, listings, false);
+  await writeJson(`${slug}-analytics.json`, projectAnalytics(listings), false);
 
   // Boundaries move verbatim (already a separate file).
   const boundaries = `${slug}-boundaries.geojson`;
@@ -100,7 +145,11 @@ async function main() {
   console.log("\nDone. Commit public/data/ and remove data/json/.");
 }
 
-main().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+// Only run the split when invoked directly (`tsx scripts/split-city-data.ts`);
+// importing this module (e.g. to reuse `projectAnalytics`) must not auto-run it.
+if (argv[1] && fileURLToPath(import.meta.url) === argv[1]) {
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
+}

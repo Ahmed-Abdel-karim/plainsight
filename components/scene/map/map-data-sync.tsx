@@ -18,11 +18,22 @@ export function MapDataSync({
   bbox,
   center,
   neighbourhoodCount,
+  priceScale,
+  currency,
 }: MapCityPayload) {
   const { setCity } = useMapActions();
 
   useEffect(() => {
-    setCity({ slug, cityName, boundaries, bbox, center, neighbourhoodCount });
+    setCity({
+      slug,
+      cityName,
+      boundaries,
+      bbox,
+      center,
+      neighbourhoodCount,
+      priceScale,
+      currency,
+    });
     // Re-sync only when the city changes; the rest of the payload is derived
     // from the slug, so keying on it avoids resetting the store every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps

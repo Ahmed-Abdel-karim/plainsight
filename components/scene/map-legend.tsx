@@ -12,7 +12,7 @@ export function MapLegend() {
   return (
     <aside
       aria-label="Map legend"
-      className="map-chrome text-map-label pointer-events-none absolute bottom-4 left-4 z-10 max-w-[calc(100%-2rem)] px-3 py-2 shadow-sm"
+      className="map-chrome text-map-label px-3 py-2 shadow-sm"
     >
       <h2 className="type-label">Neighbourhoods</h2>
       <div className="mt-2 flex items-center gap-2">

@@ -8,12 +8,20 @@
  */
 import type { ScopeAggregates } from "@/data/contract";
 import type { ListingFilters, Scope } from "@/data/types";
+import type { HexCell, HexResolution } from "@/lib/hex/types";
 
 export type ListingsRequest =
   | { type: "load"; slug: string }
-  | { type: "aggregates"; id: number; scope: Scope; filters: ListingFilters };
+  | { type: "aggregates"; id: number; scope: Scope; filters: ListingFilters }
+  | {
+      type: "hexes";
+      id: number;
+      filters: ListingFilters;
+      resolution: HexResolution;
+    };
 
 export type ListingsResponse =
   | { type: "ready"; slug: string; count: number }
   | { type: "aggregates"; id: number; result: ScopeAggregates }
+  | { type: "hexes"; id: number; cells: HexCell[] }
   | { type: "error"; id?: number; message: string };

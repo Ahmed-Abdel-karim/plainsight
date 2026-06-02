@@ -7,6 +7,8 @@
 import type { Listing, ScopeAggregates } from "@/data/contract";
 import type { ListingFilters, Scope } from "@/data/types";
 import { computeAggregates, filterListings } from "@/lib/filters";
+import { aggregateHexes } from "@/lib/hex/aggregate";
+import type { HexCell, HexResolution } from "@/lib/hex/types";
 
 /** Narrow the city listings to the active scope (city-wide or one neighbourhood). */
 export function scopeListings(
@@ -26,4 +28,18 @@ export function aggregatesFor(
   return computeAggregates(
     filterListings(scopeListings(listings, scope), filters),
   );
+}
+
+/**
+ * Hex cells for the filtered set at a resolution. Bins over the SAME
+ * `filterListings` the cards use, so the map and the sidebar can never disagree
+ * about the filtered listings (FR-009). City-wide scope — the hex map is the
+ * whole-city price view, not a per-neighbourhood drill-down.
+ */
+export function hexesFor(
+  listings: readonly Listing[],
+  filters: ListingFilters,
+  resolution: HexResolution,
+): HexCell[] {
+  return aggregateHexes(filterListings(listings, filters), resolution);
 }

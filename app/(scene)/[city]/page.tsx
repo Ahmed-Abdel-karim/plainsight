@@ -49,8 +49,17 @@ export default async function CityPage({
   if (!meta) {
     notFound();
   }
-  const { slug, name, country, frame, currency, snapshotLabel, bbox, center } =
-    meta;
+  const {
+    slug,
+    name,
+    country,
+    frame,
+    currency,
+    snapshotLabel,
+    bbox,
+    center,
+    priceScale,
+  } = meta;
   return (
     <CityScene
       citySlug={slug}
@@ -62,6 +71,7 @@ export default async function CityPage({
       scope={scope}
       bbox={bbox}
       center={center}
+      priceScale={priceScale}
     />
   );
 }

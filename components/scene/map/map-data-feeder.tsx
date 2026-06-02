@@ -3,6 +3,7 @@ import {
   getCityNeighbourhoodCount,
   type BBox,
   type LngLat,
+  type PriceScale,
 } from "@/data";
 
 import { MapDataSync } from "./map-data-sync";
@@ -20,11 +21,15 @@ export async function MapDataFeeder({
   cityName,
   bbox,
   center,
+  priceScale,
+  currency,
 }: {
   citySlug: string;
   cityName: string;
   bbox: BBox;
   center: LngLat;
+  priceScale: PriceScale;
+  currency: string;
 }) {
   const [boundaries, neighbourhoodCount] = await Promise.all([
     getCityBoundaries(citySlug),
@@ -39,6 +44,8 @@ export async function MapDataFeeder({
       bbox={bbox}
       center={center}
       neighbourhoodCount={neighbourhoodCount}
+      priceScale={priceScale}
+      currency={currency}
     />
   );
 }
