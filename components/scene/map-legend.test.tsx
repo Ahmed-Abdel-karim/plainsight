@@ -1,12 +1,37 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 import { axe } from "vitest-axe";
 
+import {
+  type MapCityPayload,
+  useMapStore,
+} from "@/components/scene/map/map-store";
 import { MapLegend } from "./map-legend";
 
+/**
+ * The count now flows from the shared map store (set by `MapDataSync`) rather
+ * than a prop, so each case seeds the store before rendering and resets it after.
+ */
+function seedCity(neighbourhoodCount: number) {
+  const city: MapCityPayload = {
+    slug: "london",
+    cityName: "London",
+    boundaries: null,
+    bbox: [-0.51, 51.28, 0.33, 51.69],
+    center: [-0.09, 51.5],
+    neighbourhoodCount,
+  };
+  useMapStore.setState({ city });
+}
+
 describe("MapLegend", () => {
+  afterEach(() => {
+    useMapStore.setState({ city: null });
+  });
+
   it("renders the neighbourhood heading and count", () => {
-    render(<MapLegend neighbourhoodCount={22} />);
+    seedCity(22);
+    render(<MapLegend />);
 
     expect(
       screen.getByRole("complementary", { name: "Map legend" }),
@@ -18,7 +43,8 @@ describe("MapLegend", () => {
   });
 
   it("has no axe violations", async () => {
-    const { container } = render(<MapLegend neighbourhoodCount={1} />);
+    seedCity(1);
+    const { container } = render(<MapLegend />);
 
     expect(await axe(container)).toHaveNoViolations();
   });

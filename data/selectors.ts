@@ -1,5 +1,6 @@
 import type {
-  CityDataset,
+  CityAggregates,
+  CityMeta,
   Listing,
   Neighbourhood,
   ScopeAggregates,
@@ -8,33 +9,33 @@ import type { ListingFilters, Scope } from "./types";
 
 /** E4-S5 + E5: pre-baked aggregates for the current scope. Runs once per request. */
 export function selectScopeAggregates(
-  dataset: CityDataset,
+  cube: CityAggregates,
   scope: Scope,
 ): ScopeAggregates {
-  if (scope.type === "city") return dataset.cityAggregates;
-  return dataset.neighbourhoodAggregates[scope.id] ?? dataset.cityAggregates;
+  if (scope.type === "city") return cube.cityAggregates;
+  return cube.neighbourhoodAggregates[scope.id] ?? cube.cityAggregates;
 }
 
 /** E4-S2: static neighbourhood lookup. */
 export function selectNeighbourhood(
-  dataset: CityDataset,
+  cube: CityAggregates,
   id: string,
 ): Neighbourhood | undefined {
-  return dataset.neighbourhoods.find((nb) => nb.id === id);
+  return cube.neighbourhoods.find((nb) => nb.id === id);
 }
 
 /** E6-S4: static lookup for listing detail page SSR. */
 export function selectListingById(
-  dataset: CityDataset,
+  listings: readonly Listing[],
   id: number,
 ): Listing | undefined {
-  return dataset.listings.find((l) => l.id === id);
+  return listings.find((l) => l.id === id);
 }
 
 /** E7-S2: initial filter bounds derived from the city's priceScale. Runs once per request. */
-export function defaultFilters(dataset: CityDataset): ListingFilters {
+export function defaultFilters(meta: CityMeta): ListingFilters {
   return {
     roomTypes: [],
-    priceRange: [dataset.priceScale.min, dataset.priceCap],
+    priceRange: [meta.priceScale.min, meta.priceCap],
   };
 }

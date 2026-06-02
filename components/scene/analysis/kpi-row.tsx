@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { ScopeAggregates } from "@/data";
+import type { ScopeAggregates } from "@/data/contract";
 import { formatNumber, formatPercent, formatPriceParts } from "./format";
 
 /**

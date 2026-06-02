@@ -1,5 +1,7 @@
 import { CityPicker } from "@/components/city-picker/city-picker";
+import { CityPickerSkeleton } from "@/components/city-picker/city-picker-skeleton";
 import { Logo } from "@/components/logo";
+import { Suspense } from "react";
 
 /**
  * Presentational landing shell. Synchronous so the static copy is unit-testable
@@ -22,7 +24,9 @@ export function HomeView() {
       </header>
 
       <section className="w-full max-w-6xl">
-        <CityPicker />
+        <Suspense fallback={<CityPickerSkeleton />}>
+          <CityPicker />
+        </Suspense>
       </section>
 
       <footer className="inline-flex items-center gap-2 text-center type-caption text-muted-foreground">

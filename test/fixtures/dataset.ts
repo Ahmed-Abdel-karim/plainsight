@@ -1,4 +1,10 @@
-import type { CityDataset, RoomType, ScopeAggregates } from "@/data";
+import type {
+  CityAggregates,
+  CityDataset,
+  CityMeta,
+  RoomType,
+  ScopeAggregates,
+} from "@/data";
 
 const EMPTY_ROOM_MIX: Record<RoomType, number> = {
   "Entire home/apt": 0,
@@ -55,4 +61,31 @@ export const datasetFixture: CityDataset = {
     centre: makeAggregates({ listingCount: 120, meetsFloor: true }),
   },
   listings: [],
+};
+
+// Narrow slices matching the split storage tiers, derived from the composite so
+// they can never drift from it. Tests assert against the slice they actually use.
+const { cityAggregates, neighbourhoods, neighbourhoodAggregates } =
+  datasetFixture;
+
+/** The `{slug}-meta.json` framing tier. */
+export const metaFixture: CityMeta = {
+  slug: datasetFixture.slug,
+  name: datasetFixture.name,
+  country: datasetFixture.country,
+  frame: datasetFixture.frame,
+  snapshotLabel: datasetFixture.snapshotLabel,
+  currency: datasetFixture.currency,
+  bbox: datasetFixture.bbox,
+  center: datasetFixture.center,
+  hexEnabled: datasetFixture.hexEnabled,
+  priceScale: datasetFixture.priceScale,
+  priceCap: datasetFixture.priceCap,
+};
+
+/** The `{slug}-aggregates.json` materialised cube. */
+export const aggregatesFixture: CityAggregates = {
+  cityAggregates,
+  neighbourhoods,
+  neighbourhoodAggregates,
 };

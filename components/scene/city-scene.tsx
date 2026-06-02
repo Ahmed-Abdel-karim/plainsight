@@ -1,21 +1,22 @@
-import type {
-  BBox,
-  CityData,
-  LngLat,
-  Neighbourhood,
-  NeighbourhoodBoundaries,
-  PriceScale,
-  ScopeAggregates,
-} from "@/data";
-import { MapDataSync } from "../map/map-data-sync";
+import { Suspense } from "react";
+
+import { Skeleton } from "@/components/ui/skeleton";
+import type { BBox, LngLat, Scope } from "@/data";
+import { MapDataFeeder } from "./map/map-data-feeder";
+import { ListingCount } from "./listing-count";
 import { SceneDrawer } from "./scene-drawer";
-import { SidebarContent, SidebarRegion } from "./sidebar-region";
+import { SidebarContent } from "./sidebar-content";
 
 /**
  * City-scoped scene overlay. The map itself lives in the `(scene)` layout so it
  * persists across city navigation; this renders the per-city chrome that *does*
- * change — the desktop sidebar (grid column 1) and the mobile drawer — plus a
- * `MapDataSync` bridge that feeds the persistent map its current-city data.
+ * change — the desktop sidebar (grid column 1) and the mobile drawer.
+ *
+ * Data is *not* threaded through here as props: each region fetches the tier it
+ * needs behind its own Suspense boundary (the analysis cards, header count, and
+ * city switcher inside `SidebarContent`; the map's boundaries via `MapDataFeeder`).
+ * This component only forwards the cheap framing primitives it received from the
+ * route's `meta` read, so a slow tier never blocks a fast one.
  */
 export function CityScene({
   citySlug,
@@ -23,67 +24,63 @@ export function CityScene({
   country,
   frame,
   currency,
-  listingCount,
   snapshotLabel,
-  aggregates,
-  neighbourhoods,
-  priceScale,
-  cities,
-  boundaries,
+  scope,
   bbox,
   center,
-  neighbourhoodCount,
 }: {
   citySlug: string;
   cityName: string;
   country: string;
   frame: string;
   currency: string;
-  listingCount: number;
   snapshotLabel: string;
-  aggregates: ScopeAggregates;
-  neighbourhoods: Neighbourhood[];
-  priceScale: PriceScale;
-  cities: CityData[];
-  boundaries: NeighbourhoodBoundaries | null;
+  scope: Scope;
   bbox: BBox;
   center: LngLat;
-  neighbourhoodCount: number;
 }) {
   return (
     <>
-      <SidebarRegion
-        citySlug={citySlug}
-        country={country}
-        frame={frame}
-        currency={currency}
-        listingCount={listingCount}
-        snapshotLabel={snapshotLabel}
-        aggregates={aggregates}
-        neighbourhoods={neighbourhoods}
-        priceScale={priceScale}
-        cities={cities}
-      />
-      <SceneDrawer cityName={cityName} listingCount={listingCount}>
+      <aside
+        aria-label="Market analysis"
+        className="@container hidden w-full flex-col gap-section overflow-y-auto border-r border-border bg-card px-section pt-section pb-gutter lg:flex lg:h-screen lg:min-h-0"
+      >
         <SidebarContent
           citySlug={citySlug}
+          cityName={cityName}
           country={country}
           frame={frame}
           currency={currency}
-          listingCount={listingCount}
           snapshotLabel={snapshotLabel}
-          aggregates={aggregates}
-          cities={cities}
+          scope={scope}
+        />
+      </aside>
+      <SceneDrawer
+        cityName={cityName}
+        triggerCount={
+          <Suspense fallback={<Skeleton className="h-3 w-16" />}>
+            <ListingCount citySlug={citySlug} scope={scope} />
+          </Suspense>
+        }
+      >
+        <SidebarContent
+          citySlug={citySlug}
+          cityName={cityName}
+          country={country}
+          frame={frame}
+          currency={currency}
+          snapshotLabel={snapshotLabel}
+          scope={scope}
         />
       </SceneDrawer>
-      <MapDataSync
-        slug={citySlug}
-        cityName={cityName}
-        boundaries={boundaries}
-        bbox={bbox}
-        center={center}
-        neighbourhoodCount={neighbourhoodCount}
-      />
+      <Suspense fallback={null}>
+        <MapDataFeeder
+          citySlug={citySlug}
+          cityName={cityName}
+          bbox={bbox}
+          center={center}
+        />
+      </Suspense>
     </>
   );
 }

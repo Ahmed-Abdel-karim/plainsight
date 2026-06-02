@@ -1,14 +1,20 @@
 <!--
 Sync Impact Report
-Version change: 1.0.0 -> 1.1.0
+Version change: 1.1.0 -> 1.2.0
 Modified principles: None (wording unchanged)
 Added sections:
-- Project Rules -> Testing Layers
+- Core Principles -> VI. Layered Feature Architecture
+- Project Rules -> Module Boundaries
+- New companion doc: docs/architecture.md (target tree + rationale)
 Removed sections: None
 Templates requiring updates:
-- ⚠ pending: .specify/templates/plan-template.md (Constitution Check should cite the testing-layer split)
+- ⚠ pending: .specify/templates/plan-template.md (Constitution Check should cite module boundaries / layer dependency direction)
 Runtime guidance updates: None
 Follow-up TODOs: None
+
+Prior amendment (1.0.0 -> 1.1.0):
+- Added Project Rules -> Testing Layers.
+- ⚠ pending: .specify/templates/plan-template.md (Constitution Check should cite the testing-layer split)
 
 Prior amendment (template -> 1.0.0):
 - Established the five core principles, Project Rules, and Development Workflow.
@@ -65,6 +71,20 @@ module boundaries, external input MUST be validated before trust, and nullable
 states MUST remain explicit. Changes MUST stay scoped to the feature and avoid
 duplicated business logic across server, client, and store layers.
 
+### VI. Layered Feature Architecture
+
+The codebase is organized in four layers with dependencies pointing downward
+only: `app/` (routes that compose features and own Suspense boundaries, no
+business logic), `components/` (UI — feature folders plus shared `ui/`, `theme/`,
+and chrome), `data/` (the IO seam: ports and adapters, entered only through the
+`@/data` loaders barrel), and `lib/` (the pure, framework-light shared kernel).
+A layer MUST NOT import from a layer above it, and a feature MUST NOT import a
+sibling feature. Feature-specific code (components, hooks, state, view-models)
+MUST live with its feature; code in shared locations MUST have more than one
+consumer. The full target tree, dependency rules, and the rationale for deferring
+a top-level `features/` directory live in `docs/architecture.md`, which all new
+code MUST follow.
+
 ## Project Rules
 
 ### Next.js App Router And Cache Components
@@ -109,6 +129,24 @@ duplicated business logic across server, client, and store layers.
   whenever one exists.
 - Component implementations MUST NOT hard-code raw colors, arbitrary spacing, or
   ad hoc typography.
+
+### Module Boundaries
+
+- All new code MUST follow `docs/architecture.md` (the four-layer model and
+  target tree).
+- Layer dependencies point downward only: `app/` → `components/` → `data/`,
+  `lib/`. `data/` and `lib/` MUST NOT import from `components/` or `app/`, and
+  `lib/` MUST NOT import from `data/`.
+- UI MUST reach data only through the `@/data` loaders barrel. Nothing outside
+  `data/` MAY import `data/repository/*`; the adapter swap is wired in exactly
+  one place (`data/repository/index.ts`).
+- `lib/` MUST stay pure and framework-light with no feature knowledge; a React
+  hook, store, or component MUST live with its feature, not in `lib/`.
+- Feature-specific modules MUST live inside their feature folder. A module MAY
+  move to a shared location (`components/ui`, `components/theme`, shared chrome)
+  only when a second consumer exists.
+- A top-level `features/` directory MUST NOT be introduced until a genuinely
+  independent second domain exists (see the rationale in `docs/architecture.md`).
 
 ### Clean Code And Verification
 
@@ -156,4 +194,4 @@ for new or materially expanded principles or sections, and PATCH for
 clarifications that do not change obligations. All plans, reviews, and
 implementation work MUST verify compliance with this constitution.
 
-**Version**: 1.1.0 | **Ratified**: 2026-05-30 | **Last Amended**: 2026-05-31
+**Version**: 1.2.0 | **Ratified**: 2026-05-30 | **Last Amended**: 2026-06-02

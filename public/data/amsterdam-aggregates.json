@@ -1,0 +1,4461 @@
+{
+  "cityAggregates": {
+    "listingCount": 5874,
+    "medianPrice": 222,
+    "multiListingHostShare": 0.2226762002042901,
+    "avgReviewsPerMonth": 1.3599635875814466,
+    "meetsFloor": true,
+    "roomTypeMix": {
+      "Entire home/apt": 4532,
+      "Private room": 1274,
+      "Shared room": 30,
+      "Hotel room": 38
+    },
+    "topHosts": [
+      {
+        "hostId": 39110511,
+        "hostName": "Mike",
+        "count": 30
+      },
+      {
+        "hostId": 364305280,
+        "hostName": "Arnold",
+        "count": 23
+      },
+      {
+        "hostId": 203731852,
+        "hostName": "Aimee",
+        "count": 21
+      },
+      {
+        "hostId": 14574533,
+        "hostName": "Hotel Not Hotel",
+        "count": 15
+      },
+      {
+        "hostId": 237150404,
+        "hostName": "Luke",
+        "count": 13
+      },
+      {
+        "hostId": 241644101,
+        "hostName": "Wittenberg",
+        "count": 13
+      },
+      {
+        "hostId": 198405490,
+        "hostName": "Suzanne",
+        "count": 12
+      },
+      {
+        "hostId": 677835907,
+        "hostName": "Folkert",
+        "count": 12
+      },
+      {
+        "hostId": 375961673,
+        "hostName": "Cityden",
+        "count": 11
+      },
+      {
+        "hostId": 408898089,
+        "hostName": "Richard Alexander Nicolaas",
+        "count": 11
+      }
+    ],
+    "priceHistogram": [
+      {
+        "x0": 0,
+        "x1": 41.25,
+        "count": 2
+      },
+      {
+        "x0": 41.25,
+        "x1": 82.5,
+        "count": 184
+      },
+      {
+        "x0": 82.5,
+        "x1": 123.75,
+        "count": 506
+      },
+      {
+        "x0": 123.75,
+        "x1": 165,
+        "count": 866
+      },
+      {
+        "x0": 165,
+        "x1": 206.25,
+        "count": 1047
+      },
+      {
+        "x0": 206.25,
+        "x1": 247.5,
+        "count": 801
+      },
+      {
+        "x0": 247.5,
+        "x1": 288.75,
+        "count": 706
+      },
+      {
+        "x0": 288.75,
+        "x1": 330,
+        "count": 482
+      },
+      {
+        "x0": 330,
+        "x1": 371.25,
+        "count": 342
+      },
+      {
+        "x0": 371.25,
+        "x1": 412.5,
+        "count": 262
+      },
+      {
+        "x0": 412.5,
+        "x1": 453.75,
+        "count": 159
+      },
+      {
+        "x0": 453.75,
+        "x1": 495,
+        "count": 97
+      },
+      {
+        "x0": 495,
+        "x1": 536.25,
+        "count": 99
+      },
+      {
+        "x0": 536.25,
+        "x1": 577.5,
+        "count": 53
+      },
+      {
+        "x0": 577.5,
+        "x1": 618.75,
+        "count": 51
+      },
+      {
+        "x0": 618.75,
+        "x1": 660,
+        "count": 46
+      },
+      {
+        "x0": 660,
+        "x1": 701.25,
+        "count": 24
+      },
+      {
+        "x0": 701.25,
+        "x1": 742.5,
+        "count": 14
+      },
+      {
+        "x0": 742.5,
+        "x1": 783.75,
+        "count": 15
+      },
+      {
+        "x0": 783.75,
+        "x1": 825,
+        "count": 18
+      },
+      {
+        "x0": 825,
+        "x1": 866.25,
+        "count": 11
+      },
+      {
+        "x0": 866.25,
+        "x1": 907.5,
+        "count": 11
+      },
+      {
+        "x0": 907.5,
+        "x1": 948.75,
+        "count": 10
+      },
+      {
+        "x0": 948.75,
+        "x1": 990,
+        "count": 68
+      }
+    ]
+  },
+  "neighbourhoods": [
+    {
+      "id": "bijlmer-centrum",
+      "name": "Bijlmer-Centrum",
+      "listingCount": 35,
+      "medianPrice": 134,
+      "meetsFloor": true
+    },
+    {
+      "id": "bijlmer-oost",
+      "name": "Bijlmer-Oost",
+      "listingCount": 22,
+      "medianPrice": 127.5,
+      "meetsFloor": true
+    },
+    {
+      "id": "bos-en-lommer",
+      "name": "Bos en Lommer",
+      "listingCount": 261,
+      "medianPrice": 184,
+      "meetsFloor": true
+    },
+    {
+      "id": "buitenveldert-zuidas",
+      "name": "Buitenveldert - Zuidas",
+      "listingCount": 82,
+      "medianPrice": 182.5,
+      "meetsFloor": true
+    },
+    {
+      "id": "centrum-oost",
+      "name": "Centrum-Oost",
+      "listingCount": 580,
+      "medianPrice": 240,
+      "meetsFloor": true
+    },
+    {
+      "id": "centrum-west",
+      "name": "Centrum-West",
+      "listingCount": 770,
+      "medianPrice": 245.5,
+      "meetsFloor": true
+    },
+    {
+      "id": "de-aker-nieuw-sloten",
+      "name": "De Aker - Nieuw Sloten",
+      "listingCount": 42,
+      "medianPrice": 151.5,
+      "meetsFloor": true
+    },
+    {
+      "id": "de-baarsjes-oud-west",
+      "name": "De Baarsjes - Oud-West",
+      "listingCount": 992,
+      "medianPrice": 240,
+      "meetsFloor": true
+    },
+    {
+      "id": "de-pijp-rivierenbuurt",
+      "name": "De Pijp - Rivierenbuurt",
+      "listingCount": 649,
+      "medianPrice": 250,
+      "meetsFloor": true
+    },
+    {
+      "id": "gaasperdam-driemond",
+      "name": "Gaasperdam - Driemond",
+      "listingCount": 30,
+      "medianPrice": 130.5,
+      "meetsFloor": true
+    },
+    {
+      "id": "geuzenveld-slotermeer",
+      "name": "Geuzenveld - Slotermeer",
+      "listingCount": 91,
+      "medianPrice": 182,
+      "meetsFloor": true
+    },
+    {
+      "id": "ijburg-zeeburgereiland",
+      "name": "IJburg - Zeeburgereiland",
+      "listingCount": 107,
+      "medianPrice": 198,
+      "meetsFloor": true
+    },
+    {
+      "id": "noord-oost",
+      "name": "Noord-Oost",
+      "listingCount": 127,
+      "medianPrice": 169,
+      "meetsFloor": true
+    },
+    {
+      "id": "noord-west",
+      "name": "Noord-West",
+      "listingCount": 175,
+      "medianPrice": 180,
+      "meetsFloor": true
+    },
+    {
+      "id": "oostelijk-havengebied-indische-buurt",
+      "name": "Oostelijk Havengebied - Indische Buurt",
+      "listingCount": 231,
+      "medianPrice": 195,
+      "meetsFloor": true
+    },
+    {
+      "id": "osdorp",
+      "name": "Osdorp",
+      "listingCount": 37,
+      "medianPrice": 153,
+      "meetsFloor": true
+    },
+    {
+      "id": "oud-noord",
+      "name": "Oud-Noord",
+      "listingCount": 252,
+      "medianPrice": 196.5,
+      "meetsFloor": true
+    },
+    {
+      "id": "oud-oost",
+      "name": "Oud-Oost",
+      "listingCount": 326,
+      "medianPrice": 222,
+      "meetsFloor": true
+    },
+    {
+      "id": "slotervaart",
+      "name": "Slotervaart",
+      "listingCount": 100,
+      "medianPrice": 185.5,
+      "meetsFloor": true
+    },
+    {
+      "id": "watergraafsmeer",
+      "name": "Watergraafsmeer",
+      "listingCount": 138,
+      "medianPrice": 213.5,
+      "meetsFloor": true
+    },
+    {
+      "id": "westerpark",
+      "name": "Westerpark",
+      "listingCount": 392,
+      "medianPrice": 214.5,
+      "meetsFloor": true
+    },
+    {
+      "id": "zuid",
+      "name": "Zuid",
+      "listingCount": 435,
+      "medianPrice": 238,
+      "meetsFloor": true
+    }
+  ],
+  "neighbourhoodAggregates": {
+    "bijlmer-oost": {
+      "listingCount": 22,
+      "medianPrice": 127.5,
+      "multiListingHostShare": 0.18181818181818182,
+      "avgReviewsPerMonth": 1.4380000000000002,
+      "meetsFloor": true,
+      "roomTypeMix": {
+        "Entire home/apt": 17,
+        "Private room": 5,
+        "Shared room": 0,
+        "Hotel room": 0
+      },
+      "topHosts": [
+        {
+          "hostId": 64761891,
+          "hostName": "Lisa",
+          "count": 2
+        },
+        {
+          "hostId": 533813955,
+          "hostName": "Valentijn",
+          "count": 2
+        },
+        {
+          "hostId": 2580855,
+          "hostName": "Martine",
+          "count": 1
+        },
+        {
+          "hostId": 1271678,
+          "hostName": "Andrea",
+          "count": 1
+        },
+        {
+          "hostId": 20149410,
+          "hostName": "Vincenzo",
+          "count": 1
+        },
+        {
+          "hostId": 12981929,
+          "hostName": "Hanne",
+          "count": 1
+        },
+        {
+          "hostId": 87948506,
+          "hostName": "Dinah",
+          "count": 1
+        },
+        {
+          "hostId": 60332116,
+          "hostName": "Gabriel",
+          "count": 1
+        },
+        {
+          "hostId": 230651111,
+          "hostName": "Petra",
+          "count": 1
+        },
+        {
+          "hostId": 107795292,
+          "hostName": "Mekky",
+          "count": 1
+        }
+      ],
+      "priceHistogram": [
+        {
+          "x0": 0,
+          "x1": 41.25,
+          "count": 0
+        },
+        {
+          "x0": 41.25,
+          "x1": 82.5,
+          "count": 5
+        },
+        {
+          "x0": 82.5,
+          "x1": 123.75,
+          "count": 5
+        },
+        {
+          "x0": 123.75,
+          "x1": 165,
+          "count": 4
+        },
+        {
+          "x0": 165,
+          "x1": 206.25,
+          "count": 3
+        },
+        {
+          "x0": 206.25,
+          "x1": 247.5,
+          "count": 0
+        },
+        {
+          "x0": 247.5,
+          "x1": 288.75,
+          "count": 2
+        },
+        {
+          "x0": 288.75,
+          "x1": 330,
+          "count": 3
+        },
+        {
+          "x0": 330,
+          "x1": 371.25,
+          "count": 0
+        },
+        {
+          "x0": 371.25,
+          "x1": 412.5,
+          "count": 0
+        },
+        {
+          "x0": 412.5,
+          "x1": 453.75,
+          "count": 0
+        },
+        {
+          "x0": 453.75,
+          "x1": 495,
+          "count": 0
+        },
+        {
+          "x0": 495,
+          "x1": 536.25,
+          "count": 0
+        },
+        {
+          "x0": 536.25,
+          "x1": 577.5,
+          "count": 0
+        },
+        {
+          "x0": 577.5,
+          "x1": 618.75,
+          "count": 0
+        },
+        {
+          "x0": 618.75,
+          "x1": 660,
+          "count": 0
+        },
+        {
+          "x0": 660,
+          "x1": 701.25,
+          "count": 0
+        },
+        {
+          "x0": 701.25,
+          "x1": 742.5,
+          "count": 0
+        },
+        {
+          "x0": 742.5,
+          "x1": 783.75,
+          "count": 0
+        },
+        {
+          "x0": 783.75,
+          "x1": 825,
+          "count": 0
+        },
+        {
+          "x0": 825,
+          "x1": 866.25,
+          "count": 0
+        },
+        {
+          "x0": 866.25,
+          "x1": 907.5,
+          "count": 0
+        },
+        {
+          "x0": 907.5,
+          "x1": 948.75,
+          "count": 0
+        },
+        {
+          "x0": 948.75,
+          "x1": 990,
+          "count": 0
+        }
+      ]
+    },
+    "oud-noord": {
+      "listingCount": 252,
+      "medianPrice": 196.5,
+      "multiListingHostShare": 0.25396825396825395,
+      "avgReviewsPerMonth": 1.5547555555555568,
+      "meetsFloor": true,
+      "roomTypeMix": {
+        "Entire home/apt": 193,
+        "Private room": 55,
+        "Shared room": 2,
+        "Hotel room": 2
+      },
+      "topHosts": [
+        {
+          "hostId": 243878598,
+          "hostName": "Bunk",
+          "count": 8
+        },
+        {
+          "hostId": 451194922,
+          "hostName": "Elias",
+          "count": 5
+        },
+        {
+          "hostId": 502914333,
+          "hostName": "Akhmad",
+          "count": 4
+        },
+        {
+          "hostId": 517668573,
+          "hostName": "Minna",
+          "count": 4
+        },
+        {
+          "hostId": 39110511,
+          "hostName": "Mike",
+          "count": 4
+        },
+        {
+          "hostId": 228217790,
+          "hostName": "Stephan",
+          "count": 4
+        },
+        {
+          "hostId": 150677340,
+          "hostName": "Faralda Crane Hotel",
+          "count": 3
+        },
+        {
+          "hostId": 203731852,
+          "hostName": "Aimee",
+          "count": 3
+        },
+        {
+          "hostId": 314064340,
+          "hostName": "Mike",
+          "count": 3
+        },
+        {
+          "hostId": 561156498,
+          "hostName": "Elias",
+          "count": 3
+        }
+      ],
+      "priceHistogram": [
+        {
+          "x0": 0,
+          "x1": 41.25,
+          "count": 0
+        },
+        {
+          "x0": 41.25,
+          "x1": 82.5,
+          "count": 3
+        },
+        {
+          "x0": 82.5,
+          "x1": 123.75,
+          "count": 30
+        },
+        {
+          "x0": 123.75,
+          "x1": 165,
+          "count": 59
+        },
+        {
+          "x0": 165,
+          "x1": 206.25,
+          "count": 41
+        },
+        {
+          "x0": 206.25,
+          "x1": 247.5,
+          "count": 38
+        },
+        {
+          "x0": 247.5,
+          "x1": 288.75,
+          "count": 29
+        },
+        {
+          "x0": 288.75,
+          "x1": 330,
+          "count": 14
+        },
+        {
+          "x0": 330,
+          "x1": 371.25,
+          "count": 7
+        },
+        {
+          "x0": 371.25,
+          "x1": 412.5,
+          "count": 8
+        },
+        {
+          "x0": 412.5,
+          "x1": 453.75,
+          "count": 2
+        },
+        {
+          "x0": 453.75,
+          "x1": 495,
+          "count": 2
+        },
+        {
+          "x0": 495,
+          "x1": 536.25,
+          "count": 2
+        },
+        {
+          "x0": 536.25,
+          "x1": 577.5,
+          "count": 3
+        },
+        {
+          "x0": 577.5,
+          "x1": 618.75,
+          "count": 1
+        },
+        {
+          "x0": 618.75,
+          "x1": 660,
+          "count": 2
+        },
+        {
+          "x0": 660,
+          "x1": 701.25,
+          "count": 1
+        },
+        {
+          "x0": 701.25,
+          "x1": 742.5,
+          "count": 0
+        },
+        {
+          "x0": 742.5,
+          "x1": 783.75,
+          "count": 1
+        },
+        {
+          "x0": 783.75,
+          "x1": 825,
+          "count": 2
+        },
+        {
+          "x0": 825,
+          "x1": 866.25,
+          "count": 1
+        },
+        {
+          "x0": 866.25,
+          "x1": 907.5,
+          "count": 1
+        },
+        {
+          "x0": 907.5,
+          "x1": 948.75,
+          "count": 0
+        },
+        {
+          "x0": 948.75,
+          "x1": 990,
+          "count": 5
+        }
+      ]
+    },
+    "noord-oost": {
+      "listingCount": 127,
+      "medianPrice": 169,
+      "multiListingHostShare": 0.3228346456692913,
+      "avgReviewsPerMonth": 1.187685185185185,
+      "meetsFloor": true,
+      "roomTypeMix": {
+        "Entire home/apt": 91,
+        "Private room": 36,
+        "Shared room": 0,
+        "Hotel room": 0
+      },
+      "topHosts": [
+        {
+          "hostId": 3040748,
+          "hostName": "Henk",
+          "count": 8
+        },
+        {
+          "hostId": 140775798,
+          "hostName": "Wilco And Karen",
+          "count": 6
+        },
+        {
+          "hostId": 75415761,
+          "hostName": "Iris",
+          "count": 3
+        },
+        {
+          "hostId": 697642796,
+          "hostName": "Indra",
+          "count": 3
+        },
+        {
+          "hostId": 704743948,
+          "hostName": "Bifu",
+          "count": 3
+        },
+        {
+          "hostId": 29591818,
+          "hostName": "Frans",
+          "count": 2
+        },
+        {
+          "hostId": 404302528,
+          "hostName": "Karel",
+          "count": 2
+        },
+        {
+          "hostId": 423135929,
+          "hostName": "Angela",
+          "count": 2
+        },
+        {
+          "hostId": 515140022,
+          "hostName": "Jiliane",
+          "count": 2
+        },
+        {
+          "hostId": 31586636,
+          "hostName": "Daily",
+          "count": 2
+        }
+      ],
+      "priceHistogram": [
+        {
+          "x0": 0,
+          "x1": 41.25,
+          "count": 0
+        },
+        {
+          "x0": 41.25,
+          "x1": 82.5,
+          "count": 14
+        },
+        {
+          "x0": 82.5,
+          "x1": 123.75,
+          "count": 27
+        },
+        {
+          "x0": 123.75,
+          "x1": 165,
+          "count": 20
+        },
+        {
+          "x0": 165,
+          "x1": 206.25,
+          "count": 24
+        },
+        {
+          "x0": 206.25,
+          "x1": 247.5,
+          "count": 11
+        },
+        {
+          "x0": 247.5,
+          "x1": 288.75,
+          "count": 17
+        },
+        {
+          "x0": 288.75,
+          "x1": 330,
+          "count": 4
+        },
+        {
+          "x0": 330,
+          "x1": 371.25,
+          "count": 4
+        },
+        {
+          "x0": 371.25,
+          "x1": 412.5,
+          "count": 3
+        },
+        {
+          "x0": 412.5,
+          "x1": 453.75,
+          "count": 0
+        },
+        {
+          "x0": 453.75,
+          "x1": 495,
+          "count": 1
+        },
+        {
+          "x0": 495,
+          "x1": 536.25,
+          "count": 0
+        },
+        {
+          "x0": 536.25,
+          "x1": 577.5,
+          "count": 0
+        },
+        {
+          "x0": 577.5,
+          "x1": 618.75,
+          "count": 0
+        },
+        {
+          "x0": 618.75,
+          "x1": 660,
+          "count": 0
+        },
+        {
+          "x0": 660,
+          "x1": 701.25,
+          "count": 0
+        },
+        {
+          "x0": 701.25,
+          "x1": 742.5,
+          "count": 0
+        },
+        {
+          "x0": 742.5,
+          "x1": 783.75,
+          "count": 1
+        },
+        {
+          "x0": 783.75,
+          "x1": 825,
+          "count": 0
+        },
+        {
+          "x0": 825,
+          "x1": 866.25,
+          "count": 0
+        },
+        {
+          "x0": 866.25,
+          "x1": 907.5,
+          "count": 0
+        },
+        {
+          "x0": 907.5,
+          "x1": 948.75,
+          "count": 0
+        },
+        {
+          "x0": 948.75,
+          "x1": 990,
+          "count": 1
+        }
+      ]
+    },
+    "noord-west": {
+      "listingCount": 175,
+      "medianPrice": 180,
+      "multiListingHostShare": 0.17714285714285713,
+      "avgReviewsPerMonth": 1.0124025974025976,
+      "meetsFloor": true,
+      "roomTypeMix": {
+        "Entire home/apt": 141,
+        "Private room": 34,
+        "Shared room": 0,
+        "Hotel room": 0
+      },
+      "topHosts": [
+        {
+          "hostId": 135487531,
+          "hostName": "Rogier & Nicole",
+          "count": 7
+        },
+        {
+          "hostId": 15712909,
+          "hostName": "Nima",
+          "count": 3
+        },
+        {
+          "hostId": 4781137,
+          "hostName": "Joke & Gerard",
+          "count": 3
+        },
+        {
+          "hostId": 39110511,
+          "hostName": "Mike",
+          "count": 3
+        },
+        {
+          "hostId": 4574185,
+          "hostName": "Scott",
+          "count": 2
+        },
+        {
+          "hostId": 3335546,
+          "hostName": "Sonia",
+          "count": 2
+        },
+        {
+          "hostId": 163592969,
+          "hostName": "Arley",
+          "count": 2
+        },
+        {
+          "hostId": 214313367,
+          "hostName": "Rosalie",
+          "count": 2
+        },
+        {
+          "hostId": 159108573,
+          "hostName": "Gert",
+          "count": 2
+        },
+        {
+          "hostId": 120131128,
+          "hostName": "Peng",
+          "count": 2
+        }
+      ],
+      "priceHistogram": [
+        {
+          "x0": 0,
+          "x1": 41.25,
+          "count": 0
+        },
+        {
+          "x0": 41.25,
+          "x1": 82.5,
+          "count": 13
+        },
+        {
+          "x0": 82.5,
+          "x1": 123.75,
+          "count": 20
+        },
+        {
+          "x0": 123.75,
+          "x1": 165,
+          "count": 36
+        },
+        {
+          "x0": 165,
+          "x1": 206.25,
+          "count": 36
+        },
+        {
+          "x0": 206.25,
+          "x1": 247.5,
+          "count": 19
+        },
+        {
+          "x0": 247.5,
+          "x1": 288.75,
+          "count": 30
+        },
+        {
+          "x0": 288.75,
+          "x1": 330,
+          "count": 8
+        },
+        {
+          "x0": 330,
+          "x1": 371.25,
+          "count": 8
+        },
+        {
+          "x0": 371.25,
+          "x1": 412.5,
+          "count": 2
+        },
+        {
+          "x0": 412.5,
+          "x1": 453.75,
+          "count": 3
+        },
+        {
+          "x0": 453.75,
+          "x1": 495,
+          "count": 0
+        },
+        {
+          "x0": 495,
+          "x1": 536.25,
+          "count": 0
+        },
+        {
+          "x0": 536.25,
+          "x1": 577.5,
+          "count": 0
+        },
+        {
+          "x0": 577.5,
+          "x1": 618.75,
+          "count": 0
+        },
+        {
+          "x0": 618.75,
+          "x1": 660,
+          "count": 0
+        },
+        {
+          "x0": 660,
+          "x1": 701.25,
+          "count": 0
+        },
+        {
+          "x0": 701.25,
+          "x1": 742.5,
+          "count": 0
+        },
+        {
+          "x0": 742.5,
+          "x1": 783.75,
+          "count": 0
+        },
+        {
+          "x0": 783.75,
+          "x1": 825,
+          "count": 0
+        },
+        {
+          "x0": 825,
+          "x1": 866.25,
+          "count": 0
+        },
+        {
+          "x0": 866.25,
+          "x1": 907.5,
+          "count": 0
+        },
+        {
+          "x0": 907.5,
+          "x1": 948.75,
+          "count": 0
+        },
+        {
+          "x0": 948.75,
+          "x1": 990,
+          "count": 0
+        }
+      ]
+    },
+    "ijburg-zeeburgereiland": {
+      "listingCount": 107,
+      "medianPrice": 198,
+      "multiListingHostShare": 0.14953271028037382,
+      "avgReviewsPerMonth": 1.1088541666666665,
+      "meetsFloor": true,
+      "roomTypeMix": {
+        "Entire home/apt": 77,
+        "Private room": 30,
+        "Shared room": 0,
+        "Hotel room": 0
+      },
+      "topHosts": [
+        {
+          "hostId": 39009584,
+          "hostName": "Yara",
+          "count": 3
+        },
+        {
+          "hostId": 44051824,
+          "hostName": "Brigitte",
+          "count": 2
+        },
+        {
+          "hostId": 33381838,
+          "hostName": "Albertine",
+          "count": 2
+        },
+        {
+          "hostId": 528387004,
+          "hostName": "Robin",
+          "count": 2
+        },
+        {
+          "hostId": 499977977,
+          "hostName": "Jessie",
+          "count": 2
+        },
+        {
+          "hostId": 666326299,
+          "hostName": "Yolande Christiane",
+          "count": 2
+        },
+        {
+          "hostId": 3564543,
+          "hostName": "Daniel",
+          "count": 1
+        },
+        {
+          "hostId": 5033331,
+          "hostName": "Dianne",
+          "count": 1
+        },
+        {
+          "hostId": 4794187,
+          "hostName": "Diederik",
+          "count": 1
+        },
+        {
+          "hostId": 5878526,
+          "hostName": "Petra",
+          "count": 1
+        }
+      ],
+      "priceHistogram": [
+        {
+          "x0": 0,
+          "x1": 41.25,
+          "count": 0
+        },
+        {
+          "x0": 41.25,
+          "x1": 82.5,
+          "count": 4
+        },
+        {
+          "x0": 82.5,
+          "x1": 123.75,
+          "count": 18
+        },
+        {
+          "x0": 123.75,
+          "x1": 165,
+          "count": 18
+        },
+        {
+          "x0": 165,
+          "x1": 206.25,
+          "count": 17
+        },
+        {
+          "x0": 206.25,
+          "x1": 247.5,
+          "count": 16
+        },
+        {
+          "x0": 247.5,
+          "x1": 288.75,
+          "count": 8
+        },
+        {
+          "x0": 288.75,
+          "x1": 330,
+          "count": 6
+        },
+        {
+          "x0": 330,
+          "x1": 371.25,
+          "count": 3
+        },
+        {
+          "x0": 371.25,
+          "x1": 412.5,
+          "count": 2
+        },
+        {
+          "x0": 412.5,
+          "x1": 453.75,
+          "count": 4
+        },
+        {
+          "x0": 453.75,
+          "x1": 495,
+          "count": 0
+        },
+        {
+          "x0": 495,
+          "x1": 536.25,
+          "count": 2
+        },
+        {
+          "x0": 536.25,
+          "x1": 577.5,
+          "count": 2
+        },
+        {
+          "x0": 577.5,
+          "x1": 618.75,
+          "count": 1
+        },
+        {
+          "x0": 618.75,
+          "x1": 660,
+          "count": 1
+        },
+        {
+          "x0": 660,
+          "x1": 701.25,
+          "count": 0
+        },
+        {
+          "x0": 701.25,
+          "x1": 742.5,
+          "count": 0
+        },
+        {
+          "x0": 742.5,
+          "x1": 783.75,
+          "count": 0
+        },
+        {
+          "x0": 783.75,
+          "x1": 825,
+          "count": 1
+        },
+        {
+          "x0": 825,
+          "x1": 866.25,
+          "count": 1
+        },
+        {
+          "x0": 866.25,
+          "x1": 907.5,
+          "count": 0
+        },
+        {
+          "x0": 907.5,
+          "x1": 948.75,
+          "count": 0
+        },
+        {
+          "x0": 948.75,
+          "x1": 990,
+          "count": 3
+        }
+      ]
+    },
+    "centrum-west": {
+      "listingCount": 770,
+      "medianPrice": 245.5,
+      "multiListingHostShare": 0.3935064935064935,
+      "avgReviewsPerMonth": 2.0506798866855527,
+      "meetsFloor": true,
+      "roomTypeMix": {
+        "Entire home/apt": 465,
+        "Private room": 283,
+        "Shared room": 14,
+        "Hotel room": 8
+      },
+      "topHosts": [
+        {
+          "hostId": 237150404,
+          "hostName": "Luke",
+          "count": 13
+        },
+        {
+          "hostId": 677835907,
+          "hostName": "Folkert",
+          "count": 12
+        },
+        {
+          "hostId": 488984558,
+          "hostName": "Abdullah",
+          "count": 11
+        },
+        {
+          "hostId": 39110511,
+          "hostName": "Mike",
+          "count": 7
+        },
+        {
+          "hostId": 198405490,
+          "hostName": "Suzanne",
+          "count": 6
+        },
+        {
+          "hostId": 398261845,
+          "hostName": "Chen Yen",
+          "count": 6
+        },
+        {
+          "hostId": 68338234,
+          "hostName": "Dries",
+          "count": 5
+        },
+        {
+          "hostId": 221337240,
+          "hostName": "Stephan",
+          "count": 5
+        },
+        {
+          "hostId": 237150996,
+          "hostName": "St Christophers At The Winston",
+          "count": 4
+        },
+        {
+          "hostId": 312020333,
+          "hostName": "Dan",
+          "count": 4
+        }
+      ],
+      "priceHistogram": [
+        {
+          "x0": 0,
+          "x1": 41.25,
+          "count": 0
+        },
+        {
+          "x0": 41.25,
+          "x1": 82.5,
+          "count": 14
+        },
+        {
+          "x0": 82.5,
+          "x1": 123.75,
+          "count": 53
+        },
+        {
+          "x0": 123.75,
+          "x1": 165,
+          "count": 109
+        },
+        {
+          "x0": 165,
+          "x1": 206.25,
+          "count": 116
+        },
+        {
+          "x0": 206.25,
+          "x1": 247.5,
+          "count": 96
+        },
+        {
+          "x0": 247.5,
+          "x1": 288.75,
+          "count": 91
+        },
+        {
+          "x0": 288.75,
+          "x1": 330,
+          "count": 75
+        },
+        {
+          "x0": 330,
+          "x1": 371.25,
+          "count": 43
+        },
+        {
+          "x0": 371.25,
+          "x1": 412.5,
+          "count": 39
+        },
+        {
+          "x0": 412.5,
+          "x1": 453.75,
+          "count": 24
+        },
+        {
+          "x0": 453.75,
+          "x1": 495,
+          "count": 21
+        },
+        {
+          "x0": 495,
+          "x1": 536.25,
+          "count": 19
+        },
+        {
+          "x0": 536.25,
+          "x1": 577.5,
+          "count": 10
+        },
+        {
+          "x0": 577.5,
+          "x1": 618.75,
+          "count": 9
+        },
+        {
+          "x0": 618.75,
+          "x1": 660,
+          "count": 9
+        },
+        {
+          "x0": 660,
+          "x1": 701.25,
+          "count": 6
+        },
+        {
+          "x0": 701.25,
+          "x1": 742.5,
+          "count": 2
+        },
+        {
+          "x0": 742.5,
+          "x1": 783.75,
+          "count": 5
+        },
+        {
+          "x0": 783.75,
+          "x1": 825,
+          "count": 2
+        },
+        {
+          "x0": 825,
+          "x1": 866.25,
+          "count": 1
+        },
+        {
+          "x0": 866.25,
+          "x1": 907.5,
+          "count": 2
+        },
+        {
+          "x0": 907.5,
+          "x1": 948.75,
+          "count": 3
+        },
+        {
+          "x0": 948.75,
+          "x1": 990,
+          "count": 21
+        }
+      ]
+    },
+    "oostelijk-havengebied-indische-buurt": {
+      "listingCount": 231,
+      "medianPrice": 195,
+      "multiListingHostShare": 0.09523809523809523,
+      "avgReviewsPerMonth": 1.198039215686274,
+      "meetsFloor": true,
+      "roomTypeMix": {
+        "Entire home/apt": 190,
+        "Private room": 41,
+        "Shared room": 0,
+        "Hotel room": 0
+      },
+      "topHosts": [
+        {
+          "hostId": 289104253,
+          "hostName": "Stephan",
+          "count": 9
+        },
+        {
+          "hostId": 560847464,
+          "hostName": "Branislav",
+          "count": 5
+        },
+        {
+          "hostId": 220711664,
+          "hostName": "Stephan",
+          "count": 4
+        },
+        {
+          "hostId": 1336633,
+          "hostName": "Stephan",
+          "count": 1
+        },
+        {
+          "hostId": 2193861,
+          "hostName": "Marco",
+          "count": 1
+        },
+        {
+          "hostId": 7621004,
+          "hostName": "Wouter",
+          "count": 1
+        },
+        {
+          "hostId": 7794998,
+          "hostName": "Chee Yee",
+          "count": 1
+        },
+        {
+          "hostId": 7679262,
+          "hostName": "Marijke",
+          "count": 1
+        },
+        {
+          "hostId": 9314105,
+          "hostName": "Bauke",
+          "count": 1
+        },
+        {
+          "hostId": 3576012,
+          "hostName": "Sheryl",
+          "count": 1
+        }
+      ],
+      "priceHistogram": [
+        {
+          "x0": 0,
+          "x1": 41.25,
+          "count": 0
+        },
+        {
+          "x0": 41.25,
+          "x1": 82.5,
+          "count": 8
+        },
+        {
+          "x0": 82.5,
+          "x1": 123.75,
+          "count": 19
+        },
+        {
+          "x0": 123.75,
+          "x1": 165,
+          "count": 49
+        },
+        {
+          "x0": 165,
+          "x1": 206.25,
+          "count": 50
+        },
+        {
+          "x0": 206.25,
+          "x1": 247.5,
+          "count": 34
+        },
+        {
+          "x0": 247.5,
+          "x1": 288.75,
+          "count": 29
+        },
+        {
+          "x0": 288.75,
+          "x1": 330,
+          "count": 15
+        },
+        {
+          "x0": 330,
+          "x1": 371.25,
+          "count": 11
+        },
+        {
+          "x0": 371.25,
+          "x1": 412.5,
+          "count": 7
+        },
+        {
+          "x0": 412.5,
+          "x1": 453.75,
+          "count": 2
+        },
+        {
+          "x0": 453.75,
+          "x1": 495,
+          "count": 2
+        },
+        {
+          "x0": 495,
+          "x1": 536.25,
+          "count": 2
+        },
+        {
+          "x0": 536.25,
+          "x1": 577.5,
+          "count": 0
+        },
+        {
+          "x0": 577.5,
+          "x1": 618.75,
+          "count": 2
+        },
+        {
+          "x0": 618.75,
+          "x1": 660,
+          "count": 0
+        },
+        {
+          "x0": 660,
+          "x1": 701.25,
+          "count": 1
+        },
+        {
+          "x0": 701.25,
+          "x1": 742.5,
+          "count": 0
+        },
+        {
+          "x0": 742.5,
+          "x1": 783.75,
+          "count": 0
+        },
+        {
+          "x0": 783.75,
+          "x1": 825,
+          "count": 0
+        },
+        {
+          "x0": 825,
+          "x1": 866.25,
+          "count": 0
+        },
+        {
+          "x0": 866.25,
+          "x1": 907.5,
+          "count": 0
+        },
+        {
+          "x0": 907.5,
+          "x1": 948.75,
+          "count": 0
+        },
+        {
+          "x0": 948.75,
+          "x1": 990,
+          "count": 0
+        }
+      ]
+    },
+    "centrum-oost": {
+      "listingCount": 580,
+      "medianPrice": 240,
+      "multiListingHostShare": 0.35517241379310344,
+      "avgReviewsPerMonth": 1.9429323308270674,
+      "meetsFloor": true,
+      "roomTypeMix": {
+        "Entire home/apt": 402,
+        "Private room": 164,
+        "Shared room": 12,
+        "Hotel room": 2
+      },
+      "topHosts": [
+        {
+          "hostId": 241644101,
+          "hostName": "Wittenberg",
+          "count": 13
+        },
+        {
+          "hostId": 9282300,
+          "hostName": "Dutch Masters",
+          "count": 9
+        },
+        {
+          "hostId": 700643286,
+          "hostName": "Gabriela",
+          "count": 9
+        },
+        {
+          "hostId": 176320082,
+          "hostName": "Lucio",
+          "count": 6
+        },
+        {
+          "hostId": 228208519,
+          "hostName": "Eric",
+          "count": 6
+        },
+        {
+          "hostId": 218582446,
+          "hostName": "Stephan",
+          "count": 6
+        },
+        {
+          "hostId": 30890942,
+          "hostName": "Zoku Amsterdam",
+          "count": 5
+        },
+        {
+          "hostId": 13764503,
+          "hostName": "Nina&Predrag",
+          "count": 5
+        },
+        {
+          "hostId": 24002310,
+          "hostName": "Thomas",
+          "count": 4
+        },
+        {
+          "hostId": 203731852,
+          "hostName": "Aimee",
+          "count": 4
+        }
+      ],
+      "priceHistogram": [
+        {
+          "x0": 0,
+          "x1": 41.25,
+          "count": 0
+        },
+        {
+          "x0": 41.25,
+          "x1": 82.5,
+          "count": 17
+        },
+        {
+          "x0": 82.5,
+          "x1": 123.75,
+          "count": 38
+        },
+        {
+          "x0": 123.75,
+          "x1": 165,
+          "count": 71
+        },
+        {
+          "x0": 165,
+          "x1": 206.25,
+          "count": 99
+        },
+        {
+          "x0": 206.25,
+          "x1": 247.5,
+          "count": 75
+        },
+        {
+          "x0": 247.5,
+          "x1": 288.75,
+          "count": 49
+        },
+        {
+          "x0": 288.75,
+          "x1": 330,
+          "count": 47
+        },
+        {
+          "x0": 330,
+          "x1": 371.25,
+          "count": 45
+        },
+        {
+          "x0": 371.25,
+          "x1": 412.5,
+          "count": 34
+        },
+        {
+          "x0": 412.5,
+          "x1": 453.75,
+          "count": 26
+        },
+        {
+          "x0": 453.75,
+          "x1": 495,
+          "count": 10
+        },
+        {
+          "x0": 495,
+          "x1": 536.25,
+          "count": 20
+        },
+        {
+          "x0": 536.25,
+          "x1": 577.5,
+          "count": 5
+        },
+        {
+          "x0": 577.5,
+          "x1": 618.75,
+          "count": 8
+        },
+        {
+          "x0": 618.75,
+          "x1": 660,
+          "count": 9
+        },
+        {
+          "x0": 660,
+          "x1": 701.25,
+          "count": 4
+        },
+        {
+          "x0": 701.25,
+          "x1": 742.5,
+          "count": 3
+        },
+        {
+          "x0": 742.5,
+          "x1": 783.75,
+          "count": 2
+        },
+        {
+          "x0": 783.75,
+          "x1": 825,
+          "count": 1
+        },
+        {
+          "x0": 825,
+          "x1": 866.25,
+          "count": 2
+        },
+        {
+          "x0": 866.25,
+          "x1": 907.5,
+          "count": 2
+        },
+        {
+          "x0": 907.5,
+          "x1": 948.75,
+          "count": 3
+        },
+        {
+          "x0": 948.75,
+          "x1": 990,
+          "count": 10
+        }
+      ]
+    },
+    "oud-oost": {
+      "listingCount": 326,
+      "medianPrice": 222,
+      "multiListingHostShare": 0.13190184049079753,
+      "avgReviewsPerMonth": 1.111554770318021,
+      "meetsFloor": true,
+      "roomTypeMix": {
+        "Entire home/apt": 272,
+        "Private room": 50,
+        "Shared room": 0,
+        "Hotel room": 4
+      },
+      "topHosts": [
+        {
+          "hostId": 401163260,
+          "hostName": "Q-Factory",
+          "count": 6
+        },
+        {
+          "hostId": 503491020,
+          "hostName": "The Social Hub",
+          "count": 5
+        },
+        {
+          "hostId": 229196646,
+          "hostName": "Stephan",
+          "count": 5
+        },
+        {
+          "hostId": 24325696,
+          "hostName": "Arild",
+          "count": 5
+        },
+        {
+          "hostId": 4905127,
+          "hostName": "Toetsie",
+          "count": 4
+        },
+        {
+          "hostId": 16274382,
+          "hostName": "Gina",
+          "count": 2
+        },
+        {
+          "hostId": 62643050,
+          "hostName": "Daniel",
+          "count": 2
+        },
+        {
+          "hostId": 421532411,
+          "hostName": "Brenda",
+          "count": 2
+        },
+        {
+          "hostId": 39110511,
+          "hostName": "Mike",
+          "count": 2
+        },
+        {
+          "hostId": 1511330,
+          "hostName": "Ton",
+          "count": 1
+        }
+      ],
+      "priceHistogram": [
+        {
+          "x0": 0,
+          "x1": 41.25,
+          "count": 0
+        },
+        {
+          "x0": 41.25,
+          "x1": 82.5,
+          "count": 6
+        },
+        {
+          "x0": 82.5,
+          "x1": 123.75,
+          "count": 21
+        },
+        {
+          "x0": 123.75,
+          "x1": 165,
+          "count": 49
+        },
+        {
+          "x0": 165,
+          "x1": 206.25,
+          "count": 65
+        },
+        {
+          "x0": 206.25,
+          "x1": 247.5,
+          "count": 54
+        },
+        {
+          "x0": 247.5,
+          "x1": 288.75,
+          "count": 39
+        },
+        {
+          "x0": 288.75,
+          "x1": 330,
+          "count": 28
+        },
+        {
+          "x0": 330,
+          "x1": 371.25,
+          "count": 24
+        },
+        {
+          "x0": 371.25,
+          "x1": 412.5,
+          "count": 17
+        },
+        {
+          "x0": 412.5,
+          "x1": 453.75,
+          "count": 6
+        },
+        {
+          "x0": 453.75,
+          "x1": 495,
+          "count": 3
+        },
+        {
+          "x0": 495,
+          "x1": 536.25,
+          "count": 2
+        },
+        {
+          "x0": 536.25,
+          "x1": 577.5,
+          "count": 1
+        },
+        {
+          "x0": 577.5,
+          "x1": 618.75,
+          "count": 0
+        },
+        {
+          "x0": 618.75,
+          "x1": 660,
+          "count": 6
+        },
+        {
+          "x0": 660,
+          "x1": 701.25,
+          "count": 0
+        },
+        {
+          "x0": 701.25,
+          "x1": 742.5,
+          "count": 0
+        },
+        {
+          "x0": 742.5,
+          "x1": 783.75,
+          "count": 2
+        },
+        {
+          "x0": 783.75,
+          "x1": 825,
+          "count": 0
+        },
+        {
+          "x0": 825,
+          "x1": 866.25,
+          "count": 0
+        },
+        {
+          "x0": 866.25,
+          "x1": 907.5,
+          "count": 1
+        },
+        {
+          "x0": 907.5,
+          "x1": 948.75,
+          "count": 0
+        },
+        {
+          "x0": 948.75,
+          "x1": 990,
+          "count": 2
+        }
+      ]
+    },
+    "westerpark": {
+      "listingCount": 392,
+      "medianPrice": 214.5,
+      "multiListingHostShare": 0.16326530612244897,
+      "avgReviewsPerMonth": 1.0782719546742214,
+      "meetsFloor": true,
+      "roomTypeMix": {
+        "Entire home/apt": 335,
+        "Private room": 55,
+        "Shared room": 0,
+        "Hotel room": 2
+      },
+      "topHosts": [
+        {
+          "hostId": 237371423,
+          "hostName": "Conscious Hotel Westerpark",
+          "count": 9
+        },
+        {
+          "hostId": 219618697,
+          "hostName": "Stephan",
+          "count": 5
+        },
+        {
+          "hostId": 3409826,
+          "hostName": "Kith & Kin",
+          "count": 4
+        },
+        {
+          "hostId": 203731852,
+          "hostName": "Aimee",
+          "count": 4
+        },
+        {
+          "hostId": 281658595,
+          "hostName": "The July",
+          "count": 4
+        },
+        {
+          "hostId": 3877342,
+          "hostName": "Nicole",
+          "count": 3
+        },
+        {
+          "hostId": 2847616,
+          "hostName": "Arie",
+          "count": 3
+        },
+        {
+          "hostId": 17458008,
+          "hostName": "Sjoerd",
+          "count": 3
+        },
+        {
+          "hostId": 56997633,
+          "hostName": "Kees Vd Vooren",
+          "count": 3
+        },
+        {
+          "hostId": 3523553,
+          "hostName": "Doet",
+          "count": 2
+        }
+      ],
+      "priceHistogram": [
+        {
+          "x0": 0,
+          "x1": 41.25,
+          "count": 0
+        },
+        {
+          "x0": 41.25,
+          "x1": 82.5,
+          "count": 7
+        },
+        {
+          "x0": 82.5,
+          "x1": 123.75,
+          "count": 22
+        },
+        {
+          "x0": 123.75,
+          "x1": 165,
+          "count": 59
+        },
+        {
+          "x0": 165,
+          "x1": 206.25,
+          "count": 87
+        },
+        {
+          "x0": 206.25,
+          "x1": 247.5,
+          "count": 65
+        },
+        {
+          "x0": 247.5,
+          "x1": 288.75,
+          "count": 50
+        },
+        {
+          "x0": 288.75,
+          "x1": 330,
+          "count": 35
+        },
+        {
+          "x0": 330,
+          "x1": 371.25,
+          "count": 22
+        },
+        {
+          "x0": 371.25,
+          "x1": 412.5,
+          "count": 13
+        },
+        {
+          "x0": 412.5,
+          "x1": 453.75,
+          "count": 8
+        },
+        {
+          "x0": 453.75,
+          "x1": 495,
+          "count": 4
+        },
+        {
+          "x0": 495,
+          "x1": 536.25,
+          "count": 7
+        },
+        {
+          "x0": 536.25,
+          "x1": 577.5,
+          "count": 3
+        },
+        {
+          "x0": 577.5,
+          "x1": 618.75,
+          "count": 3
+        },
+        {
+          "x0": 618.75,
+          "x1": 660,
+          "count": 1
+        },
+        {
+          "x0": 660,
+          "x1": 701.25,
+          "count": 1
+        },
+        {
+          "x0": 701.25,
+          "x1": 742.5,
+          "count": 0
+        },
+        {
+          "x0": 742.5,
+          "x1": 783.75,
+          "count": 0
+        },
+        {
+          "x0": 783.75,
+          "x1": 825,
+          "count": 0
+        },
+        {
+          "x0": 825,
+          "x1": 866.25,
+          "count": 1
+        },
+        {
+          "x0": 866.25,
+          "x1": 907.5,
+          "count": 0
+        },
+        {
+          "x0": 907.5,
+          "x1": 948.75,
+          "count": 1
+        },
+        {
+          "x0": 948.75,
+          "x1": 990,
+          "count": 3
+        }
+      ]
+    },
+    "watergraafsmeer": {
+      "listingCount": 138,
+      "medianPrice": 213.5,
+      "multiListingHostShare": 0.21739130434782608,
+      "avgReviewsPerMonth": 1.2236206896551722,
+      "meetsFloor": true,
+      "roomTypeMix": {
+        "Entire home/apt": 103,
+        "Private room": 35,
+        "Shared room": 0,
+        "Hotel room": 0
+      },
+      "topHosts": [
+        {
+          "hostId": 531806158,
+          "hostName": "Minna Sini Pauliina",
+          "count": 4
+        },
+        {
+          "hostId": 87974972,
+          "hostName": "Fleur",
+          "count": 3
+        },
+        {
+          "hostId": 391929878,
+          "hostName": "Deene",
+          "count": 3
+        },
+        {
+          "hostId": 121291199,
+          "hostName": "Robin",
+          "count": 3
+        },
+        {
+          "hostId": 273266448,
+          "hostName": "Vlad",
+          "count": 3
+        },
+        {
+          "hostId": 69422882,
+          "hostName": "Thomas",
+          "count": 2
+        },
+        {
+          "hostId": 62643050,
+          "hostName": "Daniel",
+          "count": 2
+        },
+        {
+          "hostId": 12782398,
+          "hostName": "Hein",
+          "count": 2
+        },
+        {
+          "hostId": 159805113,
+          "hostName": "Joris",
+          "count": 2
+        },
+        {
+          "hostId": 3336575,
+          "hostName": "Maaike",
+          "count": 1
+        }
+      ],
+      "priceHistogram": [
+        {
+          "x0": 0,
+          "x1": 41.25,
+          "count": 0
+        },
+        {
+          "x0": 41.25,
+          "x1": 82.5,
+          "count": 3
+        },
+        {
+          "x0": 82.5,
+          "x1": 123.75,
+          "count": 25
+        },
+        {
+          "x0": 123.75,
+          "x1": 165,
+          "count": 15
+        },
+        {
+          "x0": 165,
+          "x1": 206.25,
+          "count": 23
+        },
+        {
+          "x0": 206.25,
+          "x1": 247.5,
+          "count": 19
+        },
+        {
+          "x0": 247.5,
+          "x1": 288.75,
+          "count": 8
+        },
+        {
+          "x0": 288.75,
+          "x1": 330,
+          "count": 13
+        },
+        {
+          "x0": 330,
+          "x1": 371.25,
+          "count": 7
+        },
+        {
+          "x0": 371.25,
+          "x1": 412.5,
+          "count": 8
+        },
+        {
+          "x0": 412.5,
+          "x1": 453.75,
+          "count": 7
+        },
+        {
+          "x0": 453.75,
+          "x1": 495,
+          "count": 3
+        },
+        {
+          "x0": 495,
+          "x1": 536.25,
+          "count": 1
+        },
+        {
+          "x0": 536.25,
+          "x1": 577.5,
+          "count": 0
+        },
+        {
+          "x0": 577.5,
+          "x1": 618.75,
+          "count": 0
+        },
+        {
+          "x0": 618.75,
+          "x1": 660,
+          "count": 2
+        },
+        {
+          "x0": 660,
+          "x1": 701.25,
+          "count": 1
+        },
+        {
+          "x0": 701.25,
+          "x1": 742.5,
+          "count": 0
+        },
+        {
+          "x0": 742.5,
+          "x1": 783.75,
+          "count": 1
+        },
+        {
+          "x0": 783.75,
+          "x1": 825,
+          "count": 0
+        },
+        {
+          "x0": 825,
+          "x1": 866.25,
+          "count": 0
+        },
+        {
+          "x0": 866.25,
+          "x1": 907.5,
+          "count": 0
+        },
+        {
+          "x0": 907.5,
+          "x1": 948.75,
+          "count": 0
+        },
+        {
+          "x0": 948.75,
+          "x1": 990,
+          "count": 2
+        }
+      ]
+    },
+    "gaasperdam-driemond": {
+      "listingCount": 30,
+      "medianPrice": 130.5,
+      "multiListingHostShare": 0.4666666666666667,
+      "avgReviewsPerMonth": 1.6135714285714282,
+      "meetsFloor": true,
+      "roomTypeMix": {
+        "Entire home/apt": 13,
+        "Private room": 13,
+        "Shared room": 1,
+        "Hotel room": 3
+      },
+      "topHosts": [
+        {
+          "hostId": 5137582,
+          "hostName": "C.T.",
+          "count": 5
+        },
+        {
+          "hostId": 51485781,
+          "hostName": "Vital",
+          "count": 3
+        },
+        {
+          "hostId": 25069604,
+          "hostName": "Francois",
+          "count": 2
+        },
+        {
+          "hostId": 415463613,
+          "hostName": "Patricia",
+          "count": 2
+        },
+        {
+          "hostId": 31093577,
+          "hostName": "Martine",
+          "count": 2
+        },
+        {
+          "hostId": 24816465,
+          "hostName": "Francine",
+          "count": 1
+        },
+        {
+          "hostId": 34349002,
+          "hostName": "Erik",
+          "count": 1
+        },
+        {
+          "hostId": 125556535,
+          "hostName": "Maarten",
+          "count": 1
+        },
+        {
+          "hostId": 12610858,
+          "hostName": "Anne",
+          "count": 1
+        },
+        {
+          "hostId": 182599784,
+          "hostName": "Isabelle",
+          "count": 1
+        }
+      ],
+      "priceHistogram": [
+        {
+          "x0": 0,
+          "x1": 41.25,
+          "count": 1
+        },
+        {
+          "x0": 41.25,
+          "x1": 82.5,
+          "count": 8
+        },
+        {
+          "x0": 82.5,
+          "x1": 123.75,
+          "count": 6
+        },
+        {
+          "x0": 123.75,
+          "x1": 165,
+          "count": 6
+        },
+        {
+          "x0": 165,
+          "x1": 206.25,
+          "count": 5
+        },
+        {
+          "x0": 206.25,
+          "x1": 247.5,
+          "count": 0
+        },
+        {
+          "x0": 247.5,
+          "x1": 288.75,
+          "count": 2
+        },
+        {
+          "x0": 288.75,
+          "x1": 330,
+          "count": 1
+        },
+        {
+          "x0": 330,
+          "x1": 371.25,
+          "count": 1
+        },
+        {
+          "x0": 371.25,
+          "x1": 412.5,
+          "count": 0
+        },
+        {
+          "x0": 412.5,
+          "x1": 453.75,
+          "count": 0
+        },
+        {
+          "x0": 453.75,
+          "x1": 495,
+          "count": 0
+        },
+        {
+          "x0": 495,
+          "x1": 536.25,
+          "count": 0
+        },
+        {
+          "x0": 536.25,
+          "x1": 577.5,
+          "count": 0
+        },
+        {
+          "x0": 577.5,
+          "x1": 618.75,
+          "count": 0
+        },
+        {
+          "x0": 618.75,
+          "x1": 660,
+          "count": 0
+        },
+        {
+          "x0": 660,
+          "x1": 701.25,
+          "count": 0
+        },
+        {
+          "x0": 701.25,
+          "x1": 742.5,
+          "count": 0
+        },
+        {
+          "x0": 742.5,
+          "x1": 783.75,
+          "count": 0
+        },
+        {
+          "x0": 783.75,
+          "x1": 825,
+          "count": 0
+        },
+        {
+          "x0": 825,
+          "x1": 866.25,
+          "count": 0
+        },
+        {
+          "x0": 866.25,
+          "x1": 907.5,
+          "count": 0
+        },
+        {
+          "x0": 907.5,
+          "x1": 948.75,
+          "count": 0
+        },
+        {
+          "x0": 948.75,
+          "x1": 990,
+          "count": 0
+        }
+      ]
+    },
+    "bijlmer-centrum": {
+      "listingCount": 35,
+      "medianPrice": 134,
+      "multiListingHostShare": 0.5142857142857142,
+      "avgReviewsPerMonth": 3.2348571428571433,
+      "meetsFloor": true,
+      "roomTypeMix": {
+        "Entire home/apt": 12,
+        "Private room": 23,
+        "Shared room": 0,
+        "Hotel room": 0
+      },
+      "topHosts": [
+        {
+          "hostId": 323946609,
+          "hostName": "Erwin",
+          "count": 4
+        },
+        {
+          "hostId": 151414609,
+          "hostName": "M",
+          "count": 3
+        },
+        {
+          "hostId": 559442731,
+          "hostName": "EasyHotel Amsterdam Arena Boulevard",
+          "count": 3
+        },
+        {
+          "hostId": 5183517,
+          "hostName": "Simone",
+          "count": 2
+        },
+        {
+          "hostId": 159730080,
+          "hostName": "Maikel",
+          "count": 2
+        },
+        {
+          "hostId": 3219665,
+          "hostName": "Rob",
+          "count": 2
+        },
+        {
+          "hostId": 186742297,
+          "hostName": "K",
+          "count": 2
+        },
+        {
+          "hostId": 6300541,
+          "hostName": "Micha",
+          "count": 1
+        },
+        {
+          "hostId": 47544121,
+          "hostName": "Francis Chantal",
+          "count": 1
+        },
+        {
+          "hostId": 7019438,
+          "hostName": "Joek",
+          "count": 1
+        }
+      ],
+      "priceHistogram": [
+        {
+          "x0": 0,
+          "x1": 41.25,
+          "count": 0
+        },
+        {
+          "x0": 41.25,
+          "x1": 82.5,
+          "count": 3
+        },
+        {
+          "x0": 82.5,
+          "x1": 123.75,
+          "count": 13
+        },
+        {
+          "x0": 123.75,
+          "x1": 165,
+          "count": 10
+        },
+        {
+          "x0": 165,
+          "x1": 206.25,
+          "count": 3
+        },
+        {
+          "x0": 206.25,
+          "x1": 247.5,
+          "count": 5
+        },
+        {
+          "x0": 247.5,
+          "x1": 288.75,
+          "count": 0
+        },
+        {
+          "x0": 288.75,
+          "x1": 330,
+          "count": 0
+        },
+        {
+          "x0": 330,
+          "x1": 371.25,
+          "count": 0
+        },
+        {
+          "x0": 371.25,
+          "x1": 412.5,
+          "count": 0
+        },
+        {
+          "x0": 412.5,
+          "x1": 453.75,
+          "count": 1
+        },
+        {
+          "x0": 453.75,
+          "x1": 495,
+          "count": 0
+        },
+        {
+          "x0": 495,
+          "x1": 536.25,
+          "count": 0
+        },
+        {
+          "x0": 536.25,
+          "x1": 577.5,
+          "count": 0
+        },
+        {
+          "x0": 577.5,
+          "x1": 618.75,
+          "count": 0
+        },
+        {
+          "x0": 618.75,
+          "x1": 660,
+          "count": 0
+        },
+        {
+          "x0": 660,
+          "x1": 701.25,
+          "count": 0
+        },
+        {
+          "x0": 701.25,
+          "x1": 742.5,
+          "count": 0
+        },
+        {
+          "x0": 742.5,
+          "x1": 783.75,
+          "count": 0
+        },
+        {
+          "x0": 783.75,
+          "x1": 825,
+          "count": 0
+        },
+        {
+          "x0": 825,
+          "x1": 866.25,
+          "count": 0
+        },
+        {
+          "x0": 866.25,
+          "x1": 907.5,
+          "count": 0
+        },
+        {
+          "x0": 907.5,
+          "x1": 948.75,
+          "count": 0
+        },
+        {
+          "x0": 948.75,
+          "x1": 990,
+          "count": 0
+        }
+      ]
+    },
+    "de-pijp-rivierenbuurt": {
+      "listingCount": 649,
+      "medianPrice": 250,
+      "multiListingHostShare": 0.14329738058551617,
+      "avgReviewsPerMonth": 1.0361853832442063,
+      "meetsFloor": true,
+      "roomTypeMix": {
+        "Entire home/apt": 558,
+        "Private room": 91,
+        "Shared room": 0,
+        "Hotel room": 0
+      },
+      "topHosts": [
+        {
+          "hostId": 364305280,
+          "hostName": "Arnold",
+          "count": 15
+        },
+        {
+          "hostId": 12784049,
+          "hostName": "Ruud",
+          "count": 3
+        },
+        {
+          "hostId": 698662358,
+          "hostName": "Sander",
+          "count": 3
+        },
+        {
+          "hostId": 856540,
+          "hostName": "Pierre",
+          "count": 2
+        },
+        {
+          "hostId": 125667,
+          "hostName": "Michèle",
+          "count": 2
+        },
+        {
+          "hostId": 246493,
+          "hostName": "Dojo",
+          "count": 2
+        },
+        {
+          "hostId": 10726948,
+          "hostName": "Sarah",
+          "count": 2
+        },
+        {
+          "hostId": 37658666,
+          "hostName": "Ruben",
+          "count": 2
+        },
+        {
+          "hostId": 41130076,
+          "hostName": "Michiel",
+          "count": 2
+        },
+        {
+          "hostId": 594303102,
+          "hostName": "Bogdan",
+          "count": 2
+        }
+      ],
+      "priceHistogram": [
+        {
+          "x0": 0,
+          "x1": 41.25,
+          "count": 0
+        },
+        {
+          "x0": 41.25,
+          "x1": 82.5,
+          "count": 5
+        },
+        {
+          "x0": 82.5,
+          "x1": 123.75,
+          "count": 41
+        },
+        {
+          "x0": 123.75,
+          "x1": 165,
+          "count": 68
+        },
+        {
+          "x0": 165,
+          "x1": 206.25,
+          "count": 107
+        },
+        {
+          "x0": 206.25,
+          "x1": 247.5,
+          "count": 96
+        },
+        {
+          "x0": 247.5,
+          "x1": 288.75,
+          "count": 105
+        },
+        {
+          "x0": 288.75,
+          "x1": 330,
+          "count": 54
+        },
+        {
+          "x0": 330,
+          "x1": 371.25,
+          "count": 55
+        },
+        {
+          "x0": 371.25,
+          "x1": 412.5,
+          "count": 35
+        },
+        {
+          "x0": 412.5,
+          "x1": 453.75,
+          "count": 20
+        },
+        {
+          "x0": 453.75,
+          "x1": 495,
+          "count": 11
+        },
+        {
+          "x0": 495,
+          "x1": 536.25,
+          "count": 13
+        },
+        {
+          "x0": 536.25,
+          "x1": 577.5,
+          "count": 10
+        },
+        {
+          "x0": 577.5,
+          "x1": 618.75,
+          "count": 5
+        },
+        {
+          "x0": 618.75,
+          "x1": 660,
+          "count": 6
+        },
+        {
+          "x0": 660,
+          "x1": 701.25,
+          "count": 3
+        },
+        {
+          "x0": 701.25,
+          "x1": 742.5,
+          "count": 3
+        },
+        {
+          "x0": 742.5,
+          "x1": 783.75,
+          "count": 0
+        },
+        {
+          "x0": 783.75,
+          "x1": 825,
+          "count": 4
+        },
+        {
+          "x0": 825,
+          "x1": 866.25,
+          "count": 3
+        },
+        {
+          "x0": 866.25,
+          "x1": 907.5,
+          "count": 0
+        },
+        {
+          "x0": 907.5,
+          "x1": 948.75,
+          "count": 1
+        },
+        {
+          "x0": 948.75,
+          "x1": 990,
+          "count": 4
+        }
+      ]
+    },
+    "zuid": {
+      "listingCount": 435,
+      "medianPrice": 238,
+      "multiListingHostShare": 0.1839080459770115,
+      "avgReviewsPerMonth": 1.0290765171503973,
+      "meetsFloor": true,
+      "roomTypeMix": {
+        "Entire home/apt": 362,
+        "Private room": 70,
+        "Shared room": 0,
+        "Hotel room": 3
+      },
+      "topHosts": [
+        {
+          "hostId": 237150727,
+          "hostName": "Luke",
+          "count": 8
+        },
+        {
+          "hostId": 9435259,
+          "hostName": "Thierry",
+          "count": 7
+        },
+        {
+          "hostId": 366607134,
+          "hostName": "Sonder (Amsterdam)",
+          "count": 5
+        },
+        {
+          "hostId": 363449935,
+          "hostName": "Conscious Hotel Museum Square",
+          "count": 4
+        },
+        {
+          "hostId": 39110511,
+          "hostName": "Mike",
+          "count": 4
+        },
+        {
+          "hostId": 249828335,
+          "hostName": "The July",
+          "count": 3
+        },
+        {
+          "hostId": 1899420,
+          "hostName": "Rosie",
+          "count": 2
+        },
+        {
+          "hostId": 21572827,
+          "hostName": "Henriëtte Maria Theresia",
+          "count": 2
+        },
+        {
+          "hostId": 102064815,
+          "hostName": "Kirsten",
+          "count": 2
+        },
+        {
+          "hostId": 126555379,
+          "hostName": "Richard",
+          "count": 2
+        }
+      ],
+      "priceHistogram": [
+        {
+          "x0": 0,
+          "x1": 41.25,
+          "count": 0
+        },
+        {
+          "x0": 41.25,
+          "x1": 82.5,
+          "count": 11
+        },
+        {
+          "x0": 82.5,
+          "x1": 123.75,
+          "count": 24
+        },
+        {
+          "x0": 123.75,
+          "x1": 165,
+          "count": 52
+        },
+        {
+          "x0": 165,
+          "x1": 206.25,
+          "count": 67
+        },
+        {
+          "x0": 206.25,
+          "x1": 247.5,
+          "count": 75
+        },
+        {
+          "x0": 247.5,
+          "x1": 288.75,
+          "count": 37
+        },
+        {
+          "x0": 288.75,
+          "x1": 330,
+          "count": 37
+        },
+        {
+          "x0": 330,
+          "x1": 371.25,
+          "count": 24
+        },
+        {
+          "x0": 371.25,
+          "x1": 412.5,
+          "count": 24
+        },
+        {
+          "x0": 412.5,
+          "x1": 453.75,
+          "count": 24
+        },
+        {
+          "x0": 453.75,
+          "x1": 495,
+          "count": 14
+        },
+        {
+          "x0": 495,
+          "x1": 536.25,
+          "count": 10
+        },
+        {
+          "x0": 536.25,
+          "x1": 577.5,
+          "count": 7
+        },
+        {
+          "x0": 577.5,
+          "x1": 618.75,
+          "count": 10
+        },
+        {
+          "x0": 618.75,
+          "x1": 660,
+          "count": 1
+        },
+        {
+          "x0": 660,
+          "x1": 701.25,
+          "count": 1
+        },
+        {
+          "x0": 701.25,
+          "x1": 742.5,
+          "count": 3
+        },
+        {
+          "x0": 742.5,
+          "x1": 783.75,
+          "count": 0
+        },
+        {
+          "x0": 783.75,
+          "x1": 825,
+          "count": 0
+        },
+        {
+          "x0": 825,
+          "x1": 866.25,
+          "count": 0
+        },
+        {
+          "x0": 866.25,
+          "x1": 907.5,
+          "count": 3
+        },
+        {
+          "x0": 907.5,
+          "x1": 948.75,
+          "count": 1
+        },
+        {
+          "x0": 948.75,
+          "x1": 990,
+          "count": 10
+        }
+      ]
+    },
+    "buitenveldert-zuidas": {
+      "listingCount": 82,
+      "medianPrice": 182.5,
+      "multiListingHostShare": 0.35365853658536583,
+      "avgReviewsPerMonth": 0.8888135593220335,
+      "meetsFloor": true,
+      "roomTypeMix": {
+        "Entire home/apt": 57,
+        "Private room": 16,
+        "Shared room": 0,
+        "Hotel room": 9
+      },
+      "topHosts": [
+        {
+          "hostId": 484535538,
+          "hostName": "RoomPicks",
+          "count": 9
+        },
+        {
+          "hostId": 141677638,
+          "hostName": "Gros",
+          "count": 5
+        },
+        {
+          "hostId": 198469799,
+          "hostName": "Sammie",
+          "count": 3
+        },
+        {
+          "hostId": 2737834,
+          "hostName": "Sophia",
+          "count": 2
+        },
+        {
+          "hostId": 488009,
+          "hostName": "Vivian",
+          "count": 2
+        },
+        {
+          "hostId": 31864995,
+          "hostName": "Yvonne",
+          "count": 2
+        },
+        {
+          "hostId": 9048125,
+          "hostName": "Genevieve",
+          "count": 2
+        },
+        {
+          "hostId": 16583473,
+          "hostName": "Alphons",
+          "count": 2
+        },
+        {
+          "hostId": 10106174,
+          "hostName": "Sarah",
+          "count": 1
+        },
+        {
+          "hostId": 45515352,
+          "hostName": "Maaike Maria",
+          "count": 1
+        }
+      ],
+      "priceHistogram": [
+        {
+          "x0": 0,
+          "x1": 41.25,
+          "count": 0
+        },
+        {
+          "x0": 41.25,
+          "x1": 82.5,
+          "count": 5
+        },
+        {
+          "x0": 82.5,
+          "x1": 123.75,
+          "count": 13
+        },
+        {
+          "x0": 123.75,
+          "x1": 165,
+          "count": 17
+        },
+        {
+          "x0": 165,
+          "x1": 206.25,
+          "count": 11
+        },
+        {
+          "x0": 206.25,
+          "x1": 247.5,
+          "count": 4
+        },
+        {
+          "x0": 247.5,
+          "x1": 288.75,
+          "count": 3
+        },
+        {
+          "x0": 288.75,
+          "x1": 330,
+          "count": 8
+        },
+        {
+          "x0": 330,
+          "x1": 371.25,
+          "count": 4
+        },
+        {
+          "x0": 371.25,
+          "x1": 412.5,
+          "count": 4
+        },
+        {
+          "x0": 412.5,
+          "x1": 453.75,
+          "count": 3
+        },
+        {
+          "x0": 453.75,
+          "x1": 495,
+          "count": 1
+        },
+        {
+          "x0": 495,
+          "x1": 536.25,
+          "count": 1
+        },
+        {
+          "x0": 536.25,
+          "x1": 577.5,
+          "count": 0
+        },
+        {
+          "x0": 577.5,
+          "x1": 618.75,
+          "count": 0
+        },
+        {
+          "x0": 618.75,
+          "x1": 660,
+          "count": 1
+        },
+        {
+          "x0": 660,
+          "x1": 701.25,
+          "count": 0
+        },
+        {
+          "x0": 701.25,
+          "x1": 742.5,
+          "count": 1
+        },
+        {
+          "x0": 742.5,
+          "x1": 783.75,
+          "count": 0
+        },
+        {
+          "x0": 783.75,
+          "x1": 825,
+          "count": 0
+        },
+        {
+          "x0": 825,
+          "x1": 866.25,
+          "count": 0
+        },
+        {
+          "x0": 866.25,
+          "x1": 907.5,
+          "count": 0
+        },
+        {
+          "x0": 907.5,
+          "x1": 948.75,
+          "count": 0
+        },
+        {
+          "x0": 948.75,
+          "x1": 990,
+          "count": 6
+        }
+      ]
+    },
+    "de-baarsjes-oud-west": {
+      "listingCount": 992,
+      "medianPrice": 240,
+      "multiListingHostShare": 0.1381048387096774,
+      "avgReviewsPerMonth": 0.9775000000000008,
+      "meetsFloor": true,
+      "roomTypeMix": {
+        "Entire home/apt": 837,
+        "Private room": 149,
+        "Shared room": 1,
+        "Hotel room": 5
+      },
+      "topHosts": [
+        {
+          "hostId": 14574533,
+          "hostName": "Hotel Not Hotel",
+          "count": 15
+        },
+        {
+          "hostId": 428344496,
+          "hostName": "Catalonia Vondel Amsterdam",
+          "count": 8
+        },
+        {
+          "hostId": 273266448,
+          "hostName": "Vlad",
+          "count": 7
+        },
+        {
+          "hostId": 244695471,
+          "hostName": "Jaad",
+          "count": 5
+        },
+        {
+          "hostId": 128826790,
+          "hostName": "Natasja & Mylan",
+          "count": 4
+        },
+        {
+          "hostId": 139075883,
+          "hostName": "Woen Yi Jira",
+          "count": 4
+        },
+        {
+          "hostId": 203731852,
+          "hostName": "Aimee",
+          "count": 3
+        },
+        {
+          "hostId": 198405490,
+          "hostName": "Suzanne",
+          "count": 3
+        },
+        {
+          "hostId": 363404652,
+          "hostName": "Conscious Hotel The Tire Station",
+          "count": 3
+        },
+        {
+          "hostId": 16583473,
+          "hostName": "Alphons",
+          "count": 3
+        }
+      ],
+      "priceHistogram": [
+        {
+          "x0": 0,
+          "x1": 41.25,
+          "count": 0
+        },
+        {
+          "x0": 41.25,
+          "x1": 82.5,
+          "count": 22
+        },
+        {
+          "x0": 82.5,
+          "x1": 123.75,
+          "count": 49
+        },
+        {
+          "x0": 123.75,
+          "x1": 165,
+          "count": 124
+        },
+        {
+          "x0": 165,
+          "x1": 206.25,
+          "count": 179
+        },
+        {
+          "x0": 206.25,
+          "x1": 247.5,
+          "count": 137
+        },
+        {
+          "x0": 247.5,
+          "x1": 288.75,
+          "count": 144
+        },
+        {
+          "x0": 288.75,
+          "x1": 330,
+          "count": 100
+        },
+        {
+          "x0": 330,
+          "x1": 371.25,
+          "count": 64
+        },
+        {
+          "x0": 371.25,
+          "x1": 412.5,
+          "count": 57
+        },
+        {
+          "x0": 412.5,
+          "x1": 453.75,
+          "count": 26
+        },
+        {
+          "x0": 453.75,
+          "x1": 495,
+          "count": 20
+        },
+        {
+          "x0": 495,
+          "x1": 536.25,
+          "count": 16
+        },
+        {
+          "x0": 536.25,
+          "x1": 577.5,
+          "count": 11
+        },
+        {
+          "x0": 577.5,
+          "x1": 618.75,
+          "count": 11
+        },
+        {
+          "x0": 618.75,
+          "x1": 660,
+          "count": 7
+        },
+        {
+          "x0": 660,
+          "x1": 701.25,
+          "count": 6
+        },
+        {
+          "x0": 701.25,
+          "x1": 742.5,
+          "count": 2
+        },
+        {
+          "x0": 742.5,
+          "x1": 783.75,
+          "count": 3
+        },
+        {
+          "x0": 783.75,
+          "x1": 825,
+          "count": 8
+        },
+        {
+          "x0": 825,
+          "x1": 866.25,
+          "count": 2
+        },
+        {
+          "x0": 866.25,
+          "x1": 907.5,
+          "count": 2
+        },
+        {
+          "x0": 907.5,
+          "x1": 948.75,
+          "count": 1
+        },
+        {
+          "x0": 948.75,
+          "x1": 990,
+          "count": 1
+        }
+      ]
+    },
+    "bos-en-lommer": {
+      "listingCount": 261,
+      "medianPrice": 184,
+      "multiListingHostShare": 0.13026819923371646,
+      "avgReviewsPerMonth": 1.095502183406113,
+      "meetsFloor": true,
+      "roomTypeMix": {
+        "Entire home/apt": 232,
+        "Private room": 29,
+        "Shared room": 0,
+        "Hotel room": 0
+      },
+      "topHosts": [
+        {
+          "hostId": 375961673,
+          "hostName": "Cityden",
+          "count": 11
+        },
+        {
+          "hostId": 6127483,
+          "hostName": "Daniella",
+          "count": 3
+        },
+        {
+          "hostId": 58428526,
+          "hostName": "Janeth",
+          "count": 3
+        },
+        {
+          "hostId": 364305280,
+          "hostName": "Arnold",
+          "count": 3
+        },
+        {
+          "hostId": 160470419,
+          "hostName": "Joshua",
+          "count": 2
+        },
+        {
+          "hostId": 101490730,
+          "hostName": "Thomas",
+          "count": 2
+        },
+        {
+          "hostId": 39110511,
+          "hostName": "Mike",
+          "count": 2
+        },
+        {
+          "hostId": 201044625,
+          "hostName": "Carolina",
+          "count": 2
+        },
+        {
+          "hostId": 231864,
+          "hostName": "Karin",
+          "count": 1
+        },
+        {
+          "hostId": 1939922,
+          "hostName": "Hannes",
+          "count": 1
+        }
+      ],
+      "priceHistogram": [
+        {
+          "x0": 0,
+          "x1": 41.25,
+          "count": 0
+        },
+        {
+          "x0": 41.25,
+          "x1": 82.5,
+          "count": 13
+        },
+        {
+          "x0": 82.5,
+          "x1": 123.75,
+          "count": 31
+        },
+        {
+          "x0": 123.75,
+          "x1": 165,
+          "count": 52
+        },
+        {
+          "x0": 165,
+          "x1": 206.25,
+          "count": 65
+        },
+        {
+          "x0": 206.25,
+          "x1": 247.5,
+          "count": 30
+        },
+        {
+          "x0": 247.5,
+          "x1": 288.75,
+          "count": 29
+        },
+        {
+          "x0": 288.75,
+          "x1": 330,
+          "count": 16
+        },
+        {
+          "x0": 330,
+          "x1": 371.25,
+          "count": 9
+        },
+        {
+          "x0": 371.25,
+          "x1": 412.5,
+          "count": 7
+        },
+        {
+          "x0": 412.5,
+          "x1": 453.75,
+          "count": 2
+        },
+        {
+          "x0": 453.75,
+          "x1": 495,
+          "count": 4
+        },
+        {
+          "x0": 495,
+          "x1": 536.25,
+          "count": 1
+        },
+        {
+          "x0": 536.25,
+          "x1": 577.5,
+          "count": 1
+        },
+        {
+          "x0": 577.5,
+          "x1": 618.75,
+          "count": 1
+        },
+        {
+          "x0": 618.75,
+          "x1": 660,
+          "count": 0
+        },
+        {
+          "x0": 660,
+          "x1": 701.25,
+          "count": 0
+        },
+        {
+          "x0": 701.25,
+          "x1": 742.5,
+          "count": 0
+        },
+        {
+          "x0": 742.5,
+          "x1": 783.75,
+          "count": 0
+        },
+        {
+          "x0": 783.75,
+          "x1": 825,
+          "count": 0
+        },
+        {
+          "x0": 825,
+          "x1": 866.25,
+          "count": 0
+        },
+        {
+          "x0": 866.25,
+          "x1": 907.5,
+          "count": 0
+        },
+        {
+          "x0": 907.5,
+          "x1": 948.75,
+          "count": 0
+        },
+        {
+          "x0": 948.75,
+          "x1": 990,
+          "count": 0
+        }
+      ]
+    },
+    "geuzenveld-slotermeer": {
+      "listingCount": 91,
+      "medianPrice": 182,
+      "multiListingHostShare": 0.4065934065934066,
+      "avgReviewsPerMonth": 1.1006024096385543,
+      "meetsFloor": true,
+      "roomTypeMix": {
+        "Entire home/apt": 58,
+        "Private room": 33,
+        "Shared room": 0,
+        "Hotel room": 0
+      },
+      "topHosts": [
+        {
+          "hostId": 408898089,
+          "hostName": "Richard Alexander Nicolaas",
+          "count": 11
+        },
+        {
+          "hostId": 342059962,
+          "hostName": "Marcellinus Cornelius Johannes Maria",
+          "count": 5
+        },
+        {
+          "hostId": 669257810,
+          "hostName": "Arnoud",
+          "count": 4
+        },
+        {
+          "hostId": 486429198,
+          "hostName": "David",
+          "count": 3
+        },
+        {
+          "hostId": 136643553,
+          "hostName": "Geertje",
+          "count": 3
+        },
+        {
+          "hostId": 76161984,
+          "hostName": "Maggie",
+          "count": 3
+        },
+        {
+          "hostId": 3498674,
+          "hostName": "Nadia",
+          "count": 2
+        },
+        {
+          "hostId": 130649752,
+          "hostName": "Mi BnB",
+          "count": 2
+        },
+        {
+          "hostId": 246774784,
+          "hostName": "Jaap",
+          "count": 2
+        },
+        {
+          "hostId": 9137568,
+          "hostName": "Edwin",
+          "count": 1
+        }
+      ],
+      "priceHistogram": [
+        {
+          "x0": 0,
+          "x1": 41.25,
+          "count": 0
+        },
+        {
+          "x0": 41.25,
+          "x1": 82.5,
+          "count": 5
+        },
+        {
+          "x0": 82.5,
+          "x1": 123.75,
+          "count": 19
+        },
+        {
+          "x0": 123.75,
+          "x1": 165,
+          "count": 13
+        },
+        {
+          "x0": 165,
+          "x1": 206.25,
+          "count": 18
+        },
+        {
+          "x0": 206.25,
+          "x1": 247.5,
+          "count": 10
+        },
+        {
+          "x0": 247.5,
+          "x1": 288.75,
+          "count": 12
+        },
+        {
+          "x0": 288.75,
+          "x1": 330,
+          "count": 7
+        },
+        {
+          "x0": 330,
+          "x1": 371.25,
+          "count": 5
+        },
+        {
+          "x0": 371.25,
+          "x1": 412.5,
+          "count": 1
+        },
+        {
+          "x0": 412.5,
+          "x1": 453.75,
+          "count": 0
+        },
+        {
+          "x0": 453.75,
+          "x1": 495,
+          "count": 1
+        },
+        {
+          "x0": 495,
+          "x1": 536.25,
+          "count": 0
+        },
+        {
+          "x0": 536.25,
+          "x1": 577.5,
+          "count": 0
+        },
+        {
+          "x0": 577.5,
+          "x1": 618.75,
+          "count": 0
+        },
+        {
+          "x0": 618.75,
+          "x1": 660,
+          "count": 0
+        },
+        {
+          "x0": 660,
+          "x1": 701.25,
+          "count": 0
+        },
+        {
+          "x0": 701.25,
+          "x1": 742.5,
+          "count": 0
+        },
+        {
+          "x0": 742.5,
+          "x1": 783.75,
+          "count": 0
+        },
+        {
+          "x0": 783.75,
+          "x1": 825,
+          "count": 0
+        },
+        {
+          "x0": 825,
+          "x1": 866.25,
+          "count": 0
+        },
+        {
+          "x0": 866.25,
+          "x1": 907.5,
+          "count": 0
+        },
+        {
+          "x0": 907.5,
+          "x1": 948.75,
+          "count": 0
+        },
+        {
+          "x0": 948.75,
+          "x1": 990,
+          "count": 0
+        }
+      ]
+    },
+    "slotervaart": {
+      "listingCount": 100,
+      "medianPrice": 185.5,
+      "multiListingHostShare": 0.25,
+      "avgReviewsPerMonth": 1.0896703296703298,
+      "meetsFloor": true,
+      "roomTypeMix": {
+        "Entire home/apt": 71,
+        "Private room": 29,
+        "Shared room": 0,
+        "Hotel room": 0
+      },
+      "topHosts": [
+        {
+          "hostId": 460700360,
+          "hostName": "Elias",
+          "count": 5
+        },
+        {
+          "hostId": 154433811,
+          "hostName": "Jianrong",
+          "count": 4
+        },
+        {
+          "hostId": 9426449,
+          "hostName": "Gabriel",
+          "count": 3
+        },
+        {
+          "hostId": 195859,
+          "hostName": "Gianni",
+          "count": 2
+        },
+        {
+          "hostId": 14122005,
+          "hostName": "Rick",
+          "count": 2
+        },
+        {
+          "hostId": 23928189,
+          "hostName": "Bram",
+          "count": 2
+        },
+        {
+          "hostId": 395599905,
+          "hostName": "Guiseppe",
+          "count": 2
+        },
+        {
+          "hostId": 704386567,
+          "hostName": "Charles Douglas",
+          "count": 2
+        },
+        {
+          "hostId": 692757122,
+          "hostName": "Ilan",
+          "count": 2
+        },
+        {
+          "hostId": 2865851,
+          "hostName": "Oliver",
+          "count": 1
+        }
+      ],
+      "priceHistogram": [
+        {
+          "x0": 0,
+          "x1": 41.25,
+          "count": 0
+        },
+        {
+          "x0": 41.25,
+          "x1": 82.5,
+          "count": 14
+        },
+        {
+          "x0": 82.5,
+          "x1": 123.75,
+          "count": 10
+        },
+        {
+          "x0": 123.75,
+          "x1": 165,
+          "count": 16
+        },
+        {
+          "x0": 165,
+          "x1": 206.25,
+          "count": 21
+        },
+        {
+          "x0": 206.25,
+          "x1": 247.5,
+          "count": 11
+        },
+        {
+          "x0": 247.5,
+          "x1": 288.75,
+          "count": 14
+        },
+        {
+          "x0": 288.75,
+          "x1": 330,
+          "count": 8
+        },
+        {
+          "x0": 330,
+          "x1": 371.25,
+          "count": 2
+        },
+        {
+          "x0": 371.25,
+          "x1": 412.5,
+          "count": 1
+        },
+        {
+          "x0": 412.5,
+          "x1": 453.75,
+          "count": 1
+        },
+        {
+          "x0": 453.75,
+          "x1": 495,
+          "count": 0
+        },
+        {
+          "x0": 495,
+          "x1": 536.25,
+          "count": 2
+        },
+        {
+          "x0": 536.25,
+          "x1": 577.5,
+          "count": 0
+        },
+        {
+          "x0": 577.5,
+          "x1": 618.75,
+          "count": 0
+        },
+        {
+          "x0": 618.75,
+          "x1": 660,
+          "count": 0
+        },
+        {
+          "x0": 660,
+          "x1": 701.25,
+          "count": 0
+        },
+        {
+          "x0": 701.25,
+          "x1": 742.5,
+          "count": 0
+        },
+        {
+          "x0": 742.5,
+          "x1": 783.75,
+          "count": 0
+        },
+        {
+          "x0": 783.75,
+          "x1": 825,
+          "count": 0
+        },
+        {
+          "x0": 825,
+          "x1": 866.25,
+          "count": 0
+        },
+        {
+          "x0": 866.25,
+          "x1": 907.5,
+          "count": 0
+        },
+        {
+          "x0": 907.5,
+          "x1": 948.75,
+          "count": 0
+        },
+        {
+          "x0": 948.75,
+          "x1": 990,
+          "count": 0
+        }
+      ]
+    },
+    "osdorp": {
+      "listingCount": 37,
+      "medianPrice": 153,
+      "multiListingHostShare": 0.13513513513513514,
+      "avgReviewsPerMonth": 5.962,
+      "meetsFloor": true,
+      "roomTypeMix": {
+        "Entire home/apt": 22,
+        "Private room": 15,
+        "Shared room": 0,
+        "Hotel room": 0
+      },
+      "topHosts": [
+        {
+          "hostId": 407017762,
+          "hostName": "Jean Paul",
+          "count": 5
+        },
+        {
+          "hostId": 5134833,
+          "hostName": "Andre",
+          "count": 1
+        },
+        {
+          "hostId": 9502480,
+          "hostName": "Roel",
+          "count": 1
+        },
+        {
+          "hostId": 3421572,
+          "hostName": "Wing",
+          "count": 1
+        },
+        {
+          "hostId": 46878277,
+          "hostName": "Melvin",
+          "count": 1
+        },
+        {
+          "hostId": 4419890,
+          "hostName": "Ivana",
+          "count": 1
+        },
+        {
+          "hostId": 55911617,
+          "hostName": "Alco",
+          "count": 1
+        },
+        {
+          "hostId": 56251661,
+          "hostName": "Antonio",
+          "count": 1
+        },
+        {
+          "hostId": 3902805,
+          "hostName": "Marlen",
+          "count": 1
+        },
+        {
+          "hostId": 39276161,
+          "hostName": "Djinny",
+          "count": 1
+        }
+      ],
+      "priceHistogram": [
+        {
+          "x0": 0,
+          "x1": 41.25,
+          "count": 0
+        },
+        {
+          "x0": 41.25,
+          "x1": 82.5,
+          "count": 1
+        },
+        {
+          "x0": 82.5,
+          "x1": 123.75,
+          "count": 10
+        },
+        {
+          "x0": 123.75,
+          "x1": 165,
+          "count": 10
+        },
+        {
+          "x0": 165,
+          "x1": 206.25,
+          "count": 6
+        },
+        {
+          "x0": 206.25,
+          "x1": 247.5,
+          "count": 4
+        },
+        {
+          "x0": 247.5,
+          "x1": 288.75,
+          "count": 3
+        },
+        {
+          "x0": 288.75,
+          "x1": 330,
+          "count": 1
+        },
+        {
+          "x0": 330,
+          "x1": 371.25,
+          "count": 2
+        },
+        {
+          "x0": 371.25,
+          "x1": 412.5,
+          "count": 0
+        },
+        {
+          "x0": 412.5,
+          "x1": 453.75,
+          "count": 0
+        },
+        {
+          "x0": 453.75,
+          "x1": 495,
+          "count": 0
+        },
+        {
+          "x0": 495,
+          "x1": 536.25,
+          "count": 0
+        },
+        {
+          "x0": 536.25,
+          "x1": 577.5,
+          "count": 0
+        },
+        {
+          "x0": 577.5,
+          "x1": 618.75,
+          "count": 0
+        },
+        {
+          "x0": 618.75,
+          "x1": 660,
+          "count": 0
+        },
+        {
+          "x0": 660,
+          "x1": 701.25,
+          "count": 0
+        },
+        {
+          "x0": 701.25,
+          "x1": 742.5,
+          "count": 0
+        },
+        {
+          "x0": 742.5,
+          "x1": 783.75,
+          "count": 0
+        },
+        {
+          "x0": 783.75,
+          "x1": 825,
+          "count": 0
+        },
+        {
+          "x0": 825,
+          "x1": 866.25,
+          "count": 0
+        },
+        {
+          "x0": 866.25,
+          "x1": 907.5,
+          "count": 0
+        },
+        {
+          "x0": 907.5,
+          "x1": 948.75,
+          "count": 0
+        },
+        {
+          "x0": 948.75,
+          "x1": 990,
+          "count": 0
+        }
+      ]
+    },
+    "de-aker-nieuw-sloten": {
+      "listingCount": 42,
+      "medianPrice": 151.5,
+      "multiListingHostShare": 0.2857142857142857,
+      "avgReviewsPerMonth": 1.8324324324324324,
+      "meetsFloor": true,
+      "roomTypeMix": {
+        "Entire home/apt": 24,
+        "Private room": 18,
+        "Shared room": 0,
+        "Hotel room": 0
+      },
+      "topHosts": [
+        {
+          "hostId": 18482089,
+          "hostName": "Klaas",
+          "count": 3
+        },
+        {
+          "hostId": 455302001,
+          "hostName": "Erwin",
+          "count": 3
+        },
+        {
+          "hostId": 117820649,
+          "hostName": "Mohanned",
+          "count": 2
+        },
+        {
+          "hostId": 152565049,
+          "hostName": "Aniek",
+          "count": 2
+        },
+        {
+          "hostId": 4684314,
+          "hostName": "Frans",
+          "count": 1
+        },
+        {
+          "hostId": 21883308,
+          "hostName": "Nabila",
+          "count": 1
+        },
+        {
+          "hostId": 12697281,
+          "hostName": "Vera",
+          "count": 1
+        },
+        {
+          "hostId": 50886880,
+          "hostName": "Sissi",
+          "count": 1
+        },
+        {
+          "hostId": 84256372,
+          "hostName": "Carla",
+          "count": 1
+        },
+        {
+          "hostId": 78442382,
+          "hostName": "Guido",
+          "count": 1
+        }
+      ],
+      "priceHistogram": [
+        {
+          "x0": 0,
+          "x1": 41.25,
+          "count": 1
+        },
+        {
+          "x0": 41.25,
+          "x1": 82.5,
+          "count": 3
+        },
+        {
+          "x0": 82.5,
+          "x1": 123.75,
+          "count": 12
+        },
+        {
+          "x0": 123.75,
+          "x1": 165,
+          "count": 9
+        },
+        {
+          "x0": 165,
+          "x1": 206.25,
+          "count": 4
+        },
+        {
+          "x0": 206.25,
+          "x1": 247.5,
+          "count": 2
+        },
+        {
+          "x0": 247.5,
+          "x1": 288.75,
+          "count": 5
+        },
+        {
+          "x0": 288.75,
+          "x1": 330,
+          "count": 2
+        },
+        {
+          "x0": 330,
+          "x1": 371.25,
+          "count": 2
+        },
+        {
+          "x0": 371.25,
+          "x1": 412.5,
+          "count": 0
+        },
+        {
+          "x0": 412.5,
+          "x1": 453.75,
+          "count": 0
+        },
+        {
+          "x0": 453.75,
+          "x1": 495,
+          "count": 0
+        },
+        {
+          "x0": 495,
+          "x1": 536.25,
+          "count": 1
+        },
+        {
+          "x0": 536.25,
+          "x1": 577.5,
+          "count": 0
+        },
+        {
+          "x0": 577.5,
+          "x1": 618.75,
+          "count": 0
+        },
+        {
+          "x0": 618.75,
+          "x1": 660,
+          "count": 1
+        },
+        {
+          "x0": 660,
+          "x1": 701.25,
+          "count": 0
+        },
+        {
+          "x0": 701.25,
+          "x1": 742.5,
+          "count": 0
+        },
+        {
+          "x0": 742.5,
+          "x1": 783.75,
+          "count": 0
+        },
+        {
+          "x0": 783.75,
+          "x1": 825,
+          "count": 0
+        },
+        {
+          "x0": 825,
+          "x1": 866.25,
+          "count": 0
+        },
+        {
+          "x0": 866.25,
+          "x1": 907.5,
+          "count": 0
+        },
+        {
+          "x0": 907.5,
+          "x1": 948.75,
+          "count": 0
+        },
+        {
+          "x0": 948.75,
+          "x1": 990,
+          "count": 0
+        }
+      ]
+    }
+  }
+}

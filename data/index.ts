@@ -5,6 +5,7 @@ export type {
   Neighbourhood,
   PriceScale,
   CityMeta,
+  CityAggregates,
   CityDataset,
   CityIndexEntry,
   RoomType,
@@ -29,8 +30,8 @@ export {
 // UI types (TypeScript only — erased at runtime, safe to import anywhere)
 export type { CityData, ListingFilters, SortKey, Scope } from "./types";
 
-// Repository — the swap seam. Components depend on this, not a concrete source.
-export { getRepository } from "./repository";
+// Repository — the swap seam. Only the loaders call it (via `./repository`);
+// it is deliberately NOT re-exported here so UI code goes through the loaders.
 export type {
   CityRepository,
   ListingPage,
@@ -38,8 +39,19 @@ export type {
   SnapshotRef,
 } from "./repository";
 
-// Server loaders (server-only guard inside; safe to re-export from a barrel)
-export { getCitiesData, getCityBoundaries } from "./loaders";
+// Server loaders (server-only guard inside; safe to re-export from a barrel).
+// These are the ONLY data entry point for components and pages.
+export {
+  getCitiesData,
+  getCityMeta,
+  getCityBoundaries,
+  getCityNeighbourhoodCount,
+  getSidebarScopeAggregates,
+  getSidebarListingCount,
+  getSidebarFilterBounds,
+  unavailableAggregates,
+} from "./loaders";
+export type { SidebarScopeType } from "./loaders";
 
 // Server-side selectors (run once per request, produce props)
 export {

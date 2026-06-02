@@ -1,9 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { CityScene } from "@/components/scene/city-scene";
-import { getCitiesData } from "@/data";
-import { getRepository } from "@/data";
-import type { Scope } from "@/data";
+import { getCitiesData, getCityMeta, type Scope } from "@/data";
 
 export async function generateStaticParams() {
   const cities = await getCitiesData();
@@ -21,36 +19,28 @@ export default async function CityPage({
   const { city } = await params;
   // E1-S2: the chosen city is the default analysis scope until the user narrows.
   const scope: Scope = { type: "city" };
-  const repo = getRepository();
-  const [meta, boundaries, aggregates, neighbourhoods] = await Promise.all([
-    repo.getCityMeta(city),
-    repo.getBoundaries(city),
-    repo.getScopeAggregates(city, scope),
-    repo.getNeighbourhoods(city),
-  ]);
-
-  if (!meta || !boundaries || !aggregates) {
+  // Gate the route on the cheap framing tier only: "the city exists" == its meta
+  // exists. Everything heavier (boundaries, aggregates, the city index) is fetched
+  // where it's rendered, behind its own Suspense boundary, so a slow tile-sized
+  // read never blocks the analysis cards. Missing heavy tiers degrade gracefully
+  // (zeroed aggregates; a map without choropleth), so they must not force a 404.
+  const meta = await getCityMeta(city);
+  if (!meta) {
     notFound();
   }
-  const cities = await getCitiesData();
-
+  const { slug, name, country, frame, currency, snapshotLabel, bbox, center } =
+    meta;
   return (
     <CityScene
-      citySlug={meta.slug}
-      cityName={meta.name}
-      country={meta.country}
-      frame={meta.frame}
-      currency={meta.currency}
-      listingCount={aggregates.listingCount}
-      snapshotLabel={meta.snapshotLabel}
-      aggregates={aggregates}
-      neighbourhoods={neighbourhoods}
-      priceScale={meta.priceScale}
-      cities={cities}
-      boundaries={boundaries}
-      bbox={meta.bbox}
-      center={meta.center}
-      neighbourhoodCount={neighbourhoods.length}
+      citySlug={slug}
+      cityName={name}
+      country={country}
+      frame={frame}
+      currency={currency}
+      snapshotLabel={snapshotLabel}
+      scope={scope}
+      bbox={bbox}
+      center={center}
     />
   );
 }

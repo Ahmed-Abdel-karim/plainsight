@@ -1,8 +1,13 @@
 "use client";
 
-import { Bar, BarChart, ReferenceLine, XAxis, YAxis } from "recharts";
+import { useCallback, useEffect, useState } from "react";
+import { Bar, BarChart, Cell, ReferenceLine, XAxis, YAxis } from "recharts";
 import type { ScopeAggregates } from "@/data/contract";
-import { ChartContainer, type ChartConfig } from "@/components/ui/chart";
+import {
+  ChartContainer,
+  ChartTooltip,
+  type ChartConfig,
+} from "@/components/ui/chart";
 import { formatCurrency } from "./format";
 import { ChartCard } from "./chart-card";
 
@@ -12,8 +17,9 @@ const chartConfig = {
 
 /**
  * Price-distribution histogram with a median marker, rendered on the shadcn
- * `Chart` (Recharts) component. Static — server-provided `priceHistogram` only,
- * no tooltip/cursor, no filtering.
+ * `Chart` (Recharts) component. Hovering a band highlights its bar and fills the
+ * persistent hover strip below with the band range · listing count · share —
+ * matching the prototype's `chart-hover-strip`.
  */
 export function PriceHistogram({
   aggregates,
@@ -22,6 +28,12 @@ export function PriceHistogram({
   aggregates: ScopeAggregates;
   currency: string;
 }) {
+  const [active, setActive] = useState<number | null>(null);
+  const reportActive = useCallback(
+    (index: number | null) => setActive(index),
+    [],
+  );
+
   const bins = aggregates.priceHistogram;
   const totalCount = bins.reduce((sum, b) => sum + b.count, 0);
 
@@ -53,12 +65,23 @@ export function PriceHistogram({
       ? `Listings per nightly band · median ${formatCurrency(median, currency)}`
       : "Listings per nightly band";
 
+  const hovered = active != null ? bins[active] : null;
+
   return (
     <ChartCard title="Price distribution" subtitle={subtitle}>
       <ChartContainer config={chartConfig} className="aspect-auto h-32 w-full">
-        <BarChart data={data} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
+        <BarChart
+          accessibilityLayer
+          data={data}
+          margin={{ top: 4, right: 0, bottom: 0, left: 0 }}
+          onMouseLeave={() => setActive(null)}
+        >
           <XAxis dataKey="idx" hide />
           <YAxis hide />
+          <ChartTooltip
+            cursor={false}
+            content={<HoverReporter onActive={reportActive} />}
+          />
           {medianIdx >= 0 ? (
             <ReferenceLine
               x={String(medianIdx)}
@@ -67,13 +90,79 @@ export function PriceHistogram({
               strokeWidth={1}
             />
           ) : null}
-          <Bar dataKey="count" fill="var(--color-count)" radius={2} />
+          <Bar dataKey="count" radius={2} isAnimationActive={false}>
+            {data.map((_, i) => (
+              <Cell
+                key={i}
+                fill={
+                  i === active
+                    ? "var(--color-brand-emphasis)"
+                    : "var(--color-count)"
+                }
+              />
+            ))}
+          </Bar>
         </BarChart>
       </ChartContainer>
+
       <div className="flex justify-between type-caption-mono text-muted-foreground tabular-nums">
         <span>{formatCurrency(priceMin, currency)}</span>
         <span>{formatCurrency(priceMax, currency)}</span>
       </div>
+
+      <div
+        className="flex min-h-5 items-center gap-1.5 type-caption-mono tabular-nums"
+        aria-live="polite"
+      >
+        {hovered ? (
+          <>
+            <span className="text-foreground">
+              {formatCurrency(hovered.x0, currency)}–
+              {formatCurrency(hovered.x1, currency)}
+            </span>
+            <span className="text-muted-foreground/60" aria-hidden>
+              ·
+            </span>
+            <span className="text-muted-foreground">
+              {hovered.count.toLocaleString("en")} listings
+            </span>
+            <span className="text-muted-foreground/60" aria-hidden>
+              ·
+            </span>
+            <span className="text-foreground">
+              {Math.round((hovered.count / totalCount) * 100)}%
+            </span>
+          </>
+        ) : (
+          <span className="text-muted-foreground/70">
+            Hover a bar for details
+          </span>
+        )}
+      </div>
     </ChartCard>
   );
+}
+
+/**
+ * Tooltip-content bridge: Recharts passes the active band index in here; we lift
+ * it to the chart's state to drive the persistent hover strip (and keyboard
+ * navigation via `accessibilityLayer`) instead of rendering a floating tooltip.
+ */
+function HoverReporter({
+  active,
+  activeIndex,
+  onActive,
+}: {
+  active?: boolean;
+  activeIndex?: string | number;
+  onActive: (index: number | null) => void;
+}) {
+  useEffect(() => {
+    onActive(
+      active && activeIndex != null && activeIndex !== ""
+        ? Number(activeIndex)
+        : null,
+    );
+  }, [active, activeIndex, onActive]);
+  return null;
 }

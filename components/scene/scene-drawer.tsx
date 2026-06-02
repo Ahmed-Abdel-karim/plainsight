@@ -1,5 +1,3 @@
-"use client";
-
 import type { ReactNode } from "react";
 
 import {
@@ -10,32 +8,34 @@ import {
   DrawerTrigger,
 } from "@/components/ui/drawer";
 
-function formatNumber(value: number): string {
-  return value.toLocaleString("en");
-}
-
 /**
  * Mobile presentation of the analysis panel. Below `lg` the desktop aside is
- * hidden (see `sidebar-region.tsx`) and its content lives in this bottom Drawer
+ * hidden (see `city-scene.tsx`) and its content lives in this bottom Drawer
  * (Rule 5: same content, drawer wrapper). A floating `.map-chrome` bar over the
- * map (city + live listing count) is the trigger; vaul provides the grip,
- * scrim, drag-to-dismiss, focus trap, and Esc-to-close.
+ * map (city + listing count) is the trigger; vaul provides the grip, scrim,
+ * drag-to-dismiss, focus trap, and Esc-to-close.
+ *
+ * `triggerCount` is a streamed slot (the listing count fetches independently
+ * behind a Suspense boundary), so it isn't threaded in as a number. The button's
+ * `aria-label` is kept stable (no interpolated count) so the accessible name
+ * doesn't churn while the visible count fills in.
  */
 export function SceneDrawer({
   cityName,
-  listingCount,
+  triggerCount,
   children,
 }: {
   cityName: string;
-  listingCount: number;
+  triggerCount: ReactNode;
   children: ReactNode;
 }) {
+  const label = `${cityName}. Open market analysis.`;
   return (
     <Drawer>
       <DrawerTrigger asChild>
         <button
           type="button"
-          aria-label={`${cityName}, ${formatNumber(listingCount)} listings. Open market analysis.`}
+          aria-label={label}
           className="map-chrome absolute top-4 left-4 z-20 flex min-h-11 items-center gap-inline rounded-full px-stack py-snug shadow-sm lg:hidden"
         >
           <span className="text-foreground type-label">{cityName}</span>
@@ -43,7 +43,7 @@ export function SceneDrawer({
             ·
           </span>
           <span className="type-caption-mono text-muted-foreground">
-            {formatNumber(listingCount)} listings
+            {triggerCount}
           </span>
         </button>
       </DrawerTrigger>

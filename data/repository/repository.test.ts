@@ -10,7 +10,7 @@ describe("getRepository", () => {
     expect(getRepository()).toBe(staticJsonRepository);
   });
 
-  it("memoises the resolved adapter", () => {
+  it("returns a stable reference", () => {
     expect(getRepository()).toBe(getRepository());
   });
 });

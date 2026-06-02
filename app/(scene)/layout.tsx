@@ -1,4 +1,4 @@
-import { MapView } from "@/components/map/map";
+import { MapView } from "@/components/scene/map/map";
 import { MapLegend } from "@/components/scene/map-legend";
 
 /**

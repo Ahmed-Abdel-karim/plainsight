@@ -1,4 +1,8 @@
-import { ROOM_TYPES, type RoomType, type ScopeAggregates } from "@/data";
+import {
+  ROOM_TYPES,
+  type RoomType,
+  type ScopeAggregates,
+} from "@/data/contract";
 import { formatPercent } from "./format";
 import { ChartCard } from "./chart-card";
 

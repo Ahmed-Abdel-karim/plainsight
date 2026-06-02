@@ -90,9 +90,9 @@ export interface PriceScale {
 /**
  * Snapshot-varying city metadata — everything about a city EXCEPT the heavy
  * arrays (listings) and the pre-baked aggregate cube. This is the cheap read a
- * server component needs to frame a page; `CityDataset` extends it with the
- * bulk. A real DB serves this from `cities` + `city_snapshot` without touching
- * the `listings` table.
+ * server component needs to frame a page (the `{slug}-meta.json` tier). A real
+ * DB serves this from `cities` + `city_snapshot` without touching the
+ * `listings` table.
  */
 export interface CityMeta {
   slug: string;
@@ -108,10 +108,25 @@ export interface CityMeta {
   priceCap: number;
 }
 
-export interface CityDataset extends CityMeta {
+/**
+ * The materialised aggregate cube for a city snapshot (the `{slug}-aggregates.json`
+ * tier): the city-wide totals, the neighbourhood summary list for the choropleth,
+ * and the pre-baked per-neighbourhood cubes. Every sidebar card and the default
+ * (unfiltered) choropleth/hex read from here — an O(1) lookup, no listings parse.
+ */
+export interface CityAggregates {
   cityAggregates: ScopeAggregates;
   neighbourhoods: Neighbourhood[];
   neighbourhoodAggregates: Record<string, ScopeAggregates>;
+}
+
+/**
+ * The whole city snapshot, pre-split. This composite is the producer/build input
+ * and the shape of the legacy monolithic `{slug}.json`; the running app never
+ * loads it whole — the static adapter reads the three tiers (meta, aggregates,
+ * listings) independently. Retained for the split script and whole-city fixtures.
+ */
+export interface CityDataset extends CityMeta, CityAggregates {
   listings: Listing[];
 }
 

@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { cacheLife } from "next/cache";
 
 import type {
-  CityDataset,
+  CityAggregates,
   CityIndexEntry,
   CityMeta,
   Listing,
@@ -29,7 +29,9 @@ import type {
   SnapshotRef,
 } from "./port";
 
-const DATA_DIR = join(process.cwd(), "data", "json");
+// Served at `/data/` too, so the client map/browse can `fetch()` the same files
+// the server reads here from disk. See `scripts/split-city-data.ts`.
+const DATA_DIR = join(process.cwd(), "public", "data");
 
 async function readJson<T>(filename: string): Promise<T | null> {
   try {
@@ -40,37 +42,39 @@ async function readJson<T>(filename: string): Promise<T | null> {
   }
 }
 
-/**
- * Load the full per-city dataset. Cached and snapshot-immutable, so every other
- * read derives from this one cached parse. `snapshotId` is accepted for port
- * parity but ignored — the static source ships only the latest snapshot.
- */
-async function loadDataset(slug: string): Promise<CityDataset | null> {
+// --- Tiered, snapshot-immutable parses -------------------------------------
+// Each tier is cached independently, so a read only pays for the slice it needs:
+// a KPI count or the snapshot label never parses the 20 MB+ listings array.
+
+/** Framing tier: name, snapshot label, currency, bbox, price scale, … */
+async function loadMeta(slug: string): Promise<CityMeta | null> {
   "use cache";
   cacheLife("max");
-  return readJson<CityDataset>(`${slug}.json`);
+  return readJson<CityMeta>(`${slug}-meta.json`);
 }
 
-function toCityMeta(dataset: CityDataset): CityMeta {
-  return {
-    slug: dataset.slug,
-    name: dataset.name,
-    country: dataset.country,
-    frame: dataset.frame,
-    snapshotLabel: dataset.snapshotLabel,
-    currency: dataset.currency,
-    bbox: dataset.bbox,
-    center: dataset.center,
-    hexEnabled: dataset.hexEnabled,
-    priceScale: dataset.priceScale,
-    priceCap: dataset.priceCap,
-  };
+/** Materialised cube: city + per-neighbourhood aggregates + neighbourhood list. */
+async function loadAggregates(slug: string): Promise<CityAggregates | null> {
+  "use cache";
+  cacheLife("max");
+  return readJson<CityAggregates>(`${slug}-aggregates.json`);
 }
 
-/** Narrow the dataset's listings to the active scope (city-wide or one nb). */
-function scopeListings(dataset: CityDataset, scope: Scope): Listing[] {
-  if (scope.type === "city") return dataset.listings;
-  return dataset.listings.filter((l) => l.neighbourhoodId === scope.id);
+/**
+ * Computed tier: the full listings array. Cached like the others (immutable
+ * snapshot), but only the on-demand recompute/browse reads touch it — never the
+ * default scene render, which is served entirely from meta + the cube.
+ */
+async function loadListings(slug: string): Promise<Listing[] | null> {
+  "use cache";
+  cacheLife("max");
+  return readJson<Listing[]>(`${slug}-listings.json`);
+}
+
+/** Narrow a listings array to the active scope (city-wide or one nb). */
+function scopeListings(listings: readonly Listing[], scope: Scope): Listing[] {
+  if (scope.type === "city") return [...listings];
+  return listings.filter((l) => l.neighbourhoodId === scope.id);
 }
 
 async function listCities(): Promise<CityIndexEntry[]> {
@@ -80,18 +84,17 @@ async function listCities(): Promise<CityIndexEntry[]> {
 }
 
 async function getCityMeta(slug: string): Promise<CityMeta | null> {
-  const dataset = await loadDataset(slug);
-  return dataset ? toCityMeta(dataset) : null;
+  return loadMeta(slug);
 }
 
 async function listSnapshots(slug: string): Promise<SnapshotRef[]> {
-  const dataset = await loadDataset(slug);
-  if (!dataset) return [];
+  const meta = await loadMeta(slug);
+  if (!meta) return [];
   return [
     {
       id: `${slug}-latest`,
       citySlug: slug,
-      label: dataset.snapshotLabel,
+      label: meta.snapshotLabel,
       capturedAt: "",
     },
   ];
@@ -106,40 +109,40 @@ async function getBoundaries(
 }
 
 async function getNeighbourhoods(slug: string): Promise<Neighbourhood[]> {
-  const dataset = await loadDataset(slug);
-  return dataset?.neighbourhoods ?? [];
+  const cube = await loadAggregates(slug);
+  return cube?.neighbourhoods ?? [];
 }
 
 async function getNeighbourhood(
   slug: string,
   id: string,
 ): Promise<Neighbourhood | undefined> {
-  const dataset = await loadDataset(slug);
-  return dataset ? selectNeighbourhood(dataset, id) : undefined;
+  const cube = await loadAggregates(slug);
+  return cube ? selectNeighbourhood(cube, id) : undefined;
 }
 
 async function getListing(
   slug: string,
   id: number,
 ): Promise<Listing | undefined> {
-  const dataset = await loadDataset(slug);
-  return dataset ? selectListingById(dataset, id) : undefined;
+  const listings = await loadListings(slug);
+  return listings ? selectListingById(listings, id) : undefined;
 }
 
 async function getScopeAggregates(
   slug: string,
   scope: Scope,
 ): Promise<ScopeAggregates | null> {
-  const dataset = await loadDataset(slug);
-  return dataset ? selectScopeAggregates(dataset, scope) : null;
+  const cube = await loadAggregates(slug);
+  return cube ? selectScopeAggregates(cube, scope) : null;
 }
 
 async function getListingsForScope(
   slug: string,
   scope: Scope,
 ): Promise<Listing[]> {
-  const dataset = await loadDataset(slug);
-  return dataset ? scopeListings(dataset, scope) : [];
+  const listings = await loadListings(slug);
+  return listings ? scopeListings(listings, scope) : [];
 }
 
 async function getFilteredAggregates(
@@ -147,10 +150,10 @@ async function getFilteredAggregates(
   scope: Scope,
   filters: ListingFilters,
 ): Promise<ScopeAggregates | null> {
-  const dataset = await loadDataset(slug);
-  if (!dataset) return null;
+  const listings = await loadListings(slug);
+  if (!listings) return null;
   return computeAggregates(
-    filterListings(scopeListings(dataset, scope), filters),
+    filterListings(scopeListings(listings, scope), filters),
   );
 }
 
@@ -161,10 +164,10 @@ async function queryListings(
   sort: SortKey,
   page?: ListingQueryPage,
 ): Promise<ListingPage> {
-  const dataset = await loadDataset(slug);
-  if (!dataset) return { items: [], total: 0 };
+  const listings = await loadListings(slug);
+  if (!listings) return { items: [], total: 0 };
   const matched = sortListings(
-    filterListings(scopeListings(dataset, scope), filters),
+    filterListings(scopeListings(listings, scope), filters),
     sort,
   );
   const items = page
@@ -174,10 +177,12 @@ async function queryListings(
 }
 
 /**
- * The current production source: per-city static JSON in `data/json`, read with
- * Next's `"use cache"` on the snapshot-immutable parses. This is the behaviour
- * the app shipped before the seam existed — now reachable only through the port.
- */
+ * The current production source: per-city static JSON in `public/data`, split
+ * into usage tiers (meta / aggregates / listings) and read with Next's
+ * `"use cache"` on each snapshot-immutable parse. The O(1) materialised reads
+ * (meta, cube) never load the listings array; only the computed reads do.
+
+*/
 export const staticJsonRepository: CityRepository = {
   listCities,
   listSnapshots,
