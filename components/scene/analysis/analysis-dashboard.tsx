@@ -7,6 +7,7 @@ import type { Scope } from "@/data/types";
 import { useCityListings } from "@/components/scene/use-city-listings";
 
 import { AnalysisCards } from "./analysis-cards";
+import { AnalysisCardsSkeleton } from "./analysis-cards-skeleton";
 import { FilterPanel } from "./filter-panel";
 import { SidebarFoot } from "./sidebar-foot";
 import { useFilters, type FilterBounds } from "./use-filters";
@@ -62,6 +63,12 @@ export function AnalysisDashboard({
   }, [listings, scope, filters, isDefault, key]);
 
   const pending = !isDefault && filtered?.key !== key;
+  // Cold filtered path (e.g. a deep-linked/refreshed URL with active filters):
+  // we have no real result yet, and the server's `defaultAggregates` are the
+  // *wrong* numbers for this view — show a skeleton instead of flashing them.
+  // Interactive filter changes keep `filtered` non-null, so they fall through to
+  // the stale-while-revalidate path below rather than flashing a skeleton.
+  const showSkeleton = !isDefault && filtered === null;
   // Default view → pre-baked; otherwise the latest filtered result, falling back
   // to the default until the first recompute resolves.
   const aggregates =
@@ -79,7 +86,11 @@ export function AnalysisDashboard({
         onPriceChange={setPriceRange}
         onReset={reset}
       />
-      <AnalysisCards aggregates={aggregates} currency={currency} />
+      {showSkeleton ? (
+        <AnalysisCardsSkeleton />
+      ) : (
+        <AnalysisCards aggregates={aggregates} currency={currency} />
+      )}
       <SidebarFoot />
     </div>
   );

@@ -158,3 +158,40 @@ describe("computeAggregates", () => {
     expect(computeAggregates([]).medianPrice).toBeNull();
   });
 });
+
+describe("computeAggregates › priceHistogram", () => {
+  it("is empty for no listings", () => {
+    expect(computeAggregates([]).priceHistogram).toEqual([]);
+  });
+
+  it("collapses to a single bin when every price is equal", () => {
+    const listings = Array.from({ length: 3 }, () =>
+      makeListing({ price: 75 }),
+    );
+    expect(computeAggregates(listings).priceHistogram).toEqual([
+      { x0: 75, x1: 75, count: 3 },
+    ]);
+  });
+
+  it("produces 20 contiguous equal-width bins with the max clamped into the last", () => {
+    // prices 0,5,…,100 → lo=0, hi=100, width=5. Each 5k lands left-closed in bin
+    // k; hi (100) clamps into the last bin alongside 95.
+    const prices = Array.from({ length: 21 }, (_, i) => i * 5);
+    const hist = computeAggregates(
+      prices.map((price) => makeListing({ price })),
+    ).priceHistogram;
+
+    expect(hist).toHaveLength(20);
+    // edges
+    expect(hist[0]).toMatchObject({ x0: 0, x1: 5 });
+    expect(hist[19]).toMatchObject({ x0: 95, x1: 100 });
+    // contiguity: each bin's upper edge is the next bin's lower edge
+    for (let i = 0; i < hist.length - 1; i++) {
+      expect(hist[i].x1).toBe(hist[i + 1].x0);
+    }
+    // top-edge clamp: 95 and 100 both fall in the final bin
+    expect(hist[19].count).toBe(2);
+    // every price is counted exactly once
+    expect(hist.reduce((sum, b) => sum + b.count, 0)).toBe(prices.length);
+  });
+});

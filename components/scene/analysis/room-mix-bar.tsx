@@ -60,7 +60,7 @@ export function RoomMixBar({ aggregates }: { aggregates: ScopeAggregates }) {
             {segments.map((s) => (
               <li key={s.type} className="flex items-center gap-snug">
                 <span
-                  className={`size-2 shrink-0 rounded-[2px] ${s.dot}`}
+                  className={`size-2 shrink-0 rounded-xs ${s.dot}`}
                   aria-hidden="true"
                 />
                 <span className="flex-1 type-caption text-muted-foreground">

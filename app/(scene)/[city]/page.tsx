@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { CityScene } from "@/components/scene/city-scene";
@@ -9,6 +10,26 @@ export async function generateStaticParams() {
   return cities.map((city) => ({
     city: city.slug,
   }));
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ city: string }>;
+}): Promise<Metadata> {
+  const { city } = await params;
+  const meta = await getCityMeta(city);
+  if (!meta) return {};
+  return {
+    title: `Short-term rentals in ${meta.name}, ${meta.country} — Plainsight`,
+    description: `Where short-term rentals are in ${meta.name}, what they cost, and who controls the market. Based on the ${meta.snapshotLabel} Inside Airbnb snapshot.`,
+    // Filters live in the query string (shareable for humans) but each
+    // `?rooms=…&price=…` permutation is the same indexable page — canonicalise
+    // them all onto the bare city URL so crawlers don't index thin filter
+    // variants (faceted-navigation duplication). Route groups don't affect the
+    // path, so the canonical is `/<slug>`.
+    alternates: { canonical: `/${meta.slug}` },
+  };
 }
 
 export default async function CityPage({

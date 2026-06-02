@@ -14,6 +14,11 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
+  // Resolves relative `alternates.canonical` paths (set per-city) to absolute
+  // URLs. Override via NEXT_PUBLIC_SITE_URL in deployed environments.
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
+  ),
   title: "Plainsight — Explore short-term rental markets",
   description:
     "Where short-term rentals are, what they cost, and who controls the market. Built on dated public Inside Airbnb snapshots.",

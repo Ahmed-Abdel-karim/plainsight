@@ -6,18 +6,10 @@ import {
   type RoomType,
   type ScopeAggregates,
 } from "@/data/contract";
+import { bin, max, mean, median, min, rollup } from "d3-array";
 
 const TOP_HOSTS_LIMIT = 5;
 const PRICE_HISTOGRAM_BINS = 20;
-
-function median(sortedAscending: readonly number[]): number | null {
-  const n = sortedAscending.length;
-  if (n === 0) return null;
-  const mid = Math.floor(n / 2);
-  return n % 2 === 0
-    ? (sortedAscending[mid - 1] + sortedAscending[mid]) / 2
-    : sortedAscending[mid];
-}
 
 function emptyRoomMix(): Record<RoomType, number> {
   return ROOM_TYPES.reduce(
@@ -33,25 +25,28 @@ function priceHistogram(
   prices: readonly number[],
 ): ScopeAggregates["priceHistogram"] {
   if (prices.length === 0) return [];
-  const lo = prices[0];
-  const hi = prices[prices.length - 1];
+  const lo = min(prices) as number;
+  const hi = max(prices) as number;
   if (lo === hi) return [{ x0: lo, x1: hi, count: prices.length }];
 
+  // Fixed-count, equal-width bins. We pass d3 explicit interior thresholds (not
+  // a bin *count*) so it yields exactly PRICE_HISTOGRAM_BINS uniform bins rather
+  // than its "nice" tick thresholds. d3 does the bucket assignment; the edges are
+  // labelled from the same canonical `lo + i*width` the thresholds derive from,
+  // so the output is identical to the prior hand-rolled binning.
   const width = (hi - lo) / PRICE_HISTOGRAM_BINS;
-  const bins = Array.from({ length: PRICE_HISTOGRAM_BINS }, (_, i) => ({
-    x0: lo + i * width,
-    x1: lo + (i + 1) * width,
-    count: 0,
-  }));
-  for (const price of prices) {
-    // Clamp the top edge into the last bin (price === hi).
-    const idx = Math.min(
-      PRICE_HISTOGRAM_BINS - 1,
-      Math.floor((price - lo) / width),
-    );
-    bins[idx].count += 1;
-  }
-  return bins;
+  const thresholds = Array.from(
+    { length: PRICE_HISTOGRAM_BINS - 1 },
+    (_, i) => lo + (i + 1) * width,
+  );
+  return bin<number, number>()
+    .domain([lo, hi])
+    .thresholds(thresholds)(prices)
+    .map((b, i) => ({
+      x0: lo + i * width,
+      x1: lo + (i + 1) * width,
+      count: b.length,
+    }));
 }
 
 /**
@@ -74,17 +69,16 @@ export function computeAggregates(
   const listingCount = listings.length;
   const meetsFloor = listingCount >= MIN_LISTING_FLOOR;
 
-  const prices = listings.map((l) => l.price).sort((a, b) => a - b);
+  // d3.median interpolates the two middle values for even counts — the same
+  // result as the prior sort-and-pick — and returns undefined for an empty set.
+  const medianPrice = median(listings, (l) => l.price) ?? null;
 
   const roomTypeMix = emptyRoomMix();
   for (const listing of listings) roomTypeMix[listing.roomType] += 1;
 
-  const reviewed = listings.filter((l) => l.reviewsPerMonth !== null);
-  const avgReviewsPerMonth =
-    reviewed.length === 0
-      ? null
-      : reviewed.reduce((sum, l) => sum + (l.reviewsPerMonth ?? 0), 0) /
-        reviewed.length;
+  // d3.mean ignores null entries, so this is the mean over REVIEWED listings
+  // only; undefined (none reviewed) collapses to null per the contract.
+  const avgReviewsPerMonth = mean(listings, (l) => l.reviewsPerMonth) ?? null;
 
   // Concentration metrics are suppressed below the floor (contract).
   let multiListingHostShare: number | null = null;
@@ -95,20 +89,18 @@ export function computeAggregates(
     ).length;
     multiListingHostShare = multiCount / listingCount;
 
-    const byHost = new Map<
-      number,
-      { hostId: number; hostName: string | null; count: number }
-    >();
-    for (const listing of listings) {
-      const entry = byHost.get(listing.hostId);
-      if (entry) entry.count += 1;
-      else
-        byHost.set(listing.hostId, {
-          hostId: listing.hostId,
-          hostName: listing.hostName,
-          count: 1,
-        });
-    }
+    // Group by host; the first listing seen for a host carries its name. Both
+    // the rollup's insertion order and the stable sort below match the prior
+    // hand-rolled Map, so ties resolve identically.
+    const byHost = rollup(
+      listings,
+      (group) => ({
+        hostId: group[0].hostId,
+        hostName: group[0].hostName,
+        count: group.length,
+      }),
+      (l) => l.hostId,
+    );
     topHosts = [...byHost.values()]
       .sort((a, b) => b.count - a.count)
       .slice(0, TOP_HOSTS_LIMIT);
@@ -116,12 +108,12 @@ export function computeAggregates(
 
   return {
     listingCount,
-    medianPrice: median(prices),
+    medianPrice,
     multiListingHostShare,
     avgReviewsPerMonth,
     meetsFloor,
     roomTypeMix,
     topHosts,
-    priceHistogram: priceHistogram(prices),
+    priceHistogram: priceHistogram(listings.map((l) => l.price)),
   };
 }
