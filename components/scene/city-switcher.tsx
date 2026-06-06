@@ -10,28 +10,48 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { getCitiesData, type CityData } from "@/data";
+import { AsyncBoundary } from "../utils/async-boundary";
 
 /**
- * Self-fetching city switcher. The full `cities` index is needed only to populate
- * the dropdown (closed by default), so this streams behind a Suspense boundary —
- * the trigger title shows instantly via `CitySwitcherFallback` (from `cityName`,
+ * Self-fetching city switcher. The full `cities` index is needed only to fill
+ * the dropdown (closed by default), so it streams behind a Suspense boundary —
+ * the trigger title shows instantly from the fallback (derived from `citySlug`,
  * already on hand), so there's no layout shift while the index loads.
  */
-export async function CitySwitcher({ citySlug }: { citySlug: string }) {
-  const cities = await getCitiesData();
-  return <CitySwitcherUi cities={cities} citySlug={citySlug} />;
+export function CitySwitcher({ citySlug }: { citySlug: string }) {
+  return (
+    <AsyncBoundary
+      data={getCitiesData}
+      Component={({ data: cities }) => (
+        <CitySwitcherDropdown
+          cities={cities}
+          cityName={
+            cities.find(({ slug }) => slug === citySlug)?.name ?? citySlug
+          }
+          citySlug={citySlug}
+        />
+      )}
+      fallback={
+        <CitySwitcherDropdown
+          cities={[]}
+          cityName={citySlug}
+          citySlug={citySlug}
+        />
+      }
+    />
+  );
 }
 
 /** Presentational dropdown of cities with the active one highlighted. */
-export function CitySwitcherUi({
+function CitySwitcherDropdown({
   cities,
+  cityName,
   citySlug,
 }: {
   cities: CityData[];
+  cityName: string;
   citySlug: string;
 }) {
-  const currentCity = cities.find(({ slug }) => slug === citySlug);
-
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -39,8 +59,8 @@ export function CitySwitcherUi({
           variant="ghost"
           className="group -ml-inline justify-start gap-inline"
         >
-          <h1 className="m-0 type-title text-foreground">
-            {currentCity?.name ?? citySlug}
+          <h1 className="m-0 type-title text-foreground capitalize">
+            {cityName}
           </h1>
           <ChevronDownIcon
             aria-hidden="true"
@@ -77,22 +97,5 @@ export function CitySwitcherUi({
         })}
       </DropdownMenuContent>
     </DropdownMenu>
-  );
-}
-
-/** Title-only stand-in shown while the city index streams in — layout-matched. */
-export function CitySwitcherFallback({ cityName }: { cityName: string }) {
-  return (
-    <Button
-      variant="ghost"
-      aria-hidden="true"
-      className="group -ml-inline justify-start gap-inline"
-    >
-      <h1 className="m-0 type-title text-foreground">{cityName}</h1>
-      <ChevronDownIcon
-        aria-hidden="true"
-        className="size-4 text-muted-foreground"
-      />
-    </Button>
   );
 }

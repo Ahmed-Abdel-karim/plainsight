@@ -109,6 +109,38 @@ describe("sortListings", () => {
       sortListings(listings, "review_count_desc").map((l) => l.numberOfReviews),
     ).toEqual([50, 12, 5]);
   });
+
+  it("breaks ties by listing id for a deterministic order", () => {
+    // Equal price → ascending id; equal review count → ascending id.
+    const listings = [
+      makeListing({ id: 30, price: 100, numberOfReviews: 5 }),
+      makeListing({ id: 10, price: 100, numberOfReviews: 5 }),
+      makeListing({ id: 20, price: 100, numberOfReviews: 5 }),
+    ];
+    expect(sortListings(listings, "price_asc").map((l) => l.id)).toEqual([
+      10, 20, 30,
+    ]);
+    expect(sortListings(listings, "price_desc").map((l) => l.id)).toEqual([
+      10, 20, 30,
+    ]);
+    expect(
+      sortListings(listings, "review_count_desc").map((l) => l.id),
+    ).toEqual([10, 20, 30]);
+  });
+
+  it("sorts a structural subset (Browse point properties)", () => {
+    // Only the SortableListing fields — proves the comparator is reused by the
+    // Browse list, not duplicated for BrowsePointProperties.
+    const rows = [
+      { id: 3, price: 200, reviewsPerMonth: 1, numberOfReviews: 2 },
+      { id: 1, price: 50, reviewsPerMonth: 4, numberOfReviews: 9 },
+      { id: 2, price: 100, reviewsPerMonth: null, numberOfReviews: 5 },
+    ];
+    expect(sortListings(rows, "price_asc").map((r) => r.id)).toEqual([1, 2, 3]);
+    expect(sortListings(rows, "reviews_desc").map((r) => r.id)).toEqual([
+      1, 3, 2,
+    ]);
+  });
 });
 
 describe("computeAggregates", () => {

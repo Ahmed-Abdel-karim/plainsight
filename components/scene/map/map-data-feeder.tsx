@@ -1,12 +1,7 @@
-import {
-  getCityBoundaries,
-  getCityNeighbourhoodCount,
-  type BBox,
-  type LngLat,
-  type PriceScale,
-} from "@/data";
+import { CityMeta, getCityBoundaries, getCityNeighbourhoodCount } from "@/data";
 
 import { MapDataSync } from "./map-data-sync";
+import { AsyncBoundary } from "../../utils/async-boundary";
 
 /**
  * Co-located fetch for the persistent map's per-city tier: the ~1.8 MB
@@ -16,36 +11,39 @@ import { MapDataSync } from "./map-data-sync";
  * or switcher. The `Promise.all` here is local to the map's own tier; the map
  * tolerates late arrival by reacting to the shared store via `MapDataSync`.
  */
-export async function MapDataFeeder({
-  citySlug,
-  cityName,
-  bbox,
-  center,
-  priceScale,
-  currency,
+export function MapDataFeeder({
+  cityMeta: {
+    slug: citySlug,
+    name: cityName,
+    bbox,
+    center,
+    priceScale,
+    currency,
+  },
 }: {
-  citySlug: string;
-  cityName: string;
-  bbox: BBox;
-  center: LngLat;
-  priceScale: PriceScale;
-  currency: string;
+  cityMeta: CityMeta;
 }) {
-  const [boundaries, neighbourhoodCount] = await Promise.all([
-    getCityBoundaries(citySlug),
-    getCityNeighbourhoodCount(citySlug),
-  ]);
-
   return (
-    <MapDataSync
-      slug={citySlug}
-      cityName={cityName}
-      boundaries={boundaries}
-      bbox={bbox}
-      center={center}
-      neighbourhoodCount={neighbourhoodCount}
-      priceScale={priceScale}
-      currency={currency}
+    <AsyncBoundary
+      data={() =>
+        Promise.all([
+          getCityBoundaries(citySlug),
+          getCityNeighbourhoodCount(citySlug),
+        ])
+      }
+      Component={({ data: [boundaries, neighbourhoodCount] }) => (
+        <MapDataSync
+          slug={citySlug}
+          cityName={cityName}
+          boundaries={boundaries}
+          bbox={bbox}
+          center={center}
+          neighbourhoodCount={neighbourhoodCount}
+          priceScale={priceScale}
+          currency={currency}
+        />
+      )}
+      fallback={null}
     />
   );
 }

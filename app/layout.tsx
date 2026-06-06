@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
@@ -47,10 +46,8 @@ export default function RootLayout({
           defaultTheme="dark"
           enableSystem={false}
         >
-          <NuqsAdapter>
-            <ThemeToggle />
-            {children}
-          </NuqsAdapter>
+          <ThemeToggle />
+          {children}
         </ThemeProvider>
       </body>
     </html>

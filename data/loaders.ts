@@ -90,10 +90,14 @@ export async function getSidebarScopeAggregates(
   citySlug: string,
   scopeType: SidebarScopeType,
   scopeId?: string,
-): Promise<ScopeAggregates | null> {
+): Promise<ScopeAggregates> {
   const scope = toScope(scopeType, scopeId);
+  if (!scope) return unavailableAggregates;
 
-  return scope ? getRepository().getScopeAggregates(citySlug, scope) : null;
+  return (
+    (await getRepository().getScopeAggregates(citySlug, scope)) ??
+    unavailableAggregates
+  );
 }
 
 /**
@@ -105,9 +109,9 @@ export async function getSidebarScopeAggregates(
  */
 export async function getSidebarFilterBounds(
   citySlug: string,
-): Promise<{ min: number; max: number } | null> {
+): Promise<{ min: number; max: number }> {
   const meta = await getRepository().getCityMeta(citySlug);
-  if (!meta) return null;
+  if (!meta) return { min: 0, max: 1000 };
 
   const [min, max] = defaultFilters(meta).priceRange;
   return { min, max };
@@ -117,12 +121,12 @@ export async function getSidebarListingCount(
   citySlug: string,
   scopeType: SidebarScopeType,
   scopeId?: string,
-): Promise<number | null> {
+): Promise<number> {
   const aggregates = await getSidebarScopeAggregates(
     citySlug,
     scopeType,
     scopeId,
   );
 
-  return aggregates?.listingCount ?? null;
+  return aggregates.listingCount;
 }

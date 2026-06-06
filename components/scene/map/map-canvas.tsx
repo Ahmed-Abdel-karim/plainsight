@@ -15,21 +15,33 @@ import { useDebouncedCallback } from "use-debounce";
 
 import { toBounds } from "@/lib/geo";
 import { zoomToResolution } from "@/lib/hex/resolution";
-import { HEX_FILL_LAYER_ID } from "./constants";
+import {
+  FILL_LAYER_ID,
+  HEX_FILL_LAYER_ID,
+  POINTS_CIRCLE_LAYER_ID,
+} from "./constants";
 import { OPENFREEMAP_STYLE } from "./map-styles";
 import { NeighbourhoodsLayers } from "./neighbourhoods";
 import { HexLayer } from "./hex/hex-layer";
 import { HexInspect, type HexInspectState } from "./hex/hex-inspect";
 import type { HexFeatureProps } from "./hex/hex-layer";
-import { useHexLayer } from "./hex/use-hex-layer";
+import { PointsLayer } from "./points/points-layer";
+import { pointsFilterExpression } from "./points/points-filter";
+import { usePointsFeatureState } from "./points/use-points-layer";
 import { useMapControls } from "./map-controls";
 import {
-  useHexCells,
+  useHexResolution,
+  useHoveredListingId,
   useMapActions,
   useMapCity,
   useMapStatus,
   useMapStore,
 } from "./map-store";
+import { useListingsActions, useListingsHexCells } from "../listings-store";
+import { useFilters } from "../analysis/use-filters";
+import { useLens } from "../use-lens";
+import { useScope } from "../use-scope";
+import { useBrowsePoints } from "../browse/use-browse-points";
 import { useResolvedTheme } from "../../theme/theme-provider";
 import MapSkeleton from "./map-skeleton";
 
@@ -38,10 +50,17 @@ const MAX_BOUNDS_PADDING_RATIO = 0.3; // Pad maxBounds by 25% to allow some room
 export function MapCanvas() {
   const mapRef = useRef<MapRef | null>(null);
   const { fitTo, styleBasemapPlaceLabels } = useMapControls();
-  const { setMapRef, setMapStatus, setHexResolution } = useMapActions();
+  const { setMapRef, setMapStatus, setHexResolution, setHoveredListing } =
+    useMapActions();
   const status = useMapStatus();
   const city = useMapCity();
   const theme = useResolvedTheme();
+
+  // Lens + Browse dot layer state. The dots replace the hex fill in Browse,
+  // GPU-filtered by the same price/room state the list uses (FR-006).
+  const { isBrowse, selectedId, selectListing } = useLens();
+  const { scope, toggleNeighbourhood } = useScope();
+  const hoveredListingId = useHoveredListingId();
   const bounds = useMemo(() => (city ? toBounds(city.bbox) : null), [city]);
   const maxBounds = useMemo(
     () => (city ? toBounds(city.bbox, MAX_BOUNDS_PADDING_RATIO) : undefined),
@@ -49,8 +68,9 @@ export function MapCanvas() {
   );
   const mapStyle = OPENFREEMAP_STYLE[theme];
 
-  // The hex price map is the default view: acquire the worker eagerly and feed
-  // the store the cells for the active filters + zoom-derived resolution.
+  // Hex cells are computed by the listings worker store (the effects below feed
+  // it) and read here as a selector — the canvas only renders them.
+  const hexCells = useListingsHexCells();
   const hexBounds = useMemo(
     () =>
       city
@@ -58,8 +78,74 @@ export function MapCanvas() {
         : { min: 0, max: 0 },
     [city],
   );
-  useHexLayer({ slug: city?.slug ?? "", bounds: hexBounds, enabled: !!city });
-  const hexCells = useHexCells();
+
+  // Browse dots read the SAME filter state as the hex/cards (shared nuqs
+  // `price`/`rooms`), interpreted against the city price bounds — so the dots and
+  // the list can never disagree on the matching set (FR-006/SC-003).
+  const { filters } = useFilters(hexBounds);
+  const dotFilter = useMemo(
+    () => pointsFilterExpression(filters, scope),
+    [filters, scope],
+  );
+
+  // Drive the listings worker store. The map is the eager owner: it adopts the
+  // city (idempotent — the sidebar cards do the same so neither races an unset
+  // slug) and recomputes the price hexes whenever the filters or zoom-derived
+  // resolution change. Cells land in the store and are read back as `hexCells`.
+  const resolution = useHexResolution();
+  const { syncCity, requestHexes } = useListingsActions();
+  const citySlug = city?.slug;
+  useEffect(() => {
+    if (citySlug) syncCity(citySlug);
+  }, [syncCity, citySlug]);
+  useEffect(() => {
+    if (citySlug) requestHexes(filters, resolution);
+  }, [requestHexes, citySlug, filters, resolution]);
+
+  const { collection: browsePoints } = useBrowsePoints(city?.slug ?? "", {
+    enabled: isBrowse,
+  });
+  usePointsFeatureState({
+    hoveredId: hoveredListingId,
+    selectedId,
+    enabled: isBrowse,
+  });
+
+  // Browse dot interactions: hover bridges to the list (FR-007, source "map" so
+  // the list scrolls), click opens the detail drawer (FR-008/US3).
+  const handlePointHover = useCallback(
+    (event: MapLayerMouseEvent) => {
+      const dot = event.features?.find(
+        (feature) => feature.layer.id === POINTS_CIRCLE_LAYER_ID,
+      );
+      setHoveredListing(typeof dot?.id === "number" ? dot.id : null, "map");
+    },
+    [setHoveredListing],
+  );
+  const clearPointHover = useCallback(
+    () => setHoveredListing(null, "map"),
+    [setHoveredListing],
+  );
+  // A Browse click prefers a dot (open its detail) over the boundary beneath it;
+  // clicking a boundary with no dot narrows the scope to that neighbourhood, and
+  // clicking the active one again clears it (FR-008 / FR-013).
+  const handleBrowseClick = useCallback(
+    (event: MapLayerMouseEvent) => {
+      const dot = event.features?.find(
+        (feature) => feature.layer.id === POINTS_CIRCLE_LAYER_ID,
+      );
+      if (dot && typeof dot.id === "number") {
+        selectListing(dot.id);
+        return;
+      }
+      const boundary = event.features?.find(
+        (feature) => feature.layer.id === FILL_LAYER_ID,
+      );
+      const nbhdId = boundary?.properties?.id;
+      if (typeof nbhdId === "string") toggleNeighbourhood(nbhdId);
+    },
+    [selectListing, toggleNeighbourhood],
+  );
 
   // Per-cell inspect (US4): hover (desktop) / tap (touch) a hex → median + count.
   const [inspect, setInspect] = useState<HexInspectState | null>(null);
@@ -143,12 +229,16 @@ export function MapCanvas() {
         keyboard
         attributionControl={false}
         style={{ height: "100%", width: "100%" }}
-        interactiveLayerIds={[HEX_FILL_LAYER_ID]}
+        interactiveLayerIds={
+          isBrowse
+            ? [POINTS_CIRCLE_LAYER_ID, FILL_LAYER_ID]
+            : [HEX_FILL_LAYER_ID]
+        }
         onLoad={handleLoad}
         onMoveEnd={handleMoveEnd}
-        onMouseMove={handleHexHover}
-        onMouseLeave={clearInspect}
-        onClick={handleHexTap}
+        onMouseMove={isBrowse ? handlePointHover : handleHexHover}
+        onMouseLeave={isBrowse ? clearPointHover : clearInspect}
+        onClick={isBrowse ? handleBrowseClick : handleHexTap}
         onStyleData={() => styleBasemapPlaceLabels(theme)}
         onError={() => setMapStatus("error")}
       >
@@ -156,7 +246,16 @@ export function MapCanvas() {
           cells={hexCells}
           breaks={city.priceScale.breaks}
           theme={theme}
+          visible={!isBrowse}
         />
+        {browsePoints && (
+          <PointsLayer
+            collection={browsePoints}
+            theme={theme}
+            filter={dotFilter}
+            visible={isBrowse}
+          />
+        )}
         <NeighbourhoodsLayers boundaries={city.boundaries} theme={theme} />
         <NavigationControl
           position="top-left"
@@ -165,7 +264,9 @@ export function MapCanvas() {
         />
         <AttributionControl compact position="bottom-right" />
       </Map>
-      {inspect && <HexInspect {...inspect} currency={city.currency} />}
+      {!isBrowse && inspect && (
+        <HexInspect {...inspect} currency={city.currency} />
+      )}
     </div>
   );
 }

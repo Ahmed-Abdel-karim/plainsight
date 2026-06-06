@@ -27,6 +27,8 @@ interface HexLayerProps {
   breaks: number[];
   /** Resolved theme from the canvas — recolours the ramp on toggle in place. */
   theme: Theme;
+  /** Hidden in the Browse lens (the dots take over); shown in Analyse (FR-006). */
+  visible?: boolean;
 }
 
 /** Turn an H3 cell into a closed GeoJSON polygon ring ([lng,lat], first==last). */
@@ -47,7 +49,12 @@ function cellToFeature(cell: HexCell): Feature<Polygon, HexFeatureProps> {
  * expression over the city's price breaks; a theme toggle only swaps the ramp
  * literals (no source rebuild, no worker recompute).
  */
-export function HexLayer({ cells, breaks, theme }: HexLayerProps) {
+export function HexLayer({
+  cells,
+  breaks,
+  theme,
+  visible = true,
+}: HexLayerProps) {
   const data = useMemo<FeatureCollection<Polygon, HexFeatureProps>>(
     () => ({ type: "FeatureCollection", features: cells.map(cellToFeature) }),
     [cells],
@@ -58,12 +65,13 @@ export function HexLayer({ cells, breaks, theme }: HexLayerProps) {
       id: HEX_FILL_LAYER_ID,
       type: "fill",
       source: HEX_SOURCE_ID,
+      layout: { visibility: visible ? "visible" : "none" },
       paint: {
         "fill-color": priceFillExpression(theme, breaks),
         "fill-opacity": HEX_FILL_OPACITY,
       },
     }),
-    [theme, breaks],
+    [theme, breaks, visible],
   );
 
   return (

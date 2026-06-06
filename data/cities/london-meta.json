@@ -1,0 +1,17 @@
+{
+  "slug": "london",
+  "name": "London",
+  "country": "United Kingdom",
+  "frame": "Strict licensing regime",
+  "snapshotLabel": " 9/2025",
+  "currency": "GBP",
+  "bbox": [-0.49676, 51.295937, 0.27896, 51.68263],
+  "center": [-0.1303347956606712, 51.50936826089945],
+  "hexEnabled": true,
+  "priceScale": {
+    "breaks": [67, 110, 162, 250],
+    "min": 7,
+    "max": 1100
+  },
+  "priceCap": 1100
+}

@@ -3,7 +3,8 @@
  * -----------------------------------------------------------------------------
  * Single source of truth shared by the build pipeline (producer) and the
  * frontend (consumer). The UI NEVER parses raw Inside Airbnb files; it only
- * reads the shapes below, emitted as static JSON to /public/data.
+ * reads the shapes below, emitted as static JSON to data/cities (served to the
+ * client via the /api/cities/... route handlers).
  *
  * Locked decisions:
  *  - multi-listing host = calculated_host_listings_count >= 2
@@ -28,7 +29,7 @@ export type RoomType =
   | "Shared room"
   | "Hotel room";
 
-export const ROOM_TYPES: readonly RoomType[] = [
+export const ROOM_TYPES: RoomType[] = [
   "Entire home/apt",
   "Private room",
   "Shared room",
@@ -55,6 +56,31 @@ export interface Listing {
   /** Precomputed H3 cell for the hex lens; null if hex layer disabled for the city. */
   h3?: string | null;
 }
+
+/**
+ * One Browse-tier point feature's properties — a `Listing` minus the analytics-
+ * only `h3`, carried in `data/cities/{slug}-points.geojson`. The same shape backs
+ * the map dots, the list rows, and the detail drawer. A structural subset of
+ * `Listing`, so `lib/filters` (filter + sort) runs over it unchanged. There is
+ * intentionally NO `availability` field — it is not in the dataset (research D3).
+ */
+export type BrowsePointProperties = Pick<
+  Listing,
+  | "id"
+  | "name"
+  | "price"
+  | "roomType"
+  | "neighbourhoodId"
+  | "hostName"
+  | "hostListingsCount"
+  | "reviewsPerMonth"
+  | "numberOfReviews"
+  | "minNights"
+  | "imageVariant"
+>;
+
+/** A Browse-tier GeoJSON point feature (`[lng, lat]` geometry + the row fields). */
+export type BrowsePoint = GeoJSON.Feature<GeoJSON.Point, BrowsePointProperties>;
 
 export interface ScopeAggregates {
   listingCount: number;

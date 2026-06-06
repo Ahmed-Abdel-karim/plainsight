@@ -1,6 +1,4 @@
-import { HexLegend } from "@/components/scene/map/hex/hex-legend";
 import { MapView } from "@/components/scene/map/map";
-import { MapLegend } from "@/components/scene/map-legend";
 
 /**
  * Persistent scene shell. This layout sits *above* the `[city]` dynamic segment
@@ -13,6 +11,11 @@ import { MapLegend } from "@/components/scene/map-legend";
  * sit side by side. On desktop only the sidebar (`hidden lg:flex`) and the map
  * `<section>` are in-flow grid items; the mobile drawer is `lg:hidden` and the
  * `MapDataSync` bridge renders nothing, so neither claims a grid cell.
+ *
+ * Only the WebGL canvas needs to persist across city navigation, so only `MapView`
+ * lives here. The lens tabs + legends are rendered by the `[city]` route (overlaid
+ * on this column via CSS) so they can read the lens/scope search params; the grid
+ * container is `relative` to anchor that absolutely-positioned chrome.
  */
 export default function SceneLayout({
   children,
@@ -28,10 +31,6 @@ export default function SceneLayout({
           className="bg-map-bg relative min-h-96 flex-1 overflow-hidden lg:min-h-0"
         >
           <MapView />
-          <div className="pointer-events-none absolute bottom-4 left-4 z-10 flex max-w-[calc(100%-2rem)] flex-col gap-2">
-            <HexLegend />
-            <MapLegend />
-          </div>
         </section>
       </div>
     </main>

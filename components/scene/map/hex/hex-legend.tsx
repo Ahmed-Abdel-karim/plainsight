@@ -2,6 +2,7 @@
 
 import { PRICE_RAMP } from "./hex-colors";
 import { useMapCity } from "../map-store";
+import { useLens } from "../../use-lens";
 import { useResolvedTheme } from "../../../theme/theme-provider";
 
 /** Compact currency label (e.g. "£149", "€198") — symbol, no fraction. */
@@ -38,7 +39,11 @@ function rampRanges(breaks: number[], currency: string): string[] {
 export function HexLegend() {
   const city = useMapCity();
   const theme = useResolvedTheme();
-  if (!city) return null;
+  const { isBrowse } = useLens();
+  // The hex price ramp is meaningless over the Browse dots — the room-type
+  // legend takes its place (FR-006). `useLens` is SSR-correct (the route reads
+  // the param), so this branches identically on server and first client render.
+  if (!city || isBrowse) return null;
 
   const { breaks } = city.priceScale;
   const ramp = PRICE_RAMP[theme];

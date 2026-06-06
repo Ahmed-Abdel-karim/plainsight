@@ -29,9 +29,10 @@ import type {
   SnapshotRef,
 } from "./port";
 
-// Served at `/data/` too, so the client map/browse can `fetch()` the same files
-// the server reads here from disk. See `scripts/split-city-data.ts`.
-const DATA_DIR = join(process.cwd(), "public", "data");
+// Server-only canonical store (NOT web-served — clients go through the
+// `/api/cities/...` route handlers). The same files this reads from disk are
+// served, with ETag/304, by `lib/data-endpoint.ts`. See `scripts/split-city-data.ts`.
+const DATA_DIR = join(process.cwd(), "data", "cities");
 
 async function readJson<T>(filename: string): Promise<T | null> {
   try {
@@ -177,7 +178,7 @@ async function queryListings(
 }
 
 /**
- * The current production source: per-city static JSON in `public/data`, split
+ * The current production source: per-city static JSON in `data/cities`, split
  * into usage tiers (meta / aggregates / listings) and read with Next's
  * `"use cache"` on each snapshot-immutable parse. The O(1) materialised reads
  * (meta, cube) never load the listings array; only the computed reads do.

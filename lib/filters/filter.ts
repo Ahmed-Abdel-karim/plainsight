@@ -1,19 +1,23 @@
 import type { Listing } from "@/data/contract";
 import type { ListingFilters } from "@/data/types";
 
+/** The fields the price/room-type filter reads. Both `Listing` and the Browse
+ * `BrowsePointProperties` satisfy it, so one predicate serves both paths. */
+export type FilterableListing = Pick<Listing, "roomType" | "price">;
+
 /**
  * Apply the active filter state to a listing array. Pure and isomorphic — the
- * SAME function backs the server `getFilteredAggregates` path and the client
- * live-recompute path, so the map and the charts can never disagree about what
- * "the filtered set" is.
+ * SAME function backs the server `getFilteredAggregates` path, the client
+ * live-recompute path, and the Browse list/dots, so they can never disagree
+ * about what "the filtered set" is. Generic over the row shape.
  *
  * - `roomTypes: []` means "all types" (no room-type constraint).
  * - `priceRange` is an inclusive `[min, max]` band in the city's currency.
  */
-export function filterListings(
-  listings: readonly Listing[],
+export function filterListings<T extends FilterableListing>(
+  listings: readonly T[],
   filters: ListingFilters,
-): Listing[] {
+): T[] {
   const [min, max] = filters.priceRange;
   const roomTypes = filters.roomTypes;
   const allRoomTypes = roomTypes.length === 0;

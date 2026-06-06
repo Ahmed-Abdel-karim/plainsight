@@ -5,7 +5,7 @@ import { create } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 
 import type { BBox, LngLat, NeighbourhoodBoundaries, PriceScale } from "@/data";
-import type { HexCell, HexResolution } from "@/lib/hex/types";
+import type { HexResolution } from "@/lib/hex/types";
 
 export type MapStatus = "loading" | "ready" | "error";
 
@@ -35,32 +35,44 @@ interface State {
   mapRef: MapRef | null;
   mapStatus: MapStatus;
   city: MapCityPayload | null;
-  /** Latest worker hex result for the active resolution + filters. */
-  hexCells: HexCell[];
   /** Current H3 resolution bucket, derived from the map zoom. */
   hexResolution: HexResolution;
+  /**
+   * Ephemeral hovered Browse listing id, shared between the sidebar list and the
+   * `ssr:false` map canvas (the two trees that must agree on the hover). Not
+   * URL-worthy — it changes every pointer move. `null` when nothing is hovered.
+   */
+  hoveredListingId: number | null;
+  /** Where the current hover originated, so the list only scrolls when the map
+   * drives the hover (and never fights the pointer when the list drives it). */
+  hoverSource: "list" | "map" | null;
 }
 
 interface Actions {
   setMapRef: (mapRef: MapRef | null) => void;
   setMapStatus: (mapStatus: MapStatus) => void;
   setCity: (city: MapCityPayload) => void;
-  setHexCells: (cells: HexCell[]) => void;
   setHexResolution: (resolution: HexResolution) => void;
+  setHoveredListing: (id: number | null, source: "list" | "map") => void;
 }
 
 export const useMapStore = create<State & { actions: Actions }>()((set) => ({
   mapRef: null,
   mapStatus: "loading",
   city: null,
-  hexCells: [],
   hexResolution: DEFAULT_HEX_RESOLUTION,
+  hoveredListingId: null,
+  hoverSource: null,
   actions: {
     setMapRef: (mapRef) => set({ mapRef }),
     setMapStatus: (mapStatus) => set({ mapStatus }),
     setCity: (city) => set({ city }),
-    setHexCells: (hexCells) => set({ hexCells }),
     setHexResolution: (hexResolution) => set({ hexResolution }),
+    setHoveredListing: (hoveredListingId, hoverSource) =>
+      set({
+        hoveredListingId,
+        hoverSource: hoveredListingId === null ? null : hoverSource,
+      }),
   },
 }));
 
@@ -69,6 +81,8 @@ export const useMapStatus = () =>
   useMapStore(useShallow((state) => state.mapStatus));
 export const useMapRef = () => useMapStore(useShallow((state) => state.mapRef));
 export const useMapCity = () => useMapStore((state) => state.city);
-export const useHexCells = () => useMapStore((state) => state.hexCells);
 export const useHexResolution = () =>
   useMapStore((state) => state.hexResolution);
+export const useHoveredListingId = () =>
+  useMapStore((state) => state.hoveredListingId);
+export const useHoverSource = () => useMapStore((state) => state.hoverSource);

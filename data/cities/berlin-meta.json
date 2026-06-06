@@ -1,0 +1,17 @@
+{
+  "slug": "berlin",
+  "name": "Berlin",
+  "country": "Germany",
+  "frame": "Regulated mid-market",
+  "snapshotLabel": " 9/2025",
+  "currency": "EUR",
+  "bbox": [13.1168935, 52.34171613270607, 13.72139, 52.65076],
+  "center": [13.39945451053367, 52.508992219539074],
+  "hexEnabled": true,
+  "priceScale": {
+    "breaks": [64, 90, 122, 179],
+    "min": 5,
+    "max": 617
+  },
+  "priceCap": 617
+}

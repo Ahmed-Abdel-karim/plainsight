@@ -21,7 +21,7 @@ export interface NeighbourhoodBoundaryProperties {
 }
 
 /**
- * GeoJSON FeatureCollection emitted to /public/data/{slug}-boundaries.geojson.
+ * GeoJSON FeatureCollection emitted to data/cities/{slug}-boundaries.geojson.
  * feature.id = slug, enabling MapLibre setFeatureState for choropleth repaint.
  */
 export type NeighbourhoodBoundaries = FeatureCollection<

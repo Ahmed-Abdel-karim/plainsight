@@ -52,6 +52,7 @@ type ListingsResponse =
 ```ts
 class CityListingsClient {
   ready: Promise<number>;
+
   aggregates(scope, filters): Promise<ScopeAggregates>; // existing
   hexes(filters, resolution): Promise<HexCell[]>; // NEW — id-correlated
   dispose(): void;

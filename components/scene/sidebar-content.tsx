@@ -1,23 +1,21 @@
 import { Suspense } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Scope } from "@/data";
-import {
-  SidebarAnalysis,
-  SidebarAnalysisFallback,
-} from "./analysis/sidebar-analysis";
-import { CitySwitcher, CitySwitcherFallback } from "./city-switcher";
+import type { CityMeta, Scope } from "@/data";
+import { AnalysisCardsSkeleton } from "./analysis/analysis-cards-skeleton";
+import { FilterPanel } from "./analysis/filter-panel/filter-panel";
+import { SidebarAnalysis } from "./analysis/sidebar-analysis";
+import { SidebarFoot } from "./analysis/sidebar-foot";
+import { SidebarBrowse } from "./browse/sidebar-browse";
+import { CitySwitcher } from "./city-switcher";
+import { LensActivity } from "./lens-activity";
 import { ListingCount } from "./listing-count";
 import { Logo } from "../logo";
 
 type SidebarContentProps = {
-  citySlug: string;
-  cityName: string;
-  country: string;
-  frame: string;
-  currency: string;
-  snapshotLabel: string;
+  cityMeta: CityMeta;
   scope: Scope;
+  bounds: { min: number; max: number };
 };
 
 /**
@@ -26,18 +24,17 @@ type SidebarContentProps = {
  * duplicate). The brand row is hidden inside the bottom Drawer, matching the
  * design's `.sheet .brand-row { display: none }`.
  *
- * Each data region fetches its own tier behind a Suspense boundary — the city
- * switcher's index, the header listing count, and the analysis surface stream
- * independently, so none waits on the others (or on the map's boundaries).
+ * The lens surface is the shared `FilterPanel` + footer (rendered once, visible
+ * in both tabs) wrapped around a `LensActivity` toggle. The stable, meta-derived
+ * scalars (`currency`, `bounds`) are threaded in from the page — like the map's
+ * framing primitives — so the panel renders immediately; the scope-dependent
+ * pieces (the city switcher's index, the header listing count, the analysis
+ * aggregates) each still stream behind their own Suspense boundary.
  */
 export function SidebarContent({
-  citySlug,
-  cityName,
-  country,
-  frame,
-  currency,
-  snapshotLabel,
   scope,
+  bounds,
+  cityMeta: { slug: citySlug, country, frame, currency, snapshotLabel },
 }: SidebarContentProps) {
   const snapshot = snapshotLabel.trim();
 
@@ -49,12 +46,8 @@ export function SidebarContent({
           v1 · explorer
         </span>
       </div>
-
       <header className="flex flex-col gap-inline">
-        <Suspense fallback={<CitySwitcherFallback cityName={cityName} />}>
-          <CitySwitcher citySlug={citySlug} />
-        </Suspense>
-
+        <CitySwitcher citySlug={citySlug} />
         <div className="flex flex-wrap items-center gap-inline text-muted-foreground type-label">
           <span>{country}</span>
           <span aria-hidden="true">·</span>
@@ -63,13 +56,13 @@ export function SidebarContent({
             aria-live="polite"
             className="font-mono text-foreground tabular-nums"
           >
-            <Suspense
+            <ListingCount
+              citySlug={citySlug}
+              scope={scope}
               fallback={
                 <Skeleton className="inline-block h-4 w-20 align-middle" />
               }
-            >
-              <ListingCount citySlug={citySlug} scope={scope} />
-            </Suspense>
+            />
           </span>
         </div>
         <p className="max-w-sm type-caption text-muted-foreground">{frame}</p>
@@ -84,14 +77,32 @@ export function SidebarContent({
           Data: {snapshot}
         </div>
       </header>
-
-      <Suspense fallback={<SidebarAnalysisFallback />}>
-        <SidebarAnalysis
-          citySlug={citySlug}
-          scope={scope}
-          currency={currency}
-        />
-      </Suspense>
+      <div className="flex min-h-0 flex-1 flex-col gap-stack">
+        <FilterPanel bounds={bounds} currency={currency} />
+        <Suspense fallback={<AnalysisCardsSkeleton />}>
+          <LensActivity
+            analysis={
+              <div className="flex min-h-0 flex-1 flex-col gap-stack overflow-y-auto">
+                <SidebarAnalysis
+                  citySlug={citySlug}
+                  scope={scope}
+                  currency={currency}
+                  bounds={bounds}
+                />
+              </div>
+            }
+            browse={
+              <SidebarBrowse
+                key={citySlug}
+                citySlug={citySlug}
+                currency={currency}
+                bounds={bounds}
+              />
+            }
+          />
+        </Suspense>
+        <SidebarFoot />
+      </div>
     </>
   );
 }

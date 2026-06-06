@@ -1,11 +1,15 @@
-import { Suspense } from "react";
-
 import { Skeleton } from "@/components/ui/skeleton";
-import type { BBox, LngLat, PriceScale, Scope } from "@/data";
+import type { CityMeta, Scope } from "@/data";
 import { MapDataFeeder } from "./map/map-data-feeder";
 import { ListingCount } from "./listing-count";
+import { ListingDetail } from "./browse/listing-detail";
 import { SceneDrawer } from "./scene-drawer";
 import { SidebarContent } from "./sidebar-content";
+import { LensTabs } from "./lens-tabs/lens-tabs";
+import { HexLegend } from "./map/hex/hex-legend";
+import { PointsLegend } from "./map/points/points-legend";
+import { MapLegend } from "./map-legend";
+import { SceneStoreSync } from "./scene-store-sync";
 
 /**
  * City-scoped scene overlay. The map itself lives in the `(scene)` layout so it
@@ -17,74 +21,58 @@ import { SidebarContent } from "./sidebar-content";
  * city switcher inside `SidebarContent`; the map's boundaries via `MapDataFeeder`).
  * This component only forwards the cheap framing primitives it received from the
  * route's `meta` read, so a slow tier never blocks a fast one.
+ *
+ * The lens/scope/listing state is client-only (the scene store, reflected from the
+ * URL by `SceneStoreSync`), so nothing here reads `searchParams` — the route stays
+ * fully static. The heavy WebGL canvas lives in the `(scene)` layout (persistent
+ * across city navigation); only its chrome (the lens tabs + legends) lives here.
  */
 export function CityScene({
-  citySlug,
-  cityName,
-  country,
-  frame,
-  currency,
-  snapshotLabel,
   scope,
-  bbox,
-  center,
-  priceScale,
+  cityMeta,
+  bounds,
 }: {
-  citySlug: string;
-  cityName: string;
-  country: string;
-  frame: string;
-  currency: string;
-  snapshotLabel: string;
   scope: Scope;
-  bbox: BBox;
-  center: LngLat;
-  priceScale: PriceScale;
+  bounds: { min: number; max: number };
+  cityMeta: CityMeta;
 }) {
   return (
     <>
+      <SceneStoreSync />
       <aside
         aria-label="Market analysis"
         className="@container hidden w-full flex-col gap-section overflow-y-auto border-r border-border bg-card px-section pt-section pb-gutter lg:flex lg:h-screen lg:min-h-0"
       >
-        <SidebarContent
-          citySlug={citySlug}
-          cityName={cityName}
-          country={country}
-          frame={frame}
-          currency={currency}
-          snapshotLabel={snapshotLabel}
-          scope={scope}
-        />
+        <SidebarContent cityMeta={cityMeta} scope={scope} bounds={bounds} />
       </aside>
       <SceneDrawer
-        cityName={cityName}
+        cityName={cityMeta.name}
         triggerCount={
-          <Suspense fallback={<Skeleton className="h-3 w-16" />}>
-            <ListingCount citySlug={citySlug} scope={scope} />
-          </Suspense>
+          <ListingCount
+            citySlug={cityMeta.slug}
+            scope={scope}
+            fallback={<Skeleton className="h-3 w-16" />}
+          />
         }
       >
-        <SidebarContent
-          citySlug={citySlug}
-          cityName={cityName}
-          country={country}
-          frame={frame}
-          currency={currency}
-          snapshotLabel={snapshotLabel}
-          scope={scope}
-        />
+        <SidebarContent cityMeta={cityMeta} scope={scope} bounds={bounds} />
       </SceneDrawer>
-      <Suspense fallback={null}>
-        <MapDataFeeder
-          citySlug={citySlug}
-          cityName={cityName}
-          bbox={bbox}
-          center={center}
-          priceScale={priceScale}
-          currency={currency}
-        />
-      </Suspense>
+      <div className="pointer-events-none absolute inset-0 z-10 lg:left-108">
+        <div className="absolute top-4 left-1/2 -translate-x-1/2">
+          <LensTabs />
+        </div>
+        <div className="absolute bottom-4 left-4 flex max-w-[calc(100%-2rem)] flex-col gap-2">
+          <HexLegend />
+          <PointsLegend />
+          <MapLegend />
+        </div>
+      </div>
+      <MapDataFeeder cityMeta={cityMeta} />
+      <ListingDetail
+        citySlug={cityMeta.slug}
+        currency={cityMeta.currency}
+        snapshotLabel={cityMeta.snapshotLabel}
+      />
     </>
   );
 }

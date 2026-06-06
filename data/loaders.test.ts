@@ -8,7 +8,11 @@ vi.mock("./repository", () => ({
   getRepository: () => ({ getScopeAggregates }),
 }));
 
-import { getSidebarListingCount, getSidebarScopeAggregates } from "./loaders";
+import {
+  getSidebarListingCount,
+  getSidebarScopeAggregates,
+  unavailableAggregates,
+} from "./loaders";
 
 describe("sidebar scope loaders", () => {
   beforeEach(() => {
@@ -36,10 +40,10 @@ describe("sidebar scope loaders", () => {
     });
   });
 
-  it("returns null for a neighbourhood scope with no id, without hitting the repository", async () => {
+  it("returns the zeroed aggregates for a neighbourhood scope with no id, without hitting the repository", async () => {
     await expect(
       getSidebarScopeAggregates("london", "neighbourhood"),
-    ).resolves.toBeNull();
+    ).resolves.toBe(unavailableAggregates);
     expect(getScopeAggregates).not.toHaveBeenCalled();
   });
 
@@ -49,9 +53,9 @@ describe("sidebar scope loaders", () => {
     await expect(getSidebarListingCount("london", "city")).resolves.toBe(42);
   });
 
-  it("reports a null listing count when the scope has no aggregates", async () => {
+  it("reports a zero listing count when the scope has no aggregates", async () => {
     await expect(
       getSidebarListingCount("london", "neighbourhood"),
-    ).resolves.toBeNull();
+    ).resolves.toBe(0);
   });
 });
