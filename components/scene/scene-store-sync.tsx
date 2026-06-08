@@ -20,7 +20,7 @@ import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 
 import { loadScene } from "@/lib/search-params";
-import { useSceneActions } from "./scene-store";
+import { useSceneActions } from "./stores";
 
 export function SceneStoreSync() {
   const pathname = usePathname();

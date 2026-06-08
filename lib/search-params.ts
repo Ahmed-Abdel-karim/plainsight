@@ -79,6 +79,18 @@ export interface SceneUrlState {
   nbhd: string | null;
 }
 
+/**
+ * Converts a stored price range to its URL param form. `null` means "full range
+ * selected" and serializes to an absent `?price=` param (`clearOnDefault`). This
+ * is the single named home for the null-as-absent-param convention — only the URL
+ * sync path should call this.
+ */
+export function extractPriceParam(
+  priceRange: [number, number] | null,
+): [number, number] | null {
+  return priceRange;
+}
+
 /** Mirror the full scene selection to the URL, preserving any unrelated params. */
 export function syncSceneUrl(state: SceneUrlState): void {
   if (typeof window === "undefined") return;
@@ -86,7 +98,7 @@ export function syncSceneUrl(state: SceneUrlState): void {
     // Defaults drop their key (clearOnDefault), keeping the URL clean: `[]` rooms,
     // `null` price, `analyse` lens, `null` listing/nbhd all serialize to nothing.
     rooms: state.roomTypes,
-    price: state.priceRange,
+    price: extractPriceParam(state.priceRange),
     lens: state.lens,
     listing: state.selectedId,
     nbhd: state.nbhd,

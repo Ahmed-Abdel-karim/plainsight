@@ -1,16 +1,54 @@
 <!--
 Sync Impact Report
-Version change: 1.1.0 -> 1.2.0
-Modified principles: None (wording unchanged)
-Added sections:
-- Core Principles -> VI. Layered Feature Architecture
-- Project Rules -> Module Boundaries
-- New companion doc: docs/architecture.md (target tree + rationale)
+Version change: 1.5.0 -> 1.6.0
+Modified principles: Project Rules -> Zustand (redefined store organization for the
+  single composite slice store: per-slice file layout, namespaced action factories,
+  atomic selectors + combineSelectors, within-slice vs cross-slice subscriptions,
+  StoreState composition / cycle-avoidance). The prior multi-store rules (selectors in
+  the store file; cross-store selectors in stores/index.ts) are superseded. The
+  proxy-memoize rule was dropped pending introduction of memoized selectors.
+Removed or renamed principles: None
+Added sections: None
 Removed sections: None
 Templates requiring updates:
-- ⚠ pending: .specify/templates/plan-template.md (Constitution Check should cite module boundaries / layer dependency direction)
+- ✅ updated: .specify/templates/plan-template.md (Constitution Check Zustand bullet now
+  cites slice composition, selectors/subscriptions organization)
+Runtime guidance updates: None
+Follow-up TODOs:
+- Re-add the proxy-memoize selector rule once memoized selectors are introduced.
+Version bump rationale: MINOR — materially redefines the internal rules of one Project
+  Rule (Zustand) to match the implemented slice architecture; no Core Principle or
+  governance clause is removed, consistent with the prior 1.4.0 -> 1.5.0 Zustand bump.
+
+Prior amendment (1.4.0 -> 1.5.0)
+Modified principles: Project Rules -> Zustand (store side-effects, selectors, cross-store index, proxy-memoize)
+Removed or renamed principles: None
+Added sections: None
+Removed sections: None
+Templates requiring updates: None
 Runtime guidance updates: None
 Follow-up TODOs: None
+
+Prior amendment (1.3.0 -> 1.4.0)
+Modified principles: Project Rules -> Map Layer Modules
+Removed or renamed principles: None
+Added sections: None
+Removed sections: None
+Templates requiring updates:
+- ⚠ pending: .specify/templates/plan-template.md (constitution-only change requested)
+Runtime guidance updates: None
+Follow-up TODOs:
+- Existing map-layer migration is now aligned to the constitution update.
+
+Prior amendment (1.2.0 -> 1.3.0):
+- Added Project Rules -> Map Layer Modules.
+- ⚠ pending: .specify/templates/plan-template.md (Constitution Check should cite the map-layer contract)
+
+Prior amendment (1.1.0 -> 1.2.0):
+- Added Core Principles -> VI. Layered Feature Architecture.
+- Added Project Rules -> Module Boundaries.
+- Added docs/architecture.md (target tree + rationale).
+- ⚠ pending: .specify/templates/plan-template.md (Constitution Check should cite module boundaries / layer dependency direction)
 
 Prior amendment (1.0.0 -> 1.1.0):
 - Added Project Rules -> Testing Layers.
@@ -118,9 +156,49 @@ code MUST follow.
   state.
 - Server-derived data MUST be passed into Client Components as props and used to
   initialize the client store.
-- Store actions SHOULD be colocated with their store definition. Components
-  MUST select only the state they need and avoid broad subscriptions that cause
-  unrelated rerenders.
+- Related state MUST be organized as one composite store built from slices.
+  Each slice MUST live in `components/scene/stores/slices/<slice>/` and own a
+  fixed file layout: `state.ts` (state shape plus `initial<Slice>State`),
+  `actions.ts` (a `create<Slice>Actions(set, get)` factory), `selectors.ts`
+  (atomic selectors), `hooks.ts` (named selector hooks), `slice.ts`
+  (a `create<Slice>Slice` `StateCreator` composing state and actions),
+  `index.ts` (the slice barrel — its public API), and `types.ts` (slice domain
+  types). A slice with reactive side effects MUST also contain
+  `subscriptions.ts`.
+- The store MUST be created once in `stores/store.ts` by spreading the slice
+  creators into `create()(subscribeWithSelector(...))`. `store.ts` MUST import
+  slice CREATORS by sub-path (`./slices/<slice>/slice`) and MUST NOT import the
+  slice barrel, so the barrel's hooks (which import the store) cannot form an
+  import cycle.
+- Slice actions MUST be produced by the `create<Slice>Actions(set, get)`
+  factory and exposed under a single namespaced key (`<slice>Actions`) on the
+  slice. Components MUST select only the state they need through named hooks and
+  MUST avoid broad subscriptions that cause unrelated rerenders.
+- Each slice MUST expose its field reads as a `<slice>Selectors` object of
+  atomic selectors typed over the composite `StoreState` in `selectors.ts`.
+  Named hooks in `hooks.ts` MUST wrap those selectors (with `useShallow` or
+  plain equality) and MUST include any formatting, defaulting, or conditional
+  derivation consumers need. Components MUST use the hooks and MUST NOT apply
+  inline field reads or formatting on top of raw store state.
+- Multi-field reads shared between hooks and subscriptions MUST be assembled
+  with `combineSelectors` over the canonical atomic selectors, so hooks
+  (via `useShallow`) and subscriptions (via `{ equalityFn: shallow }`) share one
+  definition. Re-declaring inline composite field reads is prohibited.
+- Non-React side effects that react to state changes (imperative map API calls,
+  URL projection, worker sync, view transitions) MUST be implemented as store
+  subscriptions via `subscribeWithSelector`, not as component `useEffect`. UI
+  components are pure state pushers — they call actions; the store reacts out.
+  Within-slice subscriptions MUST live in that slice's `subscriptions.ts`
+  (`register<Slice>Subscriptions`); subscriptions spanning two or more slices
+  MUST live in `stores/subscriptions.ts`. All subscriptions MUST be registered
+  centrally from `store.ts`, MUST guard on all required conditions (e.g.
+  `mapStatus === 'ready'`) so update ordering is irrelevant, and where
+  registration order is load-bearing it MUST be documented at the call site.
+- The composite `StoreState` MUST be defined in `stores/slices/index.ts` as an
+  interface that extends every slice type (interface, not type alias, so the
+  cross-module circular type resolves lazily). Cross-slice store plumbing types
+  (`SetFn`, `GetFn`, `Subscriber`) MUST live in `stores/slices/types.ts`;
+  slice-specific domain types stay with their slice.
 
 ### React Components
 
@@ -175,6 +253,26 @@ code MUST follow.
 - Component queries MUST be accessibility-first (role/name) to keep the
   Accessibility principle enforceable through tests.
 
+### Map Layer Modules
+
+- Every map-layer folder at `components/scene/map/<layer>/` MUST contain a
+  `styles.ts` module for MapLibre layer specifications, paint and layout styles,
+  theme mappings, and style expressions.
+- Every map-layer folder at `components/scene/map/<layer>/` MUST expose its
+  folder interface through `index.ts`, and external consumers SHOULD import the
+  layer domain from that entrypoint rather than reaching into implementation
+  files.
+- Every map-layer folder may keep its component filename as
+  `<layer>-layers.tsx` for source and layer composition, but the folder
+  interface MUST remain `index.ts`.
+- Every interactive map-layer folder MUST contain `listeners.ts`.
+- Each map-layer `listeners.ts` MUST export a layer-specific React hook that
+  internally registers listeners through `useLayerListeners`.
+- Each interactive map-layer component MUST call its layer-specific listener
+  hook and MUST NOT define or register layer listeners inline.
+- A display-only map layer with no registered interactions MUST NOT be required
+  to contain `listeners.ts`.
+
 ## Development Workflow
 
 Every feature plan MUST include a Constitution Check covering Next.js cache
@@ -182,7 +280,8 @@ boundaries, React component rules, Zustand store boundaries, accessibility,
 TypeScript strictness, and verification. Specs MUST express user-observable
 accessibility and responsive outcomes for interactive UI. Task lists MUST
 include explicit implementation and verification tasks for any constitutional
-rule touched by the feature.
+rule touched by the feature. Map-layer changes MUST verify compliance with the
+Map Layer Modules contract.
 
 ## Governance
 
@@ -194,4 +293,4 @@ for new or materially expanded principles or sections, and PATCH for
 clarifications that do not change obligations. All plans, reviews, and
 implementation work MUST verify compliance with this constitution.
 
-**Version**: 1.2.0 | **Ratified**: 2026-05-30 | **Last Amended**: 2026-06-02
+**Version**: 1.6.0 | **Ratified**: 2026-05-30 | **Last Amended**: 2026-06-08

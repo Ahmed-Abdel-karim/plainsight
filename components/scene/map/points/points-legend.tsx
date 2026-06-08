@@ -4,7 +4,7 @@ import { ROOM_TYPES } from "@/data/contract";
 
 import { useLens } from "../../use-lens";
 import { useResolvedTheme } from "../../../theme/theme-provider";
-import { ROOM_DOT } from "./point-colors";
+import { ROOM_DOT } from ".";
 
 /** Short room-type labels paired with each dot colour. */
 const ROOM_LABEL: Record<(typeof ROOM_TYPES)[number], string> = {

@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 
-import { type MapCityPayload, useMapActions } from "./map-store";
+import { type MapCityPayload, useMapActions } from "../stores";
 
 /**
  * Server pages can't pass props *up* to the parent `(scene)` layout that owns the
@@ -19,7 +19,9 @@ export function MapDataSync({
   center,
   neighbourhoodCount,
   priceScale,
+  priceCap,
   currency,
+  snapshotLabel,
 }: MapCityPayload) {
   const { setCity } = useMapActions();
 
@@ -32,7 +34,9 @@ export function MapDataSync({
       center,
       neighbourhoodCount,
       priceScale,
+      priceCap,
       currency,
+      snapshotLabel,
     });
     // Re-sync only when the city changes; the rest of the payload is derived
     // from the slug, so keying on it avoids resetting the store every render.

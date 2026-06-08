@@ -1,3 +1,4 @@
+import { QueryProvider } from "@/components/query/query-provider";
 import { MapView } from "@/components/scene/map/map";
 
 /**
@@ -23,16 +24,18 @@ export default function SceneLayout({
   children: React.ReactNode;
 }) {
   return (
-    <main className="flex min-h-screen flex-col bg-background text-foreground lg:h-screen lg:overflow-hidden">
-      <div className="relative flex min-h-screen w-full flex-1 flex-col bg-background text-foreground lg:grid lg:h-screen lg:grid-cols-[432px_minmax(0,1fr)] lg:overflow-hidden">
-        {children}
-        <section
-          aria-label="Map"
-          className="bg-map-bg relative min-h-96 flex-1 overflow-hidden lg:min-h-0"
-        >
-          <MapView />
-        </section>
-      </div>
-    </main>
+    <QueryProvider>
+      <main className="flex min-h-screen flex-col bg-background text-foreground lg:h-screen lg:overflow-hidden">
+        <div className="relative flex min-h-screen w-full flex-1 flex-col bg-background text-foreground lg:grid lg:h-screen lg:grid-cols-[432px_minmax(0,1fr)] lg:overflow-hidden">
+          {children}
+          <section
+            aria-label="Map"
+            className="bg-map-bg relative min-h-96 flex-1 overflow-hidden lg:min-h-0"
+          >
+            <MapView />
+          </section>
+        </div>
+      </main>
+    </QueryProvider>
   );
 }

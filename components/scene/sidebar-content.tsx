@@ -15,7 +15,6 @@ import { Logo } from "../logo";
 type SidebarContentProps = {
   cityMeta: CityMeta;
   scope: Scope;
-  bounds: { min: number; max: number };
 };
 
 /**
@@ -33,8 +32,7 @@ type SidebarContentProps = {
  */
 export function SidebarContent({
   scope,
-  bounds,
-  cityMeta: { slug: citySlug, country, frame, currency, snapshotLabel },
+  cityMeta: { slug: citySlug, country, frame, snapshotLabel },
 }: SidebarContentProps) {
   const snapshot = snapshotLabel.trim();
 
@@ -78,27 +76,16 @@ export function SidebarContent({
         </div>
       </header>
       <div className="flex min-h-0 flex-1 flex-col gap-stack">
-        <FilterPanel bounds={bounds} currency={currency} />
+        <FilterPanel />
+
         <Suspense fallback={<AnalysisCardsSkeleton />}>
           <LensActivity
             analysis={
               <div className="flex min-h-0 flex-1 flex-col gap-stack overflow-y-auto">
-                <SidebarAnalysis
-                  citySlug={citySlug}
-                  scope={scope}
-                  currency={currency}
-                  bounds={bounds}
-                />
+                <SidebarAnalysis citySlug={citySlug} scope={scope} />
               </div>
             }
-            browse={
-              <SidebarBrowse
-                key={citySlug}
-                citySlug={citySlug}
-                currency={currency}
-                bounds={bounds}
-              />
-            }
+            browse={<SidebarBrowse key={citySlug} />}
           />
         </Suspense>
         <SidebarFoot />

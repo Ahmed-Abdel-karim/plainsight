@@ -7,3 +7,12 @@
  * layers, and a single composable `<…Layers>` component the canvas drops in.
  */
 export { NeighbourhoodsLayers } from "./neighbourhoods-layers";
+export { useNeighbourhoodsListeners } from "./listeners";
+export {
+  fillLayerTheme,
+  getFillLayer,
+  getLabelLayer,
+  getOutlineLayer,
+  labelLayerTheme,
+  outlineLayerTheme,
+} from "./styles";

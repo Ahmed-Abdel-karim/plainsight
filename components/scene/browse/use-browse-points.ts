@@ -1,20 +1,23 @@
 "use client";
 
 /**
- * Shared, lazy, ref-counted access to a city's Browse tier
- * (`/api/cities/{slug}/points`).
+ * Shared, lazy access to a city's Browse tier (`/api/cities/{slug}/points`),
+ * backed by React Query.
  *
  * Browse mounts the same surface twice (desktop sidebar + mobile drawer) and the
  * map needs the SAME parsed features for its dot source — a naive per-consumer
- * fetch would pull the multi-megabyte tier several times. This registry keeps
- * ONE parsed `FeatureCollection` per slug and hands it to every consumer.
+ * fetch would pull the multi-megabyte tier several times. A single `useQuery`
+ * keyed by `["browse-points", slug]` solves that: every consumer shares one
+ * cache entry and one in-flight request (dedup), and gets the shared retry +
+ * `staleTime/gcTime: Infinity` defaults from the provider (`@/lib/query/config`).
  *
- * It is **lazy**: the fetch starts only once a consumer passes `enabled` — i.e.
- * the first time Browse is activated for the slug. The parsed collection is then
- * cached for the session (the tier is static), so toggling Analyse↔Browse never
- * re-fetches (SC-001). The listings worker is untouched — Browse needs no worker.
+ * It is **lazy**: `enabled` gates the fetch to when Browse is active for the
+ * slug. The collection is cached for the session (the tier is static, stale time
+ * is Infinity), so toggling Analyse↔Browse never re-fetches (SC-001). The
+ * listings worker is untouched — Browse needs no worker.
  */
-import { useCallback, useMemo, useSyncExternalStore } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 
 import type { BrowsePoint, BrowsePointProperties } from "@/data/contract";
 import type { ListingFilters, Scope, SortKey } from "@/data/types";
@@ -33,99 +36,35 @@ export interface UseBrowsePointsResult {
 }
 
 /**
- * Shared, stable `loading` snapshot. Used as the server snapshot (and the
- * pre-fetch client snapshot), so SSR and the hydration render always agree —
- * `useSyncExternalStore` swaps to the live client snapshot only after hydration.
- */
-const LOADING: UseBrowsePointsResult = { status: "loading", collection: null };
-
-interface Entry {
-  status: BrowsePointsStatus;
-  collection: BrowseCollection | null;
-  refs: number;
-  listeners: Set<() => void>;
-  // Cached, identity-stable snapshot for `getSnapshot` — re-created only when the
-  // status/collection actually changes, so `useSyncExternalStore` doesn't loop.
-  snapshot: UseBrowsePointsResult;
-}
-
-const registry = new Map<string, Entry>();
-
-function acquire(slug: string): Entry {
-  let entry = registry.get(slug);
-  if (!entry) {
-    const created: Entry = {
-      status: "loading",
-      collection: null,
-      refs: 0,
-      listeners: new Set(),
-      snapshot: LOADING,
-    };
-    registry.set(slug, created);
-    fetch(`/api/cities/${slug}/points`)
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json() as Promise<BrowseCollection>;
-      })
-      .then((collection) => {
-        created.status = "ready";
-        created.collection = collection;
-        created.snapshot = { status: "ready", collection };
-      })
-      .catch(() => {
-        created.status = "error";
-        created.snapshot = { status: "error", collection: null };
-      })
-      .finally(() => created.listeners.forEach((notify) => notify()));
-    entry = created;
-  }
-  entry.refs += 1;
-  return entry;
-}
-
-function release(slug: string): void {
-  const entry = registry.get(slug);
-  if (!entry) return;
-  entry.refs -= 1;
-  // The parsed collection stays cached at refs 0 — it is static, and re-parsing
-  // ~62k features on every lens toggle would blow the SC-001 swap budget.
-}
-
-/**
  * The shared points collection for `slug` while `enabled`, with its load status.
  * While `loading` the list shows a skeleton and the map draws no dots; on
  * `error` the lens still toggles and the list shows the empty/error affordance.
  *
- * Backed by `useSyncExternalStore` over the module registry. The server snapshot
- * is always `loading` (the geojson is a client-only fetch), so the Browse slot —
- * now server-rendered when `?lens=browse` is SSR-correct — hydrates from the same
- * `loading` state on both sides. Post-hydration, `getSnapshot` reads the registry
- * directly, so an in-session Analyse↔Browse toggle still shows the already-cached
- * collection with no loading flash (SC-001).
+ * The geojson is a client-only fetch gated by `enabled`, so the server render and
+ * the first client render are both `pending` ⇒ `"loading"` — the Browse slot
+ * hydrates identically on both sides. The React Query status maps onto the small
+ * `{ status, collection }` shape every consumer already reads.
  */
 export function useBrowsePoints(
   slug: string,
   { enabled }: { enabled: boolean },
 ): UseBrowsePointsResult {
-  const subscribe = useCallback(
-    (onStoreChange: () => void) => {
-      if (!enabled) return () => {};
-      const entry = acquire(slug);
-      entry.listeners.add(onStoreChange);
-      return () => {
-        entry.listeners.delete(onStoreChange);
-        release(slug);
-      };
+  const query = useQuery({
+    queryKey: ["browse-points", slug],
+    queryFn: async ({ signal }) => {
+      const res = await fetch(`/api/cities/${slug}/points`, { signal });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return (await res.json()) as BrowseCollection;
     },
-    [slug, enabled],
-  );
+    enabled: enabled && slug !== "",
+  });
 
-  const getSnapshot = useCallback(
-    () => (enabled ? (registry.get(slug)?.snapshot ?? LOADING) : LOADING),
-    [slug, enabled],
-  );
-
-  return useSyncExternalStore(subscribe, getSnapshot, () => LOADING);
+  const status: BrowsePointsStatus = query.isSuccess
+    ? "ready"
+    : query.isError
+      ? "error"
+      : "loading";
+  return { status, collection: query.data ?? null };
 }
 
 /**

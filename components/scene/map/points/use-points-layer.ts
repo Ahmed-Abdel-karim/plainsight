@@ -2,69 +2,62 @@
 
 /**
  * Imperative bridge for the Browse dot layer's **feature-state** — the recolour/
- * resize channel MapLibre exposes without re-issuing source data. It mirrors the
+ * resize channel MapLibre exposes without re-issuing source data. It reads the
  * shared hovered id (from the list or the map) and the selected listing (from the
- * URL) onto the dots as `{ hover }` / `{ selected }` feature-state, keyed by the
- * promoted listing id. The GPU `filter` and the source data are owned
- * declaratively by `PointsLayer`; only this hover/selected emphasis is imperative.
+ * URL) off the store itself and mirrors them onto the dots as `{ hover }` /
+ * `{ selected }` feature-state, keyed by the promoted listing id. The GPU `filter`
+ * and the source data are owned declaratively by `PointsLayers`, which composes
+ * this alongside its other store-reading hooks; only this emphasis is imperative.
  */
 import { useEffect, useRef } from "react";
 
 import { POINTS_SOURCE_ID } from "../constants";
-import { useMapRef } from "../map-store";
+import { useMapControls } from "../use-map-controls";
+import {
+  useHoveredListingId,
+  useIsSourceLoaded,
+  useSelectedId,
+} from "../../stores";
 
-export function usePointsFeatureState({
-  hoveredId,
-  selectedId,
-  enabled,
-}: {
-  hoveredId: number | null;
-  selectedId: number | null;
-  enabled: boolean;
-}) {
-  const mapRef = useMapRef();
+export function usePointsFeatureState(enabled: boolean) {
+  const { setFeatureState } = useMapControls();
+  const hoveredId = useHoveredListingId();
+  const selectedId = useSelectedId();
+  const loaded = useIsSourceLoaded(POINTS_SOURCE_ID);
   const prevHover = useRef<number | null>(null);
   const prevSelected = useRef<number | null>(null);
 
   useEffect(() => {
-    const map = mapRef;
-    if (!map) return;
-
-    const apply = () => {
-      if (!map.getSource(POINTS_SOURCE_ID)) return;
-      const set = (id: number, state: Record<string, boolean>) => {
-        try {
-          map.setFeatureState({ source: POINTS_SOURCE_ID, id }, state);
-        } catch {
-          /* source not ready for this id yet — re-applied on the next idle */
-        }
-      };
-
-      const nextHover = enabled ? hoveredId : null;
-      if (prevHover.current !== nextHover) {
-        if (prevHover.current !== null)
-          set(prevHover.current, { hover: false });
-        if (nextHover !== null) set(nextHover, { hover: true });
-        prevHover.current = nextHover;
-      }
-
-      const nextSelected = enabled ? selectedId : null;
-      if (prevSelected.current !== nextSelected) {
-        if (prevSelected.current !== null)
-          set(prevSelected.current, { selected: false });
-        if (nextSelected !== null) set(nextSelected, { selected: true });
-        prevSelected.current = nextSelected;
-      }
-    };
-
-    apply();
-    // The source may still be loading on first Browse activation / deep-link —
-    // re-apply once the map next goes idle so the selected dot emphasis lands.
-    if (enabled && (hoveredId !== null || selectedId !== null)) {
-      map.once("idle", apply);
-      return () => {
-        map.off("idle", apply);
-      };
+    // The source's feature-state is wiped whenever its data (re)loads — e.g. a
+    // filter/city swap. While it's unloaded there's nothing to paint onto, so we
+    // forget what we wrote; the false→true edge below then re-applies from
+    // scratch once parsing finishes (replaces the old `once("idle")` heuristic).
+    if (!loaded) {
+      prevHover.current = null;
+      prevSelected.current = null;
+      return;
     }
-  }, [mapRef, hoveredId, selectedId, enabled]);
+
+    // Diff the last-written id against the next so we don't repaint dots that
+    // already hold the right state.
+    const nextHover = enabled ? hoveredId : null;
+    if (prevHover.current !== nextHover) {
+      if (prevHover.current !== null)
+        setFeatureState(POINTS_SOURCE_ID, prevHover.current, { hover: false });
+      if (nextHover !== null)
+        setFeatureState(POINTS_SOURCE_ID, nextHover, { hover: true });
+      prevHover.current = nextHover;
+    }
+
+    const nextSelected = enabled ? selectedId : null;
+    if (prevSelected.current !== nextSelected) {
+      if (prevSelected.current !== null)
+        setFeatureState(POINTS_SOURCE_ID, prevSelected.current, {
+          selected: false,
+        });
+      if (nextSelected !== null)
+        setFeatureState(POINTS_SOURCE_ID, nextSelected, { selected: true });
+      prevSelected.current = nextSelected;
+    }
+  }, [loaded, setFeatureState, hoveredId, selectedId, enabled]);
 }

@@ -18,7 +18,9 @@ export function MapDataFeeder({
     bbox,
     center,
     priceScale,
+    priceCap,
     currency,
+    snapshotLabel,
   },
 }: {
   cityMeta: CityMeta;
@@ -40,7 +42,9 @@ export function MapDataFeeder({
           center={center}
           neighbourhoodCount={neighbourhoodCount}
           priceScale={priceScale}
+          priceCap={priceCap}
           currency={currency}
+          snapshotLabel={snapshotLabel}
         />
       )}
       fallback={null}

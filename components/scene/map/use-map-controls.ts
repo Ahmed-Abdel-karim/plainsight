@@ -1,7 +1,6 @@
 import { useCallback } from "react";
-import { type LngLatBoundsLike } from "react-map-gl/maplibre";
-import { useMapRef } from "./map-store";
-import type { LayerId } from "./types";
+import { useMapRef } from "../stores";
+import type { LayerId, SourceId } from "./types";
 import {
   HIDDEN_PLACE_LABELS,
   RETAINED_PLACE_LABELS,
@@ -9,27 +8,16 @@ import {
 } from "./basemap";
 import { Theme } from "@/components/theme/theme-provider";
 
-export type { MapStatus } from "./map-store";
+export type { MapStatus } from "../stores";
 
 /**
- * Control surface for the WebGL map. Owns the imperative handle and a derived
- * status, and exposes *intentions* (`fitTo`, `markReady`, `markError`) rather
- * than the underlying setters or `getMap()` — so the canvas never reaches into
- * MapLibre directly. This is also the seam tests mock: assert the component
- * issued a command without standing up WebGL.
+ * Control surface for the WebGL map. Exposes imperative style mutations
+ * (`setPaintProperty`, `setLayoutProperty`, `setFeatureState`,
+ * `styleBasemapPlaceLabels`) without exposing `getMap()` directly. The seam
+ * tests mock: assert style mutations were issued without standing up WebGL.
  */
 export function useMapControls() {
   const mapRef = useMapRef();
-
-  const fitTo = useCallback(
-    (bounds: LngLatBoundsLike) => {
-      mapRef?.getMap().fitBounds(bounds, {
-        duration: 0,
-        zoom: 5,
-      });
-    },
-    [mapRef],
-  );
 
   const setPaintProperty = useCallback(
     (layerId: LayerId, property: string, value: unknown) => {
@@ -47,6 +35,23 @@ export function useMapControls() {
   const setLayoutProperty = useCallback(
     (layerId: LayerId, property: string, value: unknown) => {
       mapRef?.getMap().setLayoutProperty(layerId, property, value);
+    },
+    [mapRef],
+  );
+
+  // Recolour/resize a single feature via MapLibre feature-state (no source
+  // re-issue). Guards source readiness — the source may not yet hold this id on
+  // first activation/deep-link, so the call is swallowed and callers re-apply on
+  // the next idle.
+  const setFeatureState = useCallback(
+    (source: SourceId, id: number, state: Record<string, boolean>) => {
+      const map = mapRef?.getMap();
+      if (!map?.getSource(source)) return;
+      try {
+        map.setFeatureState({ source, id }, state);
+      } catch {
+        /* source not ready for this id yet — re-applied on the next idle */
+      }
     },
     [mapRef],
   );
@@ -75,9 +80,9 @@ export function useMapControls() {
   );
 
   return {
-    fitTo,
     setPaintProperty,
     setLayoutProperty,
+    setFeatureState,
     styleBasemapPlaceLabels,
     mapRef,
   };

@@ -1,3 +1,13 @@
+import type {
+  DataDrivenPropertyValueSpecification,
+  ExpressionSpecification,
+  FillLayerSpecification,
+} from "maplibre-gl";
+
+import type { Theme } from "@/components/theme/theme-provider";
+
+import { HEX_FILL_LAYER_ID, HEX_SOURCE_ID } from "../constants";
+
 /**
  * Price-ramp colours for the hex fill layer.
  *
@@ -7,13 +17,6 @@
  * `--price-1..5` tokens in `app/tokens.css` — same posture as `OVERLAY_LINE` in
  * the basemap layer. Regenerate by converting the OKLCH tokens to sRGB hex.
  */
-import type {
-  DataDrivenPropertyValueSpecification,
-  ExpressionSpecification,
-} from "maplibre-gl";
-
-import type { Theme } from "@/components/theme/theme-provider";
-
 type Ramp = [string, string, string, string, string];
 
 /** Five-step price ramp (low → high), mirroring `--price-1..5` per theme. */
@@ -50,3 +53,26 @@ export function priceFillExpression(
   ];
   return expression as DataDrivenPropertyValueSpecification<string>;
 }
+
+/** Modest fill so the basemap stays legible under the price ramp (both themes). */
+const HEX_FILL_OPACITY = 0.6;
+
+/**
+ * The hex price fill spec. The colour is a `step` expression over the city's
+ * price breaks; a theme toggle only swaps the ramp literals (no source rebuild).
+ * Hidden in the Browse lens (the dots take over); shown in Analyse (FR-006).
+ */
+export const getFillLayer = (
+  theme: Theme,
+  breaks: number[],
+  visible: boolean,
+): FillLayerSpecification => ({
+  id: HEX_FILL_LAYER_ID,
+  type: "fill",
+  source: HEX_SOURCE_ID,
+  layout: { visibility: visible ? "visible" : "none" },
+  paint: {
+    "fill-color": priceFillExpression(theme, breaks),
+    "fill-opacity": HEX_FILL_OPACITY,
+  },
+});

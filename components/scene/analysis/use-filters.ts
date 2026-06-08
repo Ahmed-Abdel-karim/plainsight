@@ -20,7 +20,12 @@ import { useCallback, useMemo } from "react";
 
 import { type RoomType } from "@/data/contract";
 import type { ListingFilters } from "@/data/types";
-import { usePriceRange, useRoomTypes, useSceneActions } from "../scene-store";
+import {
+  useFilterBounds,
+  usePriceRange,
+  useRoomTypes,
+  useSceneActions,
+} from "../stores";
 
 export interface FilterBounds {
   min: number;
@@ -36,9 +41,10 @@ export interface UseFiltersResult {
   reset: () => void;
 }
 
-export function useFilters(bounds: FilterBounds): UseFiltersResult {
+export function useFilters(): UseFiltersResult {
+  const bounds = useFilterBounds();
   const roomTypes = useRoomTypes();
-  const rawPriceRange = usePriceRange();
+  const storedPriceRange = usePriceRange();
   const {
     setRoomTypes,
     setPriceRange: setStorePriceRange,
@@ -46,8 +52,11 @@ export function useFilters(bounds: FilterBounds): UseFiltersResult {
   } = useSceneActions();
 
   const priceRange = useMemo<[number, number]>(
-    () => [rawPriceRange?.[0] ?? bounds.min, rawPriceRange?.[1] ?? bounds.max],
-    [rawPriceRange, bounds.min, bounds.max],
+    () => [
+      storedPriceRange?.[0] ?? bounds.min,
+      storedPriceRange?.[1] ?? bounds.max,
+    ],
+    [storedPriceRange, bounds.min, bounds.max],
   );
 
   const filters = useMemo<ListingFilters>(

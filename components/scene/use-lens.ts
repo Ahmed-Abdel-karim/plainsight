@@ -15,7 +15,7 @@
  */
 import { useMemo } from "react";
 
-import { useLensValue, useSceneActions, useSelectedId } from "./scene-store";
+import { useLensValue, useSceneActions, useSelectedId } from "./stores";
 import type { Lens } from "@/lib/search-params";
 
 export type { Lens };

@@ -1,15 +1,17 @@
-import {
-  type FillLayerSpecification,
-  type LineLayerSpecification,
-  type SymbolLayerSpecification,
+import type {
+  FillLayerSpecification,
+  LineLayerSpecification,
+  SymbolLayerSpecification,
 } from "maplibre-gl";
+
+import type { Theme } from "@/components/theme/theme-provider";
+
 import {
   FILL_LAYER_ID,
   LABEL_LAYER_ID,
   NEIGHBOURHOODS_SOURCE_ID,
   OUTLINE_LAYER_ID,
 } from "../constants";
-import { Theme } from "@/components/theme/theme-provider";
 
 export const fillLayerTheme: Record<Theme, { color: string; opacity: number }> =
   {
@@ -37,7 +39,7 @@ export const getOutlineLayer = (theme: Theme): LineLayerSpecification => ({
   type: "line",
   source: NEIGHBOURHOODS_SOURCE_ID,
   paint: {
-    "line-color": outlineLayerTheme[theme], // default; overridden by NeighbourhoodsLayers when theme changes
+    "line-color": outlineLayerTheme[theme],
     "line-width": 1,
   },
 });

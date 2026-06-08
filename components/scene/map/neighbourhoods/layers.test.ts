@@ -6,7 +6,7 @@ import {
   NEIGHBOURHOODS_SOURCE_ID,
   OUTLINE_LAYER_ID,
 } from "../constants";
-import { getFillLayer, getLabelLayer, getOutlineLayer } from "./layers";
+import { getFillLayer, getLabelLayer, getOutlineLayer } from "./styles";
 import { Theme } from "@/components/theme/theme-provider";
 
 const THEMES: Theme[] = ["dark", "light"];

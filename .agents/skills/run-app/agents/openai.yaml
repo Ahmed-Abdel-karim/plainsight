@@ -1,0 +1,4 @@
+interface:
+  display_name: "Run App"
+  short_description: "Browser-drive and visually verify Plainsight"
+  default_prompt: "Use $run-app to launch and visually verify the Plainsight scene."

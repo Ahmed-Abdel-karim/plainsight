@@ -1,6 +1,6 @@
 "use client";
 
-import { useMapCity } from "@/components/scene/map/map-store";
+import { useMapCity } from "@/components/scene/stores";
 
 export function MapLegend() {
   const neighbourhoodCount = useMapCity()?.neighbourhoodCount ?? 0;

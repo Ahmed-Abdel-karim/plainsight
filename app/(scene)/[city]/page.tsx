@@ -2,12 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { CityScene } from "@/components/scene/city-scene";
-import {
-  getCitiesData,
-  getCityMeta,
-  getSidebarFilterBounds,
-  type Scope,
-} from "@/data";
+import { getCitiesData, getCityMeta, type Scope } from "@/data";
 
 export async function generateStaticParams() {
   const cities = await getCitiesData();
@@ -35,12 +30,9 @@ export async function generateMetadata({
 export default async function CityPage({ params }: PageProps<"/[city]">) {
   const { city } = await params;
   const scope: Scope = { type: "city" };
-  const [meta, bounds] = await Promise.all([
-    getCityMeta(city),
-    getSidebarFilterBounds(city),
-  ]);
+  const meta = await getCityMeta(city);
   if (!meta) {
     notFound();
   }
-  return <CityScene cityMeta={meta} scope={scope} bounds={bounds} />;
+  return <CityScene cityMeta={meta} scope={scope} />;
 }

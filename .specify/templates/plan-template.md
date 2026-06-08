@@ -48,8 +48,12 @@ _GATE: Must pass before Phase 0 research. Re-check after Phase 1 design._
   passed into cached functions or components as primitives. Runtime-only work is
   behind `<Suspense>`.
 - **Zustand**: Request-scoped or user-scoped state uses a per-request store
-  factory and client provider. React Server Components do not read from or write
-  to Zustand stores.
+  factory and client provider, and React Server Components do not read from or
+  write to Zustand stores. Related state is one composite slice store: each slice
+  owns its `state`/`actions`/`selectors`/`hooks`/`slice`/`index` (plus
+  `subscriptions` when reactive); components consume named selector hooks;
+  non-React side effects are store subscriptions (within-slice in the slice,
+  cross-slice in `stores/subscriptions.ts`), never component effects.
 - **React Components**: New React components follow `rules/react-components.md`,
   use shadcn components from `components/ui/*` for interactive controls, and
   consume `app/tokens.css` tokens instead of raw styling values.

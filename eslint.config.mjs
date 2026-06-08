@@ -9,7 +9,6 @@ const eslintConfig = defineConfig([
   {
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
-      "import/no-cycle": ["warn", { ignoreExternal: true }],
     },
   },
   // Override default ignores of eslint-config-next.

@@ -161,6 +161,22 @@
   border-radius: var(--radius);
 }
 
+.hex-inspect-popup,
+.hex-inspect-popup .maplibregl-popup-content {
+  pointer-events: none;
+}
+
+.hex-inspect-popup .maplibregl-popup-content {
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+}
+
+.hex-inspect-popup .maplibregl-popup-tip {
+  display: none;
+}
+
 /* Below the desktop split the analysis bar (scene-drawer trigger) floats at the
    map's top-left, so push the map's top-left zoom controls clear of it. */
 @media (max-width: 1023px) {

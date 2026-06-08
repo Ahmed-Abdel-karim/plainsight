@@ -4,7 +4,7 @@ import type { RoomType } from "@/data/contract";
  * Room-type display for the Browse list rows and the detail drawer: a text label
  * paired with the categorical dot colour token (`--cat-1..4`). Room type is
  * always conveyed by label + colour, never colour alone (CR-003). The map dots
- * use hex literals (`point-colors.ts`) since MapLibre can't read the tokens.
+ * use hex literals (`map/points/layers.ts`) since MapLibre can't read the tokens.
  */
 export const ROOM_DISPLAY: Record<RoomType, { label: string; dot: string }> = {
   "Entire home/apt": { label: "Entire home", dot: "bg-cat-1" },

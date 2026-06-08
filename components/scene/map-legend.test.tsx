@@ -1,11 +1,18 @@
 import { render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { axe } from "vitest-axe";
 
-import {
-  type MapCityPayload,
-  useMapStore,
-} from "@/components/scene/map/map-store";
+// Prevent the cross-slice triggerRequestHexes subscription from spinning up the
+// Web Worker (not available in jsdom) when the map store is seeded with a city.
+vi.mock("@/lib/listings/client", () => {
+  class CityListingsClient {
+    dispose = vi.fn();
+    requestProcess = vi.fn();
+  }
+  return { CityListingsClient };
+});
+
+import { type MapCityPayload, useSceneStore } from "@/components/scene/stores";
 import { MapLegend } from "./map-legend";
 
 /**
@@ -21,14 +28,16 @@ function seedCity(neighbourhoodCount: number) {
     center: [-0.09, 51.5],
     neighbourhoodCount,
     priceScale: { breaks: [80, 120, 180, 280], min: 20, max: 1000 },
+    priceCap: 500,
     currency: "GBP",
+    snapshotLabel: " 9/2025",
   };
-  useMapStore.setState({ city });
+  useSceneStore.setState({ city });
 }
 
 describe("MapLegend", () => {
   afterEach(() => {
-    useMapStore.setState({ city: null });
+    useSceneStore.setState({ city: null });
   });
 
   it("renders the neighbourhood heading and count", () => {

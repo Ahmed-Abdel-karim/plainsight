@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/drawer";
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "../analysis/format";
-import { useMapCity } from "../map/map-store";
+import { useMapCity } from "../stores";
 import { useLens } from "../use-lens";
 import { useBrowsePoints } from "./use-browse-points";
 import { ListingDetailBody } from "./listing-detail-body";
@@ -44,19 +44,14 @@ function useDrawerDirection(): "right" | "bottom" {
  * / selecting another / lens or scope change) clears the param; vaul restores
  * focus to the trigger.
  */
-export function ListingDetail({
-  citySlug,
-  currency,
-  snapshotLabel,
-}: {
-  citySlug: string;
-  currency: string;
-  snapshotLabel: string;
-}) {
+export function ListingDetail() {
+  const city = useMapCity();
+  const citySlug = city?.slug ?? "";
+  const currency = city?.currency ?? "";
+  const snapshotLabel = city?.snapshotLabel ?? "";
   const { isBrowse, selectedId, selectListing } = useLens();
   const direction = useDrawerDirection();
   const { collection } = useBrowsePoints(citySlug, { enabled: isBrowse });
-  const city = useMapCity();
 
   const listing = useMemo(() => {
     if (selectedId === null || !collection) return null;

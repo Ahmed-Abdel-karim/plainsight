@@ -30,10 +30,8 @@ import { SceneStoreSync } from "./scene-store-sync";
 export function CityScene({
   scope,
   cityMeta,
-  bounds,
 }: {
   scope: Scope;
-  bounds: { min: number; max: number };
   cityMeta: CityMeta;
 }) {
   return (
@@ -43,7 +41,7 @@ export function CityScene({
         aria-label="Market analysis"
         className="@container hidden w-full flex-col gap-section overflow-y-auto border-r border-border bg-card px-section pt-section pb-gutter lg:flex lg:h-screen lg:min-h-0"
       >
-        <SidebarContent cityMeta={cityMeta} scope={scope} bounds={bounds} />
+        <SidebarContent cityMeta={cityMeta} scope={scope} />
       </aside>
       <SceneDrawer
         cityName={cityMeta.name}
@@ -55,7 +53,7 @@ export function CityScene({
           />
         }
       >
-        <SidebarContent cityMeta={cityMeta} scope={scope} bounds={bounds} />
+        <SidebarContent cityMeta={cityMeta} scope={scope} />
       </SceneDrawer>
       <div className="pointer-events-none absolute inset-0 z-10 lg:left-108">
         <div className="absolute top-4 left-1/2 -translate-x-1/2">
@@ -68,11 +66,7 @@ export function CityScene({
         </div>
       </div>
       <MapDataFeeder cityMeta={cityMeta} />
-      <ListingDetail
-        citySlug={cityMeta.slug}
-        currency={cityMeta.currency}
-        snapshotLabel={cityMeta.snapshotLabel}
-      />
+      <ListingDetail />
     </>
   );
 }

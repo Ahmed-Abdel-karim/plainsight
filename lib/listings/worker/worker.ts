@@ -14,6 +14,7 @@
 import { QueryClient } from "@tanstack/query-core";
 
 import type { Listing } from "@/data/contract";
+import { queryDefaults } from "@/lib/query/config";
 
 import { processes } from "./processes";
 import type { ProcessContext } from "./types";
@@ -24,21 +25,13 @@ import type { RequestMessage, ResponseMessage } from ".";
 const ctx = self as unknown as Worker;
 
 /**
- * One query client for the worker's lifetime. The same capped-exponential
- * backoff the app's React Query layer uses (so the load *feels* like every other
- * fetch); rows and cached process results are kept for the whole session
- * (`staleTime`/`gcTime: Infinity`) — the worker is disposed when the city changes.
+ * One query client for the worker's lifetime, on the same shared defaults
+ * (`@/lib/query/config`) as the app's React Query layer — capped-exponential
+ * backoff so the load *feels* like every other fetch, and `staleTime`/`gcTime:
+ * Infinity` so rows and cached process results live for the whole session (the
+ * worker is disposed when the city changes).
  */
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 3,
-      retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 30_000),
-      staleTime: Infinity,
-      gcTime: Infinity,
-    },
-  },
-});
+const queryClient = new QueryClient({ defaultOptions: queryDefaults });
 
 /** The city this worker is bound to — the key the rows are cached under. Set by
  *  the one-time load; processes read the rows back from the cache with it. */

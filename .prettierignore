@@ -8,4 +8,6 @@ coverage
 next-env.d.ts
 pnpm-lock.yaml
 design
+data/cities
 .husky/_
+.claude

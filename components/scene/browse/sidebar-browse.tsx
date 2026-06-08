@@ -5,14 +5,14 @@ import { useEffect, useMemo, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { RoomType } from "@/data/contract";
 import type { SortKey } from "@/data/types";
-import { useFilters, type FilterBounds } from "../analysis/use-filters";
+import { useFilters } from "../analysis/use-filters";
 import { formatCurrency } from "../analysis/format";
 import {
   useHoveredListingId,
   useHoverSource,
   useMapActions,
   useMapCity,
-} from "../map/map-store";
+} from "../stores";
 import { useLens } from "../use-lens";
 import { useScope } from "../use-scope";
 import { BrowseEmpty } from "./browse-empty";
@@ -36,25 +36,19 @@ const ROOM_LABEL: Record<RoomType, string> = {
  * list). The filter controls live in the shared `FilterPanel` above both tabs.
  * Serves both the desktop sidebar and the mobile sheet from one component (CR-002).
  */
-export function SidebarBrowse({
-  citySlug,
-  currency,
-  bounds,
-}: {
-  citySlug: string;
-  currency: string;
-  bounds: FilterBounds;
-}) {
+export function SidebarBrowse() {
+  const city = useMapCity();
+  const citySlug = city?.slug ?? "";
+  const currency = city?.currency ?? "";
   // Filter controls live in the shared `FilterPanel` above; here we only read the
   // (URL-shared) filter state to derive the list, plus `reset` for the empty CTA.
-  const { filters, reset } = useFilters(bounds);
+  const { filters, reset } = useFilters();
   // Scope is client state (FR-013) — a neighbourhood click on the map narrows it.
   const { scope } = useScope();
   const { selectedId, selectListing } = useLens();
   const { setHoveredListing } = useMapActions();
   const hoveredId = useHoveredListingId();
   const hoverSource = useHoverSource();
-  const city = useMapCity();
 
   // Browse is only mounted while the lens is active, so the fetch is enabled.
   const { status, collection } = useBrowsePoints(citySlug, { enabled: true });

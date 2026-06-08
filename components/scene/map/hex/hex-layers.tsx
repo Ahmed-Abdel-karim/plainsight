@@ -2,15 +2,15 @@
 
 import type { Feature, FeatureCollection, Polygon } from "geojson";
 import { cellToBoundary } from "h3-js";
-import type { FillLayerSpecification } from "maplibre-gl";
 import { useMemo } from "react";
 import { Layer, Source } from "react-map-gl/maplibre";
 
 import type { Theme } from "@/components/theme/theme-provider";
 import type { HexCell } from "@/lib/hex/types";
 
-import { HEX_FILL_LAYER_ID, HEX_SOURCE_ID } from "../constants";
-import { priceFillExpression } from "./hex-colors";
+import { HEX_SOURCE_ID } from "../constants";
+import { getFillLayer } from "./styles";
+import { useHexListeners } from "./listeners";
 
 /** Properties carried on each hex feature (read by the fill + inspect). */
 export interface HexFeatureProps {
@@ -18,10 +18,7 @@ export interface HexFeatureProps {
   count: number;
 }
 
-/** Modest fill so the basemap stays legible under the price ramp (both themes). */
-const HEX_FILL_OPACITY = 0.6;
-
-interface HexLayerProps {
+interface HexLayersProps {
   cells: HexCell[];
   /** City quantile breaks (`priceScale.breaks`) driving the colour buckets. */
   breaks: number[];
@@ -45,34 +42,25 @@ function cellToFeature(cell: HexCell): Feature<Polygon, HexFeatureProps> {
 /**
  * The hex price source + fill layer. Cells (worker output, held in the map
  * store) become a GeoJSON FeatureCollection on the main thread; an empty set
- * yields an empty collection → no fills (FR-007). The fill colour is a `step`
- * expression over the city's price breaks; a theme toggle only swaps the ramp
- * literals (no source rebuild, no worker recompute).
+ * yields an empty collection → no fills (FR-007). Per-layer style stays in
+ * `styles.ts`; the canvas composes this and never touches the source id.
  */
-export function HexLayer({
+export function HexLayers({
   cells,
   breaks,
   theme,
   visible = true,
-}: HexLayerProps) {
+}: HexLayersProps) {
   const data = useMemo<FeatureCollection<Polygon, HexFeatureProps>>(
     () => ({ type: "FeatureCollection", features: cells.map(cellToFeature) }),
     [cells],
   );
 
-  const fillLayer = useMemo<FillLayerSpecification>(
-    () => ({
-      id: HEX_FILL_LAYER_ID,
-      type: "fill",
-      source: HEX_SOURCE_ID,
-      layout: { visibility: visible ? "visible" : "none" },
-      paint: {
-        "fill-color": priceFillExpression(theme, breaks),
-        "fill-opacity": HEX_FILL_OPACITY,
-      },
-    }),
+  const fillLayer = useMemo(
+    () => getFillLayer(theme, breaks, visible),
     [theme, breaks, visible],
   );
+  useHexListeners(visible, cells);
 
   return (
     <Source id={HEX_SOURCE_ID} type="geojson" data={data}>

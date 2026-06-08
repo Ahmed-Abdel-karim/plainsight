@@ -14,7 +14,7 @@ import { useMemo } from "react";
 
 import type { Scope } from "@/data/types";
 import { scopeFromNbhd } from "@/lib/search-params";
-import { useNbhd, useSceneActions } from "./scene-store";
+import { useNbhd, useSceneActions } from "./stores";
 
 export interface UseScopeResult {
   scope: Scope;

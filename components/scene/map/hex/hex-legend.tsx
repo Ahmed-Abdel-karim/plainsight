@@ -1,7 +1,7 @@
 "use client";
 
-import { PRICE_RAMP } from "./hex-colors";
-import { useMapCity } from "../map-store";
+import { PRICE_RAMP } from ".";
+import { useMapCity } from "../../stores";
 import { useLens } from "../../use-lens";
 import { useResolvedTheme } from "../../../theme/theme-provider";
 
