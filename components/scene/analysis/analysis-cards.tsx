@@ -7,8 +7,7 @@ import { KpiRow } from "./kpi-row";
 import { PriceHistogram } from "./price-histogram";
 import { RoomMixBar } from "./room-mix-bar";
 import { TopHostsBar } from "./top-hosts-bar";
-import { useFilters } from "./use-filters";
-import { useAggregates, useCityFraming } from "../state";
+import { useAggregates, useCityFraming, useIsDefaultFilter } from "../state";
 
 /**
  * The four distribution cards. This component only *selects and renders* — the
@@ -21,6 +20,7 @@ import { useAggregates, useCityFraming } from "../state";
  * filtered numbers (stale-while-revalidate — the last good aggregate stays put
  * until the next one lands).
  */
+
 export function AnalysisCards({
   currency: defaultCurrency,
   defaultAggregates,
@@ -30,7 +30,7 @@ export function AnalysisCards({
 }) {
   const city = useCityFraming();
   const currency = city?.currency ?? defaultCurrency;
-  const { isDefault } = useFilters();
+  const isDefault = useIsDefaultFilter();
   const filtered = useAggregates();
 
   // Cold filtered path (a deep-linked/refreshed URL with active filters): no real

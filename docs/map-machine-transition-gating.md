@@ -144,9 +144,9 @@ entry the map just re-applies `ui`'s current selection/hover — a `SELECT` from
 list click during loading needs no buffer), and `HEX_INSPECT` can't fire before
 the map paints. The _only_ genuinely ephemeral command with no other home is
 `FIT_BOUNDS`, so it gets a one-field coalescing buffer (`pendingFitBounds`,
-last-wins). `reconcileToReady` on `ready` entry flies to it and re-applies
+last-wins). `applyCurrentStateToMap` on `ready` entry flies to it and re-applies
 selection/hover, then `clearPendingFitBounds` drops the buffer. Idempotent, no
-stale storm, and the `useRef` gate + fly-guard are deleted. Cost: `reconcileToReady`
+stale storm, and the `useRef` gate + fly-guard are deleted. Cost: `applyCurrentStateToMap`
 reads `system.get('ui')` (a session-persistent sibling, always present).
 
 ## Machine sketch
@@ -183,13 +183,13 @@ export const mapMachine = setup({
       /* assign loadedSources[id] = true */
     },
     // readiness-race deferral (option D)
-    bufferFitBounds: () => {
+    savePendingFitBounds: () => {
       /* assign pendingFitBounds = latest bbox (last-wins) */
     },
     clearPendingFitBounds: () => {
       /* assign pendingFitBounds: null */
     },
-    reconcileToReady: () => {
+    applyCurrentStateToMap: () => {
       /* fly to pendingFitBounds (if any) + re-apply
                                 selection/hover from system.get('ui') */
     },
@@ -208,16 +208,16 @@ export const mapMachine = setup({
         "MAP.READY": "ready", // fired once MapLibre 'load' resolves
         "MAP.ERROR": "error",
         // readiness-race deferral (option D): coalesce the latest bounds; applied
-        // by `reconcileToReady` on entry to `ready`. SELECT/HOVER not buffered
+        // by `applyCurrentStateToMap` on entry to `ready`. SELECT/HOVER not buffered
         // (truth lives in `ui`); HEX_INSPECT can't occur before paint.
-        "MAP.FIT_BOUNDS": { actions: "bufferFitBounds" },
+        "MAP.FIT_BOUNDS": { actions: "savePendingFitBounds" },
       },
     },
 
     ready: {
       initial: "interactive",
       // sync the imperative layer to durable truth once, then drop the buffer
-      entry: ["reconcileToReady", "clearPendingFitBounds"],
+      entry: ["applyCurrentStateToMap", "clearPendingFitBounds"],
       on: {
         // bring the new city in — flow in BOTH children (incl. suppressed)
         "MAP.FIT_BOUNDS": { actions: "flyTo" },
@@ -341,7 +341,7 @@ running: {
     navigating: {
       on: {
         // page mounted + framing resolved: stop the old city, spawn the new one
-        "CITY.CHANGED": { actions: ["stopPreviousCity", "spawnCity"] },
+        "CITY.CHANGED": { actions: ["stopOldCity", "startNewCity"] },
         // newer click before the first finished: just restamp the target
         "NAV.START": { actions: assign({ pendingSlug: ({ event }) => event.slug }) },
         // the spawned city converged
@@ -382,7 +382,7 @@ Decided (recorded above, kept here for traceability):
   (~150ms delay so fast navigations stay silent) is therefore a **view** concern
   (delayed render / CSS), not a machine action.
 - **Readiness-race deferral** → option D (reconcile on `ready`): one-field
-  `pendingFitBounds` buffer + `reconcileToReady` entry; no event queue.
+  `pendingFitBounds` buffer + `applyCurrentStateToMap` entry; no event queue.
 
 ## Reminder — prefetch on navigation intent (TODO when wiring `NAV.START`)
 

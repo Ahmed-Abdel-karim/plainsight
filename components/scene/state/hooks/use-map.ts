@@ -26,7 +26,7 @@ export function useMapSend() {
 // --- action hooks ---
 
 /** Fires MAP.MOUNTED → MAP.READY → MAP.RESOLUTION_CHANGED in the required order. */
-export function useNotifyMapLoaded() {
+export function useReportMapLoaded() {
   const send = useMapSend();
   return useCallback(
     (mapRef: MapRef, hexResolution: HexResolution) => {
@@ -38,7 +38,7 @@ export function useNotifyMapLoaded() {
   );
 }
 
-export function useMapMounted() {
+export function useReportMapMounted() {
   const send = useMapSend();
   return useCallback(
     (mapRef: MapRef) => send({ type: "MAP.MOUNTED", mapRef }),
@@ -46,17 +46,17 @@ export function useMapMounted() {
   );
 }
 
-export function useMapReady() {
+export function useReportMapReady() {
   const send = useMapSend();
   return useCallback(() => send({ type: "MAP.READY" }), [send]);
 }
 
-export function useMapError() {
+export function useReportMapError() {
   const send = useMapSend();
   return useCallback(() => send({ type: "MAP.ERROR" }), [send]);
 }
 
-export function useMapSourceLoaded() {
+export function useReportSourceLoaded() {
   const send = useMapSend();
   return useCallback(
     (sourceId: SourceId, loaded: boolean) =>
@@ -65,7 +65,7 @@ export function useMapSourceLoaded() {
   );
 }
 
-export function useMapResolutionChanged() {
+export function useChangeMapResolution() {
   const send = useMapSend();
   return useCallback(
     (hexResolution: HexResolution) =>
@@ -74,7 +74,7 @@ export function useMapResolutionChanged() {
   );
 }
 
-export function useMapFitBounds() {
+export function useFitMapBounds() {
   const send = useMapSend();
   return useCallback(
     (bbox: BBox) => send({ type: "MAP.FIT_BOUNDS", bbox }),
@@ -82,7 +82,7 @@ export function useMapFitBounds() {
   );
 }
 
-export function useMapHexInspect() {
+export function useInspectHex() {
   const send = useMapSend();
   return useCallback(
     (info: HexInspectInfo | null) => send({ type: "MAP.HEX_INSPECT", info }),
@@ -90,7 +90,7 @@ export function useMapHexInspect() {
   );
 }
 
-export function useMapHover() {
+export function useSetMapHover() {
   const send = useMapSend();
   return useCallback(
     (id: number | null, source: "list" | "map" | null) =>
@@ -99,7 +99,7 @@ export function useMapHover() {
   );
 }
 
-export function useMapSelect() {
+export function useSelectMapFeature() {
   const send = useMapSend();
   return useCallback(
     (id: number | null) => send({ type: "MAP.SELECT", id }),

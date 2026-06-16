@@ -1,16 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { CityMeta, ROOM_TYPES, type RoomType } from "@/data/contract";
+import { CityMeta, type RoomType } from "@/data/contract";
+import { expandRoomTypes } from "@/lib/filters/normalize";
 import { useDebouncedCallback } from "use-debounce";
-import { useFilters } from "../use-filters";
-import { useCityFraming } from "../../state";
+import { useCityFraming, useFilterControls } from "../../state";
 import { FilterPanelUi } from "./filter-panel-ui";
 
 const PRICE_COMMIT_MS = 250;
 
 /**
- * Filter panel. Owns its filter ↔ URL state directly via `useFilters` (shared
+ * Filter panel. Owns its filter ↔ URL state directly via `useFilterControls` (shared
  * with the Analyse cards + Browse list through the nuqs URL params, not props),
  * so it renders once above both tabs and stays in sync with them. Room-type
  * toggles commit immediately (discrete); the price slider drags on instant local
@@ -24,11 +24,10 @@ export function FilterPanel({ cityMeta }: { cityMeta: CityMeta }) {
   const city = useCityFraming() ?? cityMeta;
   const currency = city?.currency ?? "";
   const { filters, bounds, isDefault, setRoomTypes, setPriceRange, reset } =
-    useFilters();
+    useFilterControls();
 
   // Empty selection is the "all room types" state — show every toggle as active.
-  const selectedRooms =
-    filters.roomTypes.length === 0 ? [...ROOM_TYPES] : filters.roomTypes;
+  const selectedRooms = expandRoomTypes(filters.roomTypes);
 
   // Local draft for smooth dragging; the committed range lands in the URL.
   const [priceDraft, setPriceDraft] = useState<[number, number]>(

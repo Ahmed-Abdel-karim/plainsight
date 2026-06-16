@@ -1,9 +1,9 @@
 import { ROOM_TYPES, type RoomType } from "@/data/contract";
+import type { FilterBounds } from "@/data/types";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { formatCurrency } from "../format";
-import { type FilterBounds } from "../use-filters";
 
 const ROOM_LABEL: Record<RoomType, string> = {
   "Entire home/apt": "Entire",
@@ -13,7 +13,7 @@ const ROOM_LABEL: Record<RoomType, string> = {
 };
 
 /**
- * Filter panel. Owns its filter ↔ URL state directly via `useFilters` (shared
+ * Filter panel. Owns its filter ↔ URL state directly via `useFilterControls` (shared
  * with the Analyse cards + Browse list through the nuqs URL params, not props),
  * so it renders once above both tabs and stays in sync with them. Room-type
  * toggles commit immediately (discrete); the price slider drags on instant local

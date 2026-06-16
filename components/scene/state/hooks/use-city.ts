@@ -1,8 +1,15 @@
 "use client";
 
+import { shallowEqual } from "@xstate/react";
 import { useCallback } from "react";
 
 import type { RoomType } from "@/data/contract";
+import type { ListingFilters } from "@/data/types";
+import {
+  isDefaultFilters,
+  priceBounds,
+  resolveFilters,
+} from "@/lib/filters/normalize";
 
 import { SceneActorContext } from "../provider";
 import type { CityMachineActor } from "../machines/city/machine";
@@ -35,30 +42,6 @@ export const useCityFraming = createCitySelector(
 );
 
 // --- action hooks ---
-
-/**
- * Bulk-seeds all three filter fields in one call. Used by `UrlStoreSync` to
- * restore URL state on first city mount. Returns `undefined` before the city
- * actor exists — callers must gate the effect on `!!useCitySend()`.
- */
-export function useSeedCityFilter() {
-  const send = useCitySend();
-  return useCallback(
-    (filter: {
-      roomTypes: RoomType[];
-      priceRange: [number, number] | null;
-      nbhd: string | null;
-    }) => {
-      send?.({ type: "FILTER.SET_ROOM_TYPES", roomTypes: filter.roomTypes });
-      send?.({
-        type: "FILTER.SET_PRICE_RANGE",
-        priceRange: filter.priceRange,
-      });
-      send?.({ type: "FILTER.SET_NBHD", nbhd: filter.nbhd });
-    },
-    [send],
-  );
-}
 
 export function useSetRoomTypes() {
   const send = useCitySend();
@@ -99,6 +82,50 @@ export const usePriceRange = createCitySelector(
 export const useNbhd = createCitySelector(
   (s) => s?.context.filter.nbhd ?? null,
 );
+
+export const usePriceBounds = createCitySelector(
+  (s) => priceBounds(s?.context.framing ?? null),
+  shallowEqual,
+);
+
+export const useResolvedFilters = createCitySelector(
+  (s): ListingFilters =>
+    resolveFilters(
+      s?.context.filter ?? { roomTypes: [], priceRange: null },
+      priceBounds(s?.context.framing ?? null),
+    ),
+  shallowEqual,
+);
+
+export const useIsDefaultFilter = createCitySelector((s) =>
+  isDefaultFilters(
+    s?.context.filter ?? { roomTypes: [], priceRange: null },
+    priceBounds(s?.context.framing ?? null),
+  ),
+);
+
+export function useResetFilters() {
+  const send = useCitySend();
+  return useCallback(() => {
+    send?.({ type: "FILTER.SET_ROOM_TYPES", roomTypes: [] });
+    send?.({ type: "FILTER.SET_PRICE_RANGE", priceRange: null });
+  }, [send]);
+}
+
+/**
+ * Composite matching the old `useFilters` facade's return shape, for the one
+ * consumer (the filter panel) that drives every control. Setters here are
+ * thin pass-throughs — normalization lives in the city machine.
+ */
+export function useFilterControls() {
+  const filters = useResolvedFilters();
+  const bounds = usePriceBounds();
+  const isDefault = useIsDefaultFilter();
+  const setRoomTypes = useSetRoomTypes();
+  const setPriceRange = useSetPriceRange();
+  const reset = useResetFilters();
+  return { filters, bounds, isDefault, setRoomTypes, setPriceRange, reset };
+}
 
 // --- worker output ---
 

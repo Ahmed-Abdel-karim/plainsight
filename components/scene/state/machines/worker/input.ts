@@ -1,8 +1,7 @@
 /**
- * Data required to initialise the worker machine.
- * The slug is the only input: the actor creates a CityListingsClient bound to
- * it and disposes the client when the actor stops.
+ * The worker machine takes no input. It is a session-lifetime actor invoked by
+ * the root (sibling of map/ui); the city it serves is whichever `system.get("city")`
+ * resolves to at request time, and the slug rides on each request event — so there
+ * is nothing to bind at construction.
  */
-export interface Input {
-  readonly slug: string;
-}
+export type Input = Record<string, never>;

@@ -3,6 +3,8 @@
 import { useCallback } from "react";
 
 import type { MapCityPayload } from "@/data/types";
+
+import type { Input as CityInput } from "../machines/city/input";
 import { SceneActorContext } from "../provider";
 
 /**
@@ -24,7 +26,7 @@ export function useRootSend() {
 
 // --- action hooks ---
 
-export function useNavStart() {
+export function useStartNav() {
   const send = useRootSend();
   return useCallback(
     (slug: string) => send({ type: "NAV.START", slug }),
@@ -32,10 +34,11 @@ export function useNavStart() {
   );
 }
 
-export function useDispatchCityChanged() {
+export function useChangeCity() {
   const send = useRootSend();
   return useCallback(
-    (payload: MapCityPayload) => send({ type: "CITY.CHANGED", payload }),
+    (payload: MapCityPayload, filter: CityInput["filter"]) =>
+      send({ type: "CITY.CHANGED", payload, filter }),
     [send],
   );
 }

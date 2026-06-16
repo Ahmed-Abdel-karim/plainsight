@@ -57,7 +57,7 @@ const safeSetFeatureState = (
  *
  * Readiness-race deferral (option D — reconcile on ready, NOT an event queue):
  * a `MAP.FIT_BOUNDS` arriving while `loading` is coalesced into
- * `context.pendingFitBounds` (last-wins). On entry to `ready`, `reconcileToReady`
+ * `context.pendingFitBounds` (last-wins). On entry to `ready`, `applyCurrentStateToMap`
  * flies to any pending bounds and re-applies the current selection/hover from
  * the `ui` actor — so the imperative layer is synced to durable truth once,
  * structurally. This replaces the `useRef` replay gate in
@@ -103,7 +103,7 @@ export const mapMachine = setup({
     }),
     resetHexInspect: assign({ hexInspectInfo: null }),
     // Readiness-race buffer: stash the latest bbox while still `loading`.
-    bufferFitBounds: assign({
+    savePendingFitBounds: assign({
       pendingFitBounds: ({ context, event }) =>
         event.type === "MAP.FIT_BOUNDS" ? event.bbox : context.pendingFitBounds,
     }),
@@ -124,9 +124,9 @@ export const mapMachine = setup({
       assertEvent(event, "MAP.HOVER");
       const map = getMap(context);
       if (map?.getSource(POINTS_SOURCE_ID)) {
-        map.removeFeatureState({ source: POINTS_SOURCE_ID }, "hovered");
+        map.removeFeatureState({ source: POINTS_SOURCE_ID }, "hover");
         if (event.id !== null)
-          safeSetFeatureState(map, event.id, { hovered: true });
+          safeSetFeatureState(map, event.id, { hover: true });
       }
       system.get("ui")?.send({
         type: "UI.SET_HOVER",
@@ -140,7 +140,7 @@ export const mapMachine = setup({
       if (!map) return;
       applyBounds(map, event.bbox);
     },
-    // Clears both `selected` and `hovered` feature states from the points
+    // Clears both `selected` and `hover` feature states from the points
     // source. NAV.START already fans out to ui (clearing selectedId/hover
     // there) — this only resets the MapLibre visual layer.
     clearInteractionState: ({ context }) => {
@@ -151,7 +151,7 @@ export const mapMachine = setup({
     // Entry to `ready` — sync the imperative layer to durable truth once.
     // clearPendingFitBounds runs AFTER this in the entry array, so
     // context.pendingFitBounds is still readable here.
-    reconcileToReady: ({ context, system }) => {
+    applyCurrentStateToMap: ({ context, system }) => {
       const map = getMap(context);
       if (!map) return;
       if (context.pendingFitBounds) applyBounds(map, context.pendingFitBounds);
@@ -160,7 +160,7 @@ export const mapMachine = setup({
       if (uiCtx.selectedId !== null)
         safeSetFeatureState(map, uiCtx.selectedId, { selected: true });
       if (uiCtx.hoveredListingId !== null)
-        safeSetFeatureState(map, uiCtx.hoveredListingId, { hovered: true });
+        safeSetFeatureState(map, uiCtx.hoveredListingId, { hover: true });
     },
   },
 }).createMachine({
@@ -177,17 +177,17 @@ export const mapMachine = setup({
         "MAP.READY": "ready",
         "MAP.ERROR": "error",
         // Readiness-race deferral (option D): coalesce the latest desired bounds
-        // — applied by `reconcileToReady` on entry to `ready`. SELECT/HOVER are
+        // — applied by `applyCurrentStateToMap` on entry to `ready`. SELECT/HOVER are
         // intentionally NOT buffered (their truth lives in `ui`, reconciled on
         // ready); HEX_INSPECT can't occur before the map paints.
-        "MAP.FIT_BOUNDS": { actions: "bufferFitBounds" },
+        "MAP.FIT_BOUNDS": { actions: "savePendingFitBounds" },
       },
     },
 
     ready: {
       initial: "interactive",
       // Sync the imperative layer to durable truth once, then drop the buffer.
-      entry: ["reconcileToReady", "clearPendingFitBounds"],
+      entry: ["applyCurrentStateToMap", "clearPendingFitBounds"],
       on: {
         // Always handled while `ready` (both children) — these bring the new
         // city in, so they must keep flowing even during `suppressed`.

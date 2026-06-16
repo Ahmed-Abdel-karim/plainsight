@@ -1,5 +1,5 @@
-import type { ProcessResult, ProcessType } from "@/lib/listings/client";
 import type { RoomType } from "@/data/contract";
+import type { ProcessResult, ProcessType } from "../worker/events";
 import type { HexResolution } from "@/lib/hex/types";
 
 // --- filter events (from UI action hooks; only honoured in city.ready) ---
@@ -26,14 +26,17 @@ export interface MapResolutionChanged {
 
 // --- worker events (sent via sendParent from the invoked worker actor) ---
 
-/** Worker's one-time city-data load succeeded. City exits loading → ready. */
+/** Worker's city-data load succeeded. City exits loading → ready. Carries the
+ *  `slug` it is for so a city that has since been navigated away from drops it. */
 export interface WorkerFetchOk {
   readonly type: "WORKER.FETCH_OK";
+  readonly slug: string;
   readonly count: number;
 }
-/** Terminal load failure — city exits loading → error. */
+/** Terminal load failure — city exits loading → error. Slug-stamped (Rule 5.3). */
 export interface WorkerFetchError {
   readonly type: "WORKER.FETCH_ERROR";
+  readonly slug: string;
   readonly error: Error;
 }
 /** A recompute landed. City assigns aggregates or hexCells from the result. */

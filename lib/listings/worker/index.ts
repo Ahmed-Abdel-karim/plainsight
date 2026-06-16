@@ -22,3 +22,9 @@ export type LoadDataResponseMessage = ResponseMessageType<
 
 export type RequestMessage = LoadDataRequestMessage | ProcessRequestMessage;
 export type ResponseMessage = LoadDataResponseMessage | ProcessResponseMessage;
+
+/** Spawn the bundled listings worker. Lives here so the bundler-resolved
+ *  `new URL("./worker.ts", import.meta.url)` stays next to the worker entry. */
+export function createListingsWorker(): Worker {
+  return new Worker(new URL("./worker.ts", import.meta.url));
+}

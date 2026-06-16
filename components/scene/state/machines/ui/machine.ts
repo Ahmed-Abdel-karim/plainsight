@@ -1,4 +1,4 @@
-import { type ActorRefFrom, assign, setup } from "xstate";
+import { type ActorRefFrom, assertEvent, assign, setup } from "xstate";
 
 import * as Context from "./context";
 import type * as Events from "./events";
@@ -49,6 +49,13 @@ export const uiMachine = setup({
             : event.source
           : context.hoverSource,
     }),
+    // Sets the selected listing id (UI.SELECT).
+    assignSelectedId: assign({
+      selectedId: ({ event }) => {
+        assertEvent(event, "UI.SELECT");
+        return event.id;
+      },
+    }),
     // Clears selection + hover on nav start — folds the fan-out.ts reset.
     // Lens is preserved for UX continuity across cities.
     clearSelectionAndHover: assign({
@@ -65,9 +72,7 @@ export const uiMachine = setup({
     active: {
       on: {
         "UI.SET_LENS": { actions: "assignLens" },
-        "UI.SELECT": {
-          actions: assign({ selectedId: ({ event }) => event.id }),
-        },
+        "UI.SELECT": { actions: "assignSelectedId" },
         "UI.SET_HOVER": { actions: "assignHover" },
         "NAV.START": {
           target: "navigating",

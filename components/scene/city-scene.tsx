@@ -5,12 +5,11 @@ import { ListingDetail } from "./browse/listing-detail";
 import { SceneDrawer } from "./scene-drawer";
 import { SidebarContent } from "./sidebar-content";
 import { LensTabs } from "./lens-tabs/lens-tabs";
-import { HexLegend } from "./map/hex/hex-legend";
-import { PointsLegend } from "./map/points/points-legend";
+import { HexLegend } from "./map/layers/hex/hex-legend";
+import { PointsLegend } from "./map/layers/points/points-legend";
 import { MapLegend } from "./map-legend";
 import type { MapCityPayload } from "@/data/types";
-import { CityDispatcher } from "./city-dispatcher";
-import { UrlStoreSync } from "./url-store-sync";
+import { SceneUrlLoader } from "./scene-url-loader";
 import { UrlWriteSync } from "./url-write-sync";
 
 /**
@@ -18,13 +17,13 @@ import { UrlWriteSync } from "./url-write-sync";
  * persists across city navigation; this renders the per-city chrome that *does*
  * change — the desktop sidebar (grid column 1) and the mobile drawer.
  *
- * `CityDispatcher` fires `CITY.CHANGED` into the XState root machine on mount,
+ * `SceneUrlLoader` fires `CITY.CHANGED` into the XState root machine on mount,
  * spawning a fresh city actor per slug. The heavy boundaries GeoJSON is fetched
  * lazily via React Query so the sidebar never blocks on it.
  *
  * Data is otherwise *not* threaded through here as props: each region fetches the
  * tier it needs behind its own Suspense boundary. The lens/scope/listing state is
- * client-only (XState, reflected from the URL by `UrlStoreSync`), so nothing
+ * client-only (XState, reflected from the URL by `SceneUrlLoader`), so nothing
  * here reads `searchParams` — the route stays fully static.
  */
 export function CityScene({
@@ -40,21 +39,14 @@ export function CityScene({
   const cityPromise: Promise<MapCityPayload> = getCityNeighbourhoodCount(
     cityMeta.slug,
   ).then((neighbourhoodCount) => ({
-    slug: cityMeta.slug,
+    ...cityMeta,
     cityName: cityMeta.name,
-    bbox: cityMeta.bbox,
-    center: cityMeta.center,
     neighbourhoodCount,
-    priceScale: cityMeta.priceScale,
-    priceCap: cityMeta.priceCap,
-    currency: cityMeta.currency,
-    snapshotLabel: cityMeta.snapshotLabel,
   }));
 
   return (
     <>
-      <CityDispatcher cityPromise={cityPromise} />
-      <UrlStoreSync />
+      <SceneUrlLoader cityPromise={cityPromise} />
       <UrlWriteSync />
       <aside
         aria-label="Market analysis"

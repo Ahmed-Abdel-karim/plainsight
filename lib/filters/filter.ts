@@ -1,6 +1,8 @@
 import type { Listing } from "@/data/contract";
 import type { ListingFilters } from "@/data/types";
 
+import { isAllRoomTypes } from "./normalize";
+
 /** The fields the price/room-type filter reads. Both `Listing` and the Browse
  * `BrowsePointProperties` satisfy it, so one predicate serves both paths. */
 export type FilterableListing = Pick<Listing, "roomType" | "price">;
@@ -20,7 +22,7 @@ export function filterListings<T extends FilterableListing>(
 ): T[] {
   const [min, max] = filters.priceRange;
   const roomTypes = filters.roomTypes;
-  const allRoomTypes = roomTypes.length === 0;
+  const allRoomTypes = isAllRoomTypes(roomTypes);
 
   return listings.filter((listing) => {
     if (!allRoomTypes && !roomTypes.includes(listing.roomType)) return false;

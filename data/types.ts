@@ -17,6 +17,12 @@ export interface ListingFilters {
   priceRange: [number, number]; // [min, max] in city currency
 }
 
+/** Inclusive price bounds for a city, used to resolve a null priceRange. */
+export interface FilterBounds {
+  min: number;
+  max: number;
+}
+
 /** Sort options for the Browse listing list (E6-S5). */
 export type SortKey =
   | "price_asc"

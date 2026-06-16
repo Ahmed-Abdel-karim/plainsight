@@ -1,4 +1,6 @@
 import type { MapCityPayload } from "@/data/types";
+
+import type { Input as CityInput } from "../city/input";
 import type * as Input from "./input";
 
 /** Auto-fired when the actor starts; carries the machine `input`. */
@@ -15,6 +17,8 @@ export interface Init {
 export interface CityChanged {
   readonly type: "CITY.CHANGED";
   readonly payload: MapCityPayload;
+  /** Initial filter seeded from the URL — passed to the city machine's input. */
+  readonly filter: CityInput["filter"];
 }
 
 /**
@@ -36,4 +40,14 @@ export interface CityReady {
   readonly type: "CITY.READY";
 }
 
-export type Events = Init | CityChanged | NavStart | CityReady;
+/**
+ * The projected scene selection changed and the URL should be mirrored. A bare
+ * signal — the root's `syncUrl` action reads the live `ui` + `city` snapshots,
+ * so no payload is carried. Handled only in `running.idle`; dropped while
+ * `navigating` so intermediate city-switch state never clobbers the URL.
+ */
+export interface UrlSync {
+  readonly type: "URL.SYNC";
+}
+
+export type Events = Init | CityChanged | NavStart | CityReady | UrlSync;

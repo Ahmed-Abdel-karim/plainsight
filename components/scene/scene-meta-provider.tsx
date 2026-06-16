@@ -3,7 +3,7 @@
 import { createContext, useContext } from "react";
 
 import type { Scope } from "@/data";
-import type { FilterBounds } from "./analysis/use-filters";
+import type { FilterBounds } from "@/data/types";
 
 export interface SceneMeta {
   citySlug: string;

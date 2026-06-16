@@ -43,7 +43,7 @@ export const sceneParams = {
 /**
  * Filter params — room types + price range. `rooms` defaults to `[]` ("all
  * rooms"); `price` has no default because its bounds are per-city, so the absent
- * param means "full range" and `use-filters` resolves it against the city bounds.
+ * param means "full range" and `useResolvedFilters` resolves it against the city bounds.
  */
 export const filterParams = {
   rooms: parseAsArrayOf(parseAsStringLiteral(ROOM_TYPES)).withDefault([]),

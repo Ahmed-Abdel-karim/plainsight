@@ -5,12 +5,13 @@ import { useEffect, useMemo, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { RoomType } from "@/data/contract";
 import type { SortKey } from "@/data/types";
-import { useFilters } from "../analysis/use-filters";
 import { formatCurrency } from "../analysis/format";
 import {
   useCityFraming,
   useHoveredListingId,
   useHoverSource,
+  useResetFilters,
+  useResolvedFilters,
   useSetHover,
 } from "../state";
 import { useCityBoundaries } from "../use-city-boundaries";
@@ -31,8 +32,8 @@ const ROOM_LABEL: Record<RoomType, string> = {
 
 /**
  * The Browse list surface — the live count + sort + virtualized list / empty /
- * loading states. Reads the (URL-shared) filter state via `useFilters` and the
- * neighbourhood scope via `useScope`, then derives the filtered+sorted list from
+ * loading states. Reads the (URL-shared) filter state via `useResolvedFilters`
+ * and the neighbourhood scope via `useScope`, then derives the filtered+sorted list from
  * the lazily-fetched points tier (one compute, feeding both the count and the
  * list). The filter controls live in the shared `FilterPanel` above both tabs.
  * Serves both the desktop sidebar and the mobile sheet from one component (CR-002).
@@ -43,7 +44,8 @@ export function SidebarBrowse() {
   const currency = city?.currency ?? "";
   // Filter controls live in the shared `FilterPanel` above; here we only read the
   // (URL-shared) filter state to derive the list, plus `reset` for the empty CTA.
-  const { filters, reset } = useFilters();
+  const filters = useResolvedFilters();
+  const reset = useResetFilters();
   // Scope is client state (FR-013) — a neighbourhood click on the map narrows it.
   const { scope } = useScope();
   const { selectedId, selectListing } = useLens();
