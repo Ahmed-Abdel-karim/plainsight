@@ -3,35 +3,32 @@
 import type { MapLayerMouseEvent } from "react-map-gl/maplibre";
 import { useEffect } from "react";
 
-import { useLens } from "../../use-lens";
-import { POINTS_CIRCLE_LAYER_ID } from "../constants";
-import { useMapActions } from "../../stores";
-import { useLayerListeners } from "../use-layer-listeners";
+import { useMapHover, useMapSelect } from "../../state";
+import type { LayerListener } from "../layer";
 
 function pointIdFrom(event: MapLayerMouseEvent): number | null {
   const point = event.features?.[0];
   return typeof point?.id === "number" ? point.id : null;
 }
 
-export function usePointsListeners(visible: boolean): void {
-  const { selectListing } = useLens();
-  const { setHoveredListing } = useMapActions();
-
-  useLayerListeners(
-    POINTS_CIRCLE_LAYER_ID,
-    {
-      mousemove: (event) => setHoveredListing(pointIdFrom(event), "map"),
-      mouseleave: () => setHoveredListing(null, "map"),
-      click: (event) => {
-        const id = pointIdFrom(event);
-        if (id !== null) selectListing(id);
-      },
-    },
-    visible,
-  );
+export function usePointsListeners(visible: boolean): LayerListener[] {
+  const mapHover = useMapHover();
+  const mapSelect = useMapSelect();
 
   useEffect(() => {
-    if (!visible) setHoveredListing(null, "map");
-    return () => setHoveredListing(null, "map");
-  }, [setHoveredListing, visible]);
+    if (!visible) mapHover(null, null);
+    return () => mapHover(null, null);
+  }, [mapHover, visible]);
+
+  return [
+    { type: "mousemove", listener: (e) => mapHover(pointIdFrom(e), "map") },
+    { type: "mouseleave", listener: () => mapHover(null, null) },
+    {
+      type: "click",
+      listener: (e) => {
+        const id = pointIdFrom(e);
+        if (id !== null) mapSelect(id);
+      },
+    },
+  ];
 }

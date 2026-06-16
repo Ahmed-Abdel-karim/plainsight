@@ -33,6 +33,7 @@ type SidebarContentProps = {
 export function SidebarContent({
   scope,
   cityMeta: { slug: citySlug, country, frame, snapshotLabel },
+  cityMeta,
 }: SidebarContentProps) {
   const snapshot = snapshotLabel.trim();
 
@@ -76,13 +77,17 @@ export function SidebarContent({
         </div>
       </header>
       <div className="flex min-h-0 flex-1 flex-col gap-stack">
-        <FilterPanel />
+        <FilterPanel cityMeta={cityMeta} />
 
         <Suspense fallback={<AnalysisCardsSkeleton />}>
           <LensActivity
             analysis={
               <div className="flex min-h-0 flex-1 flex-col gap-stack overflow-y-auto">
-                <SidebarAnalysis citySlug={citySlug} scope={scope} />
+                <SidebarAnalysis
+                  citySlug={citySlug}
+                  currency={cityMeta.currency}
+                  scope={scope}
+                />
               </div>
             }
             browse={<SidebarBrowse key={citySlug} />}

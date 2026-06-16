@@ -1,6 +1,8 @@
 import { useCallback } from "react";
-import { useMapRef } from "../stores";
-import type { LayerId, SourceId } from "./types";
+import type { MapRef } from "react-map-gl/maplibre";
+import type { MapLayerEventType, Subscription } from "maplibre-gl";
+import { useMapRef } from "../state";
+import type { LayerId, LayerListeners, SourceId } from "./types";
 import {
   HIDDEN_PLACE_LABELS,
   RETAINED_PLACE_LABELS,
@@ -8,7 +10,17 @@ import {
 } from "./basemap";
 import { Theme } from "@/components/theme/theme-provider";
 
-export type { MapStatus } from "../stores";
+type LayerEventType = keyof MapLayerEventType;
+
+function registerLayerListener<T extends LayerEventType>(
+  mapRef: MapRef,
+  layerId: LayerId,
+  eventType: T,
+  listener: LayerListeners[T],
+): Subscription | undefined {
+  if (!listener) return;
+  return mapRef.on(eventType, layerId, listener);
+}
 
 /**
  * Control surface for the WebGL map. Exposes imperative style mutations
@@ -18,6 +30,29 @@ export type { MapStatus } from "../stores";
  */
 export function useMapControls() {
   const mapRef = useMapRef();
+
+  const setLayerListeners = useCallback(
+    ({
+      layerId,
+      listeners,
+    }: {
+      layerId: LayerId;
+      listeners: LayerListeners;
+    }): Subscription[] => {
+      if (!mapRef) return [];
+      return (Object.keys(listeners) as LayerEventType[])
+        .map((eventType) =>
+          registerLayerListener(
+            mapRef,
+            layerId,
+            eventType,
+            listeners[eventType],
+          ),
+        )
+        .filter((s): s is Subscription => !!s);
+    },
+    [mapRef],
+  );
 
   const setPaintProperty = useCallback(
     (layerId: LayerId, property: string, value: unknown) => {
@@ -84,6 +119,7 @@ export function useMapControls() {
     setLayoutProperty,
     setFeatureState,
     styleBasemapPlaceLabels,
+    setLayerListeners,
     mapRef,
   };
 }

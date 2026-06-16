@@ -1,4 +1,5 @@
 import { QueryProvider } from "@/components/query/query-provider";
+import { SceneProvider } from "@/components/scene/state";
 import { MapView } from "@/components/scene/map/map";
 
 /**
@@ -10,8 +11,8 @@ import { MapView } from "@/components/scene/map/map";
  *
  * The grid lives here so the sidebar (`{children}`, column 1) and the map column
  * sit side by side. On desktop only the sidebar (`hidden lg:flex`) and the map
- * `<section>` are in-flow grid items; the mobile drawer is `lg:hidden` and the
- * `MapDataSync` bridge renders nothing, so neither claims a grid cell.
+ * `<section>` are in-flow grid items; the mobile drawer is `lg:hidden`, so it
+ * doesn't claim a grid cell.
  *
  * Only the WebGL canvas needs to persist across city navigation, so only `MapView`
  * lives here. The lens tabs + legends are rendered by the `[city]` route (overlaid
@@ -25,17 +26,19 @@ export default function SceneLayout({
 }) {
   return (
     <QueryProvider>
-      <main className="flex min-h-screen flex-col bg-background text-foreground lg:h-screen lg:overflow-hidden">
-        <div className="relative flex min-h-screen w-full flex-1 flex-col bg-background text-foreground lg:grid lg:h-screen lg:grid-cols-[432px_minmax(0,1fr)] lg:overflow-hidden">
-          {children}
-          <section
-            aria-label="Map"
-            className="bg-map-bg relative min-h-96 flex-1 overflow-hidden lg:min-h-0"
-          >
-            <MapView />
-          </section>
-        </div>
-      </main>
+      <SceneProvider>
+        <main className="flex min-h-screen flex-col bg-background text-foreground lg:h-screen lg:overflow-hidden">
+          <div className="relative flex min-h-screen w-full flex-1 flex-col bg-background text-foreground lg:grid lg:h-screen lg:grid-cols-[432px_minmax(0,1fr)] lg:overflow-hidden">
+            {children}
+            <section
+              aria-label="Map"
+              className="bg-map-bg relative min-h-96 flex-1 overflow-hidden lg:min-h-0"
+            >
+              <MapView />
+            </section>
+          </div>
+        </main>
+      </SceneProvider>
     </QueryProvider>
   );
 }

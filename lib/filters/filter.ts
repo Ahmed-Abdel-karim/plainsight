@@ -7,9 +7,9 @@ export type FilterableListing = Pick<Listing, "roomType" | "price">;
 
 /**
  * Apply the active filter state to a listing array. Pure and isomorphic — the
- * SAME function backs the server `getFilteredAggregates` path, the client
- * live-recompute path, and the Browse list/dots, so they can never disagree
- * about what "the filtered set" is. Generic over the row shape.
+ * SAME function backs the worker's Analyse recompute (hex + cards) and the
+ * Browse list/dots, so they can never disagree about what "the filtered set" is.
+ * Generic over the row shape.
  *
  * - `roomTypes: []` means "all types" (no room-type constraint).
  * - `priceRange` is an inclusive `[min, max]` band in the city's currency.

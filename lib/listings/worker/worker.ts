@@ -66,10 +66,15 @@ ctx.onmessage = async (event: MessageEvent<RequestMessage>) => {
       slug = citySlug;
       post({
         status: "success",
+        slug: citySlug,
         payload: { type: "load", data: { slug: citySlug, count: rows.length } },
       });
     } catch (err) {
-      post({ status: "error", payload: { type: "load", error: toError(err) } });
+      post({
+        status: "error",
+        slug: citySlug,
+        payload: { type: "load", error: toError(err) },
+      });
     }
     return;
   }
@@ -94,11 +99,13 @@ ctx.onmessage = async (event: MessageEvent<RequestMessage>) => {
       : process.execute(message.params, context);
     post({
       status: "success",
+      slug: message.slug, // echo the request's slug for stale-reply drop (5.3)
       payload: { type: message.type, data },
     } as ResponseMessage);
   } catch (err) {
     post({
       status: "error",
+      slug: message.slug,
       payload: { type: message.type, error: toError(err) },
     } as ResponseMessage);
   }

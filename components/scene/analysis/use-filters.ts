@@ -18,14 +18,15 @@
  */
 import { useCallback, useMemo } from "react";
 
-import { type RoomType } from "@/data/contract";
+import { ROOM_TYPES, type RoomType } from "@/data/contract";
 import type { ListingFilters } from "@/data/types";
 import {
-  useFilterBounds,
+  useCityFraming,
   usePriceRange,
   useRoomTypes,
-  useSceneActions,
-} from "../stores";
+  useSetPriceRange,
+  useSetRoomTypes,
+} from "../state";
 
 export interface FilterBounds {
   min: number;
@@ -42,14 +43,14 @@ export interface UseFiltersResult {
 }
 
 export function useFilters(): UseFiltersResult {
-  const bounds = useFilterBounds();
+  const city = useCityFraming();
+  const bounds = city
+    ? { min: city.priceScale.min, max: city.priceCap }
+    : { min: 0, max: 0 };
   const roomTypes = useRoomTypes();
   const storedPriceRange = usePriceRange();
-  const {
-    setRoomTypes,
-    setPriceRange: setStorePriceRange,
-    reset,
-  } = useSceneActions();
+  const _setRoomTypes = useSetRoomTypes();
+  const _setPriceRange = useSetPriceRange();
 
   const priceRange = useMemo<[number, number]>(
     () => [
@@ -69,15 +70,29 @@ export function useFilters(): UseFiltersResult {
     priceRange[0] === bounds.min &&
     priceRange[1] === bounds.max;
 
+  const setRoomTypes = useCallback(
+    (next: RoomType[]) => {
+      // Mirror the filter store's normalization: all-selected == no filter.
+      const normalised = next.length === ROOM_TYPES.length ? [] : next;
+      _setRoomTypes(normalised);
+    },
+    [_setRoomTypes],
+  );
+
   const setPriceRange = useCallback(
     (range: [number, number]) => {
       // A full-range selection is the "no filter" state — store `null` so the
       // URL clears the `price` param.
       const atDefault = range[0] === bounds.min && range[1] === bounds.max;
-      setStorePriceRange(atDefault ? null : range);
+      _setPriceRange(atDefault ? null : range);
     },
-    [setStorePriceRange, bounds.min, bounds.max],
+    [_setPriceRange, bounds.min, bounds.max],
   );
+
+  const reset = useCallback(() => {
+    _setRoomTypes([]);
+    _setPriceRange(null);
+  }, [_setRoomTypes, _setPriceRange]);
 
   return {
     filters,

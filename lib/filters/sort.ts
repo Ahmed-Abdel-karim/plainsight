@@ -29,9 +29,9 @@ function byKeyThenId<T extends SortableListing>(
 
 /**
  * Sort listings for the Browse list (E6-S5). Returns a NEW array; never mutates
- * the input. Pure and isomorphic — shared by the server `queryListings` path,
- * the Browse list rendering, and any client-side list. Generic over the row
- * shape so it accepts both `Listing` and `BrowsePointProperties`.
+ * the input. Pure and isomorphic — drives the Browse list rendering (over
+ * `BrowsePointProperties`) and works equally over `Listing`. Generic over the
+ * row shape so it accepts both.
  *
  * Ties break by listing id for a stable, deterministic order across renders.
  */

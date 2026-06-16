@@ -34,17 +34,21 @@ interface TierSpec {
  * The tier allowlist. Mapping a tier here is the ONLY way to expose a file, so it
  * doubles as the guard against arbitrary-path reads — an unknown tier 404s before
  * any filesystem access.
+ *
+ * Exposed client-fetched tiers: `analytics` (the scene worker → hex + cards),
+ * `points` (Browse → dots/list/drawer), and `boundaries` (the neighbourhood
+ * polygons GeoJSON — fetched lazily by the map's neighbourhoods layer via React
+ * Query so the heavy file streams off the cache instead of through the RSC
+ * payload). The remaining materialised tiers (meta, aggregates) are read
+ * server-side through the repository for the RSC render and stay un-served.
  */
 export const CITY_TIERS = {
   points: { filename: (s) => `${s}-points.geojson`, contentType: GEOJSON },
+  analytics: { filename: (s) => `${s}-analytics.json`, contentType: JSON_CT },
   boundaries: {
     filename: (s) => `${s}-boundaries.geojson`,
     contentType: GEOJSON,
   },
-  analytics: { filename: (s) => `${s}-analytics.json`, contentType: JSON_CT },
-  listings: { filename: (s) => `${s}-listings.json`, contentType: JSON_CT },
-  meta: { filename: (s) => `${s}-meta.json`, contentType: JSON_CT },
-  aggregates: { filename: (s) => `${s}-aggregates.json`, contentType: JSON_CT },
 } satisfies Record<string, TierSpec>;
 
 export type CityTier = keyof typeof CITY_TIERS;

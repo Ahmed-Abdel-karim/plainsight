@@ -5,9 +5,8 @@ import { useEffect } from "react";
 
 import type { HexCell } from "@/lib/hex/types";
 
-import { HEX_FILL_LAYER_ID } from "../constants";
-import { useMapActions, type HexInspectInfo } from "../../stores";
-import { useLayerListeners } from "../use-layer-listeners";
+import { useMapHexInspect, type HexInspectInfo } from "../../state";
+import type { LayerListener } from "../layer";
 import type { HexFeatureProps } from "./hex-layers";
 
 function inspectFrom(event: MapLayerMouseEvent): HexInspectInfo | null {
@@ -25,25 +24,21 @@ function inspectFrom(event: MapLayerMouseEvent): HexInspectInfo | null {
   };
 }
 
-export function useHexListeners(visible: boolean, cells: HexCell[]): void {
-  const { setHexInspectInfo } = useMapActions();
-
-  const updateHexInspect = (event: MapLayerMouseEvent) =>
-    setHexInspectInfo(inspectFrom(event));
-
-  useLayerListeners(
-    HEX_FILL_LAYER_ID,
-    {
-      mouseenter: updateHexInspect,
-      mousemove: updateHexInspect,
-      mouseleave: () => setHexInspectInfo(null),
-      click: updateHexInspect,
-    },
-    visible,
-  );
+export function useHexListeners(
+  visible: boolean,
+  cells: HexCell[],
+): LayerListener[] {
+  const hexInspect = useMapHexInspect();
 
   // A hidden or replaced hex layer must never leave stale inspect data visible.
   useEffect(() => {
-    setHexInspectInfo(null);
-  }, [cells, setHexInspectInfo, visible]);
+    hexInspect(null);
+  }, [cells, hexInspect, visible]);
+
+  return [
+    { type: "mouseenter", listener: (e) => hexInspect(inspectFrom(e)) },
+    { type: "mousemove", listener: (e) => hexInspect(inspectFrom(e)) },
+    { type: "mouseleave", listener: () => hexInspect(null) },
+    { type: "click", listener: (e) => hexInspect(inspectFrom(e)) },
+  ];
 }

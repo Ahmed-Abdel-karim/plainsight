@@ -8,11 +8,12 @@ import type { SortKey } from "@/data/types";
 import { useFilters } from "../analysis/use-filters";
 import { formatCurrency } from "../analysis/format";
 import {
+  useCityFraming,
   useHoveredListingId,
   useHoverSource,
-  useMapActions,
-  useMapCity,
-} from "../stores";
+  useSetHover,
+} from "../state";
+import { useCityBoundaries } from "../use-city-boundaries";
 import { useLens } from "../use-lens";
 import { useScope } from "../use-scope";
 import { BrowseEmpty } from "./browse-empty";
@@ -37,7 +38,7 @@ const ROOM_LABEL: Record<RoomType, string> = {
  * Serves both the desktop sidebar and the mobile sheet from one component (CR-002).
  */
 export function SidebarBrowse() {
-  const city = useMapCity();
+  const city = useCityFraming();
   const citySlug = city?.slug ?? "";
   const currency = city?.currency ?? "";
   // Filter controls live in the shared `FilterPanel` above; here we only read the
@@ -46,7 +47,7 @@ export function SidebarBrowse() {
   // Scope is client state (FR-013) — a neighbourhood click on the map narrows it.
   const { scope } = useScope();
   const { selectedId, selectListing } = useLens();
-  const { setHoveredListing } = useMapActions();
+  const setHover = useSetHover();
   const hoveredId = useHoveredListingId();
   const hoverSource = useHoverSource();
 
@@ -78,15 +79,17 @@ export function SidebarBrowse() {
     ).length;
   }, [collection, scope]);
 
-  // Resolve neighbourhood id → display name from the boundaries already loaded
-  // for the map (no extra fetch); fall back to the raw id before they arrive.
+  // Resolve neighbourhood id → display name from the shared boundaries tier (one
+  // cached fetch across the map + Browse); fall back to the raw id before it
+  // arrives.
+  const boundaries = useCityBoundaries(citySlug || null);
   const neighbourhoodNames = useMemo(() => {
     const map: Record<string, string> = {};
-    for (const feature of city?.boundaries?.features ?? []) {
+    for (const feature of boundaries?.features ?? []) {
       map[feature.properties.id] = feature.properties.name;
     }
     return map;
-  }, [city]);
+  }, [boundaries]);
 
   const emptySummary = useMemo(() => {
     const rooms =
@@ -120,7 +123,7 @@ export function SidebarBrowse() {
           hoveredId={hoveredId}
           hoverSource={hoverSource}
           selectedId={selectedId}
-          onHover={(id) => setHoveredListing(id, "list")}
+          onHover={(id) => setHover(id, "list")}
           onSelect={(id) => selectListing(id)}
         />
       )}

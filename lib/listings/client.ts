@@ -48,10 +48,11 @@ import type {
 /** The process types the client routes by (the per-type slot key). */
 export type ProcessType = ProcessRequestMessage["type"];
 
-/** A recompute result, tagged by type so the store routes it to its slab. */
+/** A recompute result, tagged by type so the store routes it to its slab and by
+ *  `slug` so the store can stamp which city the result is for (Rule 5.2). */
 export type ProcessResult =
-  | { type: "aggregates"; payload: ScopeAggregates }
-  | { type: "hexes"; payload: HexCell[] };
+  | { type: "aggregates"; payload: ScopeAggregates; slug: string }
+  | { type: "hexes"; payload: HexCell[]; slug: string };
 
 /**
  * The store's sinks. `fetch` is the one-time city load (a failure is terminal and
@@ -130,12 +131,15 @@ export class CityListingsClient {
   }
 
   /** Record the latest request for its type (dropping any older one in the slot),
-   *  spawn the worker on first use, then try to send. */
-  requestProcess(message: ProcessRequestMessage) {
+   *  spawn the worker on first use, then try to send. Callers pass the bare
+   *  `{ type, params }`; the client stamps the city `slug` it's bound to (Rule
+   *  5.3) so the worker can echo it back and stale replies get dropped. */
+  requestProcess(message: Omit<ProcessRequestMessage, "slug">) {
     if (this.#status === "failed") return;
-    this.#slot(message.type).offer(message); // newest wins
+    const stamped = { ...message, slug: this.#slug } as ProcessRequestMessage;
+    this.#slot(stamped.type).offer(stamped); // newest wins
     this.#start();
-    this.#send(message.type);
+    this.#send(stamped.type);
   }
 
   dispose() {
@@ -213,6 +217,10 @@ export class CityListingsClient {
    * session stays `ready`.
    */
   #handleProcess(message: ProcessResponseMessage) {
+    // Drop a reply that outlived its city (Rule 5.3). A per-city client only ever
+    // hears its own worker, so this never fires today — it's defence against a
+    // future client reuse / an in-flight reply racing dispose, never a leak.
+    if (message.slug !== this.#slug) return;
     const type = message.payload.type as ProcessType;
     const slot = this.#slots.get(type);
     if (!slot) return;
@@ -221,6 +229,7 @@ export class CityListingsClient {
         this.#callbacks.onProcessSuccess({
           type: message.payload.type,
           payload: message.payload.data,
+          slug: message.slug,
         } as ProcessResult);
       } else {
         this.#callbacks.onProcessError(type, message.payload.error);

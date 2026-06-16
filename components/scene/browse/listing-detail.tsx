@@ -13,7 +13,8 @@ import {
 } from "@/components/ui/drawer";
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "../analysis/format";
-import { useMapCity } from "../stores";
+import { useCityFraming } from "../state";
+import { useCityBoundaries } from "../use-city-boundaries";
 import { useLens } from "../use-lens";
 import { useBrowsePoints } from "./use-browse-points";
 import { ListingDetailBody } from "./listing-detail-body";
@@ -45,13 +46,14 @@ function useDrawerDirection(): "right" | "bottom" {
  * focus to the trigger.
  */
 export function ListingDetail() {
-  const city = useMapCity();
+  const city = useCityFraming();
   const citySlug = city?.slug ?? "";
   const currency = city?.currency ?? "";
   const snapshotLabel = city?.snapshotLabel ?? "";
   const { isBrowse, selectedId, selectListing } = useLens();
   const direction = useDrawerDirection();
   const { collection } = useBrowsePoints(citySlug, { enabled: isBrowse });
+  const boundaries = useCityBoundaries(citySlug || null);
 
   const listing = useMemo(() => {
     if (selectedId === null || !collection) return null;
@@ -63,11 +65,11 @@ export function ListingDetail() {
 
   const neighbourhoodName = useMemo(() => {
     if (!listing) return "";
-    const match = city?.boundaries?.features.find(
+    const match = boundaries?.features.find(
       (f) => f.properties.id === listing.neighbourhoodId,
     );
     return match?.properties.name ?? listing.neighbourhoodId;
-  }, [city, listing]);
+  }, [boundaries, listing]);
 
   const open = listing !== null;
   const rt = listing ? ROOM_DISPLAY[listing.roomType] : null;

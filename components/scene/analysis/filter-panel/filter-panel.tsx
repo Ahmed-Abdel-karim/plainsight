@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { ROOM_TYPES, type RoomType } from "@/data/contract";
+import { CityMeta, ROOM_TYPES, type RoomType } from "@/data/contract";
 import { useDebouncedCallback } from "use-debounce";
 import { useFilters } from "../use-filters";
-import { useMapCity } from "../../stores";
+import { useCityFraming } from "../../state";
 import { FilterPanelUi } from "./filter-panel-ui";
 
 const PRICE_COMMIT_MS = 250;
@@ -20,8 +20,8 @@ const PRICE_COMMIT_MS = 250;
  * Only the static, server-derived `bounds` + `currency` come in as props (threaded
  * from the page's cached meta read); everything filter-shaped lives here.
  */
-export function FilterPanel() {
-  const city = useMapCity();
+export function FilterPanel({ cityMeta }: { cityMeta: CityMeta }) {
+  const city = useCityFraming() ?? cityMeta;
   const currency = city?.currency ?? "";
   const { filters, bounds, isDefault, setRoomTypes, setPriceRange, reset } =
     useFilters();

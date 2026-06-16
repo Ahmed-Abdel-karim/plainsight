@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Lens + selected-listing state, read from the scene store (E7 / FR-011).
+ * Lens + selected-listing state, read from the ui machine (E7 / FR-011).
  *
  *   ?lens=browse        → the Browse lens (absent = the default `analyse` lens)
  *   ?listing=12345      → the open listing's detail drawer (absent = none)
@@ -15,8 +15,14 @@
  */
 import { useMemo } from "react";
 
-import { useLensValue, useSceneActions, useSelectedId } from "./stores";
 import type { Lens } from "@/lib/search-params";
+
+import {
+  useLens as useLensValue,
+  useSelectedId,
+  useSetLens,
+  useSelectListing,
+} from "./state";
 
 export type { Lens };
 
@@ -32,7 +38,8 @@ export interface UseLensResult {
 export function useLens(): UseLensResult {
   const lens = useLensValue();
   const selectedId = useSelectedId();
-  const { setLens, selectListing } = useSceneActions();
+  const setLens = useSetLens();
+  const selectListing = useSelectListing();
 
   return useMemo(
     () => ({

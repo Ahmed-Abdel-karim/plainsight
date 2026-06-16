@@ -1,29 +1,21 @@
 import { render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { axe } from "vitest-axe";
 
-// Prevent the cross-slice triggerRequestHexes subscription from spinning up the
-// Web Worker (not available in jsdom) when the map store is seeded with a city.
-vi.mock("@/lib/listings/client", () => {
-  class CityListingsClient {
-    dispose = vi.fn();
-    requestProcess = vi.fn();
-  }
-  return { CityListingsClient };
-});
+vi.mock("@/components/scene/state", () => ({
+  useCityFraming: vi.fn(),
+}));
 
-import { type MapCityPayload, useSceneStore } from "@/components/scene/stores";
+import { useCityFraming } from "@/components/scene/state";
+import type { MapCityPayload } from "@/data/types";
 import { MapLegend } from "./map-legend";
 
-/**
- * The count now flows from the shared map store (set by `MapDataSync`) rather
- * than a prop, so each case seeds the store before rendering and resets it after.
- */
-function seedCity(neighbourhoodCount: number) {
+const mockUseCityFraming = vi.mocked(useCityFraming);
+
+function renderWithCity(neighbourhoodCount: number) {
   const city: MapCityPayload = {
     slug: "london",
     cityName: "London",
-    boundaries: null,
     bbox: [-0.51, 51.28, 0.33, 51.69],
     center: [-0.09, 51.5],
     neighbourhoodCount,
@@ -32,17 +24,13 @@ function seedCity(neighbourhoodCount: number) {
     currency: "GBP",
     snapshotLabel: " 9/2025",
   };
-  useSceneStore.setState({ city });
+  mockUseCityFraming.mockReturnValue(city);
+  return render(<MapLegend />);
 }
 
 describe("MapLegend", () => {
-  afterEach(() => {
-    useSceneStore.setState({ city: null });
-  });
-
   it("renders the neighbourhood heading and count", () => {
-    seedCity(22);
-    render(<MapLegend />);
+    renderWithCity(22);
 
     expect(
       screen.getByRole("complementary", { name: "Map legend" }),
@@ -54,8 +42,7 @@ describe("MapLegend", () => {
   });
 
   it("has no axe violations", async () => {
-    seedCity(1);
-    const { container } = render(<MapLegend />);
+    const { container } = renderWithCity(1);
 
     expect(await axe(container)).toHaveNoViolations();
   });

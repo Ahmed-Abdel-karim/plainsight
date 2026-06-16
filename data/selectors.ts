@@ -1,7 +1,6 @@
 import type {
   CityAggregates,
   CityMeta,
-  Listing,
   Neighbourhood,
   ScopeAggregates,
 } from "./contract";
@@ -22,14 +21,6 @@ export function selectNeighbourhood(
   id: string,
 ): Neighbourhood | undefined {
   return cube.neighbourhoods.find((nb) => nb.id === id);
-}
-
-/** E6-S4: static lookup for listing detail page SSR. */
-export function selectListingById(
-  listings: readonly Listing[],
-  id: number,
-): Listing | undefined {
-  return listings.find((l) => l.id === id);
 }
 
 /** E7-S2: initial filter bounds derived from the city's priceScale. Runs once per request. */

@@ -3,18 +3,18 @@
 import type { MapLayerMouseEvent } from "react-map-gl/maplibre";
 
 import { useScope } from "../../use-scope";
-import { FILL_LAYER_ID, POINTS_CIRCLE_LAYER_ID } from "../constants";
-import { useMapRef } from "../../stores";
-import { useLayerListeners } from "../use-layer-listeners";
+import { POINTS_CIRCLE_LAYER_ID } from "../constants";
+import { useMapRef } from "../../state";
+import type { LayerListener } from "../layer";
 
-export function useNeighbourhoodsListeners(interactive: boolean): void {
+export function useNeighbourhoodsListeners(): LayerListener[] {
   const mapRef = useMapRef();
   const { toggleNeighbourhood } = useScope();
 
-  useLayerListeners(
-    FILL_LAYER_ID,
+  return [
     {
-      click: (event: MapLayerMouseEvent) => {
+      type: "click",
+      listener: (event: MapLayerMouseEvent) => {
         const map = mapRef;
         let clickedPoint = false;
         if (map?.getLayer(POINTS_CIRCLE_LAYER_ID)) {
@@ -29,6 +29,5 @@ export function useNeighbourhoodsListeners(interactive: boolean): void {
         if (typeof nbhdId === "string") toggleNeighbourhood(nbhdId);
       },
     },
-    interactive,
-  );
+  ];
 }

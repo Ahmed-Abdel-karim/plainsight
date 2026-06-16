@@ -1,20 +1,23 @@
 import { renderHook } from "@testing-library/react";
 import type { MapRef } from "react-map-gl/maplibre";
 import type { Subscription } from "maplibre-gl";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { POINTS_CIRCLE_LAYER_ID } from "./constants";
 import { useLayerListeners } from "./use-layer-listeners";
-import { useSceneStore } from "../stores";
+
+// Inject the mock mapRef via the state module that useLayerListeners reads from.
+const mockMapRef = vi.hoisted(() => ({ current: null as MapRef | null }));
+vi.mock("../state", () => ({
+  useMapRef: () => mockMapRef.current,
+}));
+
+function setup(on: MapRef["on"]) {
+  mockMapRef.current = { on } as unknown as MapRef;
+  return {};
+}
 
 describe("useLayerListeners", () => {
-  afterEach(() => {
-    useSceneStore
-      .getState()
-      .mapActions.removeEventListeners(POINTS_CIRCLE_LAYER_ID);
-    useSceneStore.setState({ mapRef: null });
-  });
-
   it("delivers events to the latest handlers without re-subscribing", () => {
     const unsubscribe = vi.fn();
     const on = vi.fn<
@@ -24,7 +27,7 @@ describe("useLayerListeners", () => {
         listener: (event: object) => void,
       ) => Subscription
     >(() => ({ unsubscribe }));
-    useSceneStore.getState().mapActions.setMapRef({ on } as unknown as MapRef);
+    setup(on as unknown as MapRef["on"]);
     const first = vi.fn();
     const latest = vi.fn();
 
@@ -56,7 +59,7 @@ describe("useLayerListeners", () => {
         listener: (event: object) => void,
       ) => Subscription
     >(() => ({ unsubscribe }));
-    useSceneStore.getState().mapActions.setMapRef({ on } as unknown as MapRef);
+    setup(on as unknown as MapRef["on"]);
 
     const { rerender } = renderHook(
       ({ enabled }: { enabled: boolean }) =>

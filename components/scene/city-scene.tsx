@@ -1,6 +1,5 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import type { CityMeta, Scope } from "@/data";
-import { MapDataFeeder } from "./map/map-data-feeder";
+import { type CityMeta, getCityNeighbourhoodCount, type Scope } from "@/data";
 import { ListingCount } from "./listing-count";
 import { ListingDetail } from "./browse/listing-detail";
 import { SceneDrawer } from "./scene-drawer";
@@ -9,23 +8,24 @@ import { LensTabs } from "./lens-tabs/lens-tabs";
 import { HexLegend } from "./map/hex/hex-legend";
 import { PointsLegend } from "./map/points/points-legend";
 import { MapLegend } from "./map-legend";
-import { SceneStoreSync } from "./scene-store-sync";
+import type { MapCityPayload } from "@/data/types";
+import { CityDispatcher } from "./city-dispatcher";
+import { UrlStoreSync } from "./url-store-sync";
+import { UrlWriteSync } from "./url-write-sync";
 
 /**
  * City-scoped scene overlay. The map itself lives in the `(scene)` layout so it
  * persists across city navigation; this renders the per-city chrome that *does*
  * change — the desktop sidebar (grid column 1) and the mobile drawer.
  *
- * Data is *not* threaded through here as props: each region fetches the tier it
- * needs behind its own Suspense boundary (the analysis cards, header count, and
- * city switcher inside `SidebarContent`; the map's boundaries via `MapDataFeeder`).
- * This component only forwards the cheap framing primitives it received from the
- * route's `meta` read, so a slow tier never blocks a fast one.
+ * `CityDispatcher` fires `CITY.CHANGED` into the XState root machine on mount,
+ * spawning a fresh city actor per slug. The heavy boundaries GeoJSON is fetched
+ * lazily via React Query so the sidebar never blocks on it.
  *
- * The lens/scope/listing state is client-only (the scene store, reflected from the
- * URL by `SceneStoreSync`), so nothing here reads `searchParams` — the route stays
- * fully static. The heavy WebGL canvas lives in the `(scene)` layout (persistent
- * across city navigation); only its chrome (the lens tabs + legends) lives here.
+ * Data is otherwise *not* threaded through here as props: each region fetches the
+ * tier it needs behind its own Suspense boundary. The lens/scope/listing state is
+ * client-only (XState, reflected from the URL by `UrlStoreSync`), so nothing
+ * here reads `searchParams` — the route stays fully static.
  */
 export function CityScene({
   scope,
@@ -34,9 +34,28 @@ export function CityScene({
   scope: Scope;
   cityMeta: CityMeta;
 }) {
+  // Cheap framing promise: everything but the neighbourhood count comes straight
+  // off the already-read meta; the count is the one extra (cached) read. Built
+  // here (server) and passed unresolved so the client provider can `use()` it.
+  const cityPromise: Promise<MapCityPayload> = getCityNeighbourhoodCount(
+    cityMeta.slug,
+  ).then((neighbourhoodCount) => ({
+    slug: cityMeta.slug,
+    cityName: cityMeta.name,
+    bbox: cityMeta.bbox,
+    center: cityMeta.center,
+    neighbourhoodCount,
+    priceScale: cityMeta.priceScale,
+    priceCap: cityMeta.priceCap,
+    currency: cityMeta.currency,
+    snapshotLabel: cityMeta.snapshotLabel,
+  }));
+
   return (
     <>
-      <SceneStoreSync />
+      <CityDispatcher cityPromise={cityPromise} />
+      <UrlStoreSync />
+      <UrlWriteSync />
       <aside
         aria-label="Market analysis"
         className="@container hidden w-full flex-col gap-section overflow-y-auto border-r border-border bg-card px-section pt-section pb-gutter lg:flex lg:h-screen lg:min-h-0"
@@ -65,7 +84,6 @@ export function CityScene({
           <MapLegend />
         </div>
       </div>
-      <MapDataFeeder cityMeta={cityMeta} />
       <ListingDetail />
     </>
   );

@@ -86,7 +86,7 @@ function emphasis(
  */
 export const getCircleLayer = (
   theme: Theme,
-  visible: boolean,
+  visible = true,
 ): CircleLayerSpecification => ({
   id: POINTS_CIRCLE_LAYER_ID,
   type: "circle",

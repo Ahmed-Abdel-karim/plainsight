@@ -1,7 +1,7 @@
 "use client";
 
 import { PRICE_RAMP } from ".";
-import { useMapCity } from "../../stores";
+import { useCityFraming } from "../../state";
 import { useLens } from "../../use-lens";
 import { useResolvedTheme } from "../../../theme/theme-provider";
 
@@ -37,7 +37,7 @@ function rampRanges(breaks: number[], currency: string): string[] {
  * same per-theme ramp literals as the fill layer.
  */
 export function HexLegend() {
-  const city = useMapCity();
+  const city = useCityFraming();
   const theme = useResolvedTheme();
   const { isBrowse } = useLens();
   // The hex price ramp is meaningless over the Browse dots — the room-type

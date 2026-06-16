@@ -1,61 +1,39 @@
-import { render } from "@testing-library/react";
+import { renderHook } from "@testing-library/react";
 import type { MapLayerMouseEvent } from "maplibre-gl";
-import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-
-import type { NeighbourhoodBoundaries } from "@/data";
-import type { BrowsePointProperties } from "@/data/contract";
 
 const mocks = vi.hoisted(() => ({
   getLayer: vi.fn(),
   queryRenderedFeatures: vi.fn(),
-  selectListing: vi.fn(),
-  setHoveredListing: vi.fn(),
+  mapHover: vi.fn(),
+  mapSelect: vi.fn(),
   toggleNeighbourhood: vi.fn(),
-  useLayerListeners: vi.fn(),
 }));
 
-vi.mock("react-map-gl/maplibre", () => ({
-  Layer: () => null,
-  Source: ({ children }: { children: ReactNode }) => <>{children}</>,
-}));
-vi.mock("./use-layer-listeners", () => ({
-  useLayerListeners: mocks.useLayerListeners,
-}));
-vi.mock("../stores", () => ({
-  useMapActions: () => ({ setHoveredListing: mocks.setHoveredListing }),
+vi.mock("../state", () => ({
+  useMapHover: () => mocks.mapHover,
+  useMapSelect: () => mocks.mapSelect,
   useMapRef: () => ({
     getLayer: mocks.getLayer,
     queryRenderedFeatures: mocks.queryRenderedFeatures,
   }),
-  // Read by the relocated usePointsFeatureState; inert here so the feature-state
-  // effect no-ops while this test exercises the layer's pointer listeners.
-  useHoveredListingId: () => null,
-  useSelectedId: () => null,
-  useIsSourceLoaded: () => false,
-}));
-vi.mock("../use-lens", () => ({
-  useLens: () => ({ selectListing: mocks.selectListing }),
 }));
 vi.mock("../use-scope", () => ({
   useScope: () => ({ toggleNeighbourhood: mocks.toggleNeighbourhood }),
 }));
-vi.mock("./points/use-points-filter", () => ({
-  usePointsFilter: () => ["all"],
-}));
 
-import { FILL_LAYER_ID, POINTS_CIRCLE_LAYER_ID } from "./constants";
-import { NeighbourhoodsLayers } from "./neighbourhoods";
-import { PointsLayers } from "./points";
+import { POINTS_CIRCLE_LAYER_ID } from "./constants";
+import { usePointsListeners } from "./points/listeners";
+import { useNeighbourhoodsListeners } from "./neighbourhoods/listeners";
+import type { LayerListener } from "./layer";
 
-const collection = {
-  type: "FeatureCollection",
-  features: [],
-} as GeoJSON.FeatureCollection<GeoJSON.Point, BrowsePointProperties>;
-const boundaries = {
-  type: "FeatureCollection",
-  features: [],
-} as unknown as NeighbourhoodBoundaries;
+function find<T extends LayerListener["type"]>(
+  listeners: LayerListener[],
+  type: T,
+): Extract<LayerListener, { type: T }>["listener"] {
+  const found = listeners.find((l) => l.type === type);
+  return found!.listener as any;
+}
 
 function layerEvent(input: {
   id?: number;
@@ -78,42 +56,28 @@ beforeEach(() => {
 
 describe("layer-owned Browse interactions", () => {
   it("registers point hover and click behavior on the points layer", () => {
-    render(<PointsLayers collection={collection} theme="light" visible />);
-
-    const [layerId, listeners, enabled] = mocks.useLayerListeners.mock.calls[0];
+    const { result } = renderHook(() => usePointsListeners(true));
     const pointEvent = layerEvent({ id: 42 });
 
-    expect(layerId).toBe(POINTS_CIRCLE_LAYER_ID);
-    expect(enabled).toBe(true);
+    find(result.current, "mousemove")(pointEvent);
+    expect(mocks.mapHover).toHaveBeenLastCalledWith(42, "map");
 
-    listeners.mousemove(pointEvent);
-    expect(mocks.setHoveredListing).toHaveBeenLastCalledWith(42, "map");
+    find(result.current, "mouseleave")(pointEvent);
+    expect(mocks.mapHover).toHaveBeenLastCalledWith(null, null);
 
-    listeners.mouseleave();
-    expect(mocks.setHoveredListing).toHaveBeenLastCalledWith(null, "map");
-
-    listeners.click(pointEvent);
-    expect(mocks.selectListing).toHaveBeenCalledWith(42);
+    find(result.current, "click")(pointEvent);
+    expect(mocks.mapSelect).toHaveBeenCalledWith(42);
   });
 
   it("skips the neighbourhood action when a rendered point overlaps", () => {
     mocks.getLayer.mockReturnValue({});
     mocks.queryRenderedFeatures.mockReturnValue([{}]);
-    render(
-      <NeighbourhoodsLayers
-        boundaries={boundaries}
-        theme="light"
-        interactive
-      />,
-    );
 
-    const [layerId, listeners, enabled] = mocks.useLayerListeners.mock.calls[0];
+    const { result } = renderHook(() => useNeighbourhoodsListeners());
+    const click = find(result.current, "click");
     const boundaryEvent = layerEvent({ neighbourhoodId: "camden" });
 
-    expect(layerId).toBe(FILL_LAYER_ID);
-    expect(enabled).toBe(true);
-
-    listeners.click(boundaryEvent);
+    click(boundaryEvent);
 
     expect(mocks.queryRenderedFeatures).toHaveBeenCalledWith(
       boundaryEvent.point,
@@ -125,16 +89,11 @@ describe("layer-owned Browse interactions", () => {
   it("toggles the neighbourhood when no rendered point overlaps", () => {
     mocks.getLayer.mockReturnValue({});
     mocks.queryRenderedFeatures.mockReturnValue([]);
-    render(
-      <NeighbourhoodsLayers
-        boundaries={boundaries}
-        theme="light"
-        interactive
-      />,
-    );
 
-    const listeners = mocks.useLayerListeners.mock.calls[0][1];
-    listeners.click(layerEvent({ neighbourhoodId: "camden" }));
+    const { result } = renderHook(() => useNeighbourhoodsListeners());
+    const click = find(result.current, "click");
+
+    click(layerEvent({ neighbourhoodId: "camden" }));
 
     expect(mocks.toggleNeighbourhood).toHaveBeenCalledWith("camden");
   });

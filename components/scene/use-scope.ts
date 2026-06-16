@@ -10,11 +10,11 @@
  *
  *   ?nbhd=camden   → neighbourhood scope (absent = city-wide)
  */
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 
 import type { Scope } from "@/data/types";
 import { scopeFromNbhd } from "@/lib/search-params";
-import { useNbhd, useSceneActions } from "./stores";
+import { useNbhd, useSetNbhd } from "./state";
 
 export interface UseScopeResult {
   scope: Scope;
@@ -25,9 +25,16 @@ export interface UseScopeResult {
 
 export function useScope(): UseScopeResult {
   const nbhd = useNbhd();
-  const { setNeighbourhood, toggleNeighbourhood } = useSceneActions();
+  const setNbhd = useSetNbhd();
 
   const scope = useMemo<Scope>(() => scopeFromNbhd(nbhd), [nbhd]);
+
+  const setNeighbourhood = setNbhd;
+
+  const toggleNeighbourhood = useCallback(
+    (id: string) => setNbhd(nbhd === id ? null : id),
+    [setNbhd, nbhd],
+  );
 
   return {
     scope,

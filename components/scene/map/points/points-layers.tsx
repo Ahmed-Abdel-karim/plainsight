@@ -1,21 +1,16 @@
 "use client";
 
-import { useMemo } from "react";
-import { Layer, Source } from "react-map-gl/maplibre";
-
-import type { Theme } from "@/components/theme/theme-provider";
-import type { BrowsePointProperties } from "@/data/contract";
+import { Source } from "react-map-gl/maplibre";
 
 import { POINTS_SOURCE_ID } from "../constants";
+import { MapLayer } from "../layer";
 import { getCircleLayer } from "./styles";
 import { usePointsListeners } from "./listeners";
 import { usePointsFeatureState } from "./use-points-layer";
 import { usePointsFilter } from "./use-points-filter";
-
-type PointsCollection = GeoJSON.FeatureCollection<
-  GeoJSON.Point,
-  BrowsePointProperties
->;
+import { useBrowsePoints } from "../../browse/use-browse-points";
+import { useLens } from "../../use-lens";
+import { useCityFraming } from "../../state";
 
 /**
  * The Browse dot source + circle layer. The `geojson` source uses
@@ -25,19 +20,16 @@ type PointsCollection = GeoJSON.FeatureCollection<
  * render input. Per-layer style stays in `styles.ts`; the canvas composes this
  * and never touches the source id.
  */
-export function PointsLayers({
-  collection,
-  theme,
-  visible,
-}: {
-  collection: PointsCollection;
-  theme: Theme;
-  visible: boolean;
-}) {
-  const layer = useMemo(() => getCircleLayer(theme, visible), [theme, visible]);
+export function PointsLayers({ visible }: { visible: boolean }) {
   const filter = usePointsFilter();
-  usePointsListeners(visible);
+  const city = useCityFraming();
+  const listeners = usePointsListeners(visible);
   usePointsFeatureState(visible);
+  const { isBrowse } = useLens();
+  const { collection } = useBrowsePoints(city?.slug ?? "", {
+    enabled: isBrowse,
+  });
+  if (!collection) return;
   return (
     <Source
       id={POINTS_SOURCE_ID}
@@ -45,7 +37,12 @@ export function PointsLayers({
       data={collection}
       promoteId="id"
     >
-      <Layer {...layer} filter={filter} />
+      <MapLayer
+        getLayerStyles={getCircleLayer}
+        visible={visible}
+        listeners={listeners}
+        filter={filter}
+      />
     </Source>
   );
 }

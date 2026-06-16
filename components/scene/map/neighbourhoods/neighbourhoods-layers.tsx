@@ -1,42 +1,42 @@
 "use client";
 
-import { Layer, Source } from "react-map-gl/maplibre";
+import { Source } from "react-map-gl/maplibre";
 
-import type { NeighbourhoodBoundaries } from "@/data";
-import { useMemo } from "react";
-import { Theme } from "@/components/theme/theme-provider";
+import { useCityFraming } from "../../state";
+import { useCityBoundaries } from "../../use-city-boundaries";
 import { NEIGHBOURHOODS_SOURCE_ID } from "../constants";
+import { MapLayer } from "../layer";
 import { getFillLayer, getLabelLayer, getOutlineLayer } from "./styles";
 import { useNeighbourhoodsListeners } from "./listeners";
 
 interface NeighbourhoodsLayersProps {
-  boundaries: NeighbourhoodBoundaries;
-  /** Resolved theme supplied by the canvas — the single source of truth. */
-  theme: Theme;
   /** Browse owns boundary clicks; Analyse leaves the overlay display-only. */
   interactive?: boolean;
 }
 
 /**
- * The neighbourhoods source and the layers that render it. The canvas composes
- * this; it never touches the source id or layer specs directly. Per-layer style
- * and (later) interaction logic stay encapsulated here.
+ * The neighbourhoods source and the layers that render it. Self-fetches its
+ * GeoJSON via React Query off the city slug read directly from the city-data
+ * store. Renders nothing until the tier resolves; the rest of the map paints
+ * meanwhile.
  */
 export function NeighbourhoodsLayers({
-  boundaries,
-  theme,
   interactive = false,
 }: NeighbourhoodsLayersProps) {
-  const fillLayer = useMemo(() => getFillLayer(theme), [theme]);
-  const outlineLayer = useMemo(() => getOutlineLayer(theme), [theme]);
-  const labelLayer = useMemo(() => getLabelLayer(theme), [theme]);
-  useNeighbourhoodsListeners(interactive);
+  const listeners = useNeighbourhoodsListeners();
+
+  const boundaries = useCityBoundaries(useCityFraming()?.slug ?? null);
+  if (!boundaries) return null;
 
   return (
     <Source id={NEIGHBOURHOODS_SOURCE_ID} type="geojson" data={boundaries}>
-      <Layer {...fillLayer} />
-      <Layer {...outlineLayer} />
-      <Layer {...labelLayer} />
+      <MapLayer
+        getLayerStyles={getFillLayer}
+        listeners={listeners}
+        visible={interactive}
+      />
+      <MapLayer getLayerStyles={getOutlineLayer} />
+      <MapLayer getLayerStyles={getLabelLayer} />
     </Source>
   );
 }

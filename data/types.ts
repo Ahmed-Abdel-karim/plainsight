@@ -1,4 +1,5 @@
-import type { RoomType } from "./contract";
+import type { PriceScale, RoomType } from "./contract";
+import type { BBox, LngLat } from "@/lib/geo/types";
 
 /** UI-facing city shape for the city picker (maps from CityIndexEntry). */
 export interface CityData {
@@ -25,3 +26,16 @@ export type SortKey =
 
 /** Analysis scope — city-wide or drilled into one neighbourhood (E4). */
 export type Scope = { type: "city" } | { type: "neighbourhood"; id: string };
+
+/** City framing streamed from the server to seed the city machine on each nav. */
+export interface MapCityPayload {
+  slug: string;
+  cityName: string;
+  bbox: BBox;
+  center: LngLat;
+  neighbourhoodCount: number;
+  priceScale: PriceScale;
+  priceCap: number;
+  currency: string;
+  snapshotLabel: string;
+}

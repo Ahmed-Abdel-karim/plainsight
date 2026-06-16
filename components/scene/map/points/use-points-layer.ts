@@ -17,7 +17,7 @@ import {
   useHoveredListingId,
   useIsSourceLoaded,
   useSelectedId,
-} from "../../stores";
+} from "../../state";
 
 export function usePointsFeatureState(enabled: boolean) {
   const { setFeatureState } = useMapControls();

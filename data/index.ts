@@ -30,14 +30,9 @@ export {
 // UI types (TypeScript only — erased at runtime, safe to import anywhere)
 export type { CityData, ListingFilters, SortKey, Scope } from "./types";
 
-// Repository — the swap seam. Only the loaders call it (via `./repository`);
-// it is deliberately NOT re-exported here so UI code goes through the loaders.
-export type {
-  CityRepository,
-  ListingPage,
-  ListingQueryPage,
-  SnapshotRef,
-} from "./repository";
+// Repository — the server-render data seam. Only the loaders call it (via
+// `./repository`); the type is re-exported for them, not for UI code.
+export type { CityRepository } from "./repository";
 
 // Server loaders (server-only guard inside; safe to re-export from a barrel).
 // These are the ONLY data entry point for components and pages.
@@ -57,7 +52,6 @@ export type { SidebarScopeType } from "./loaders";
 export {
   selectScopeAggregates,
   selectNeighbourhood,
-  selectListingById,
   defaultFilters,
 } from "./selectors";
 

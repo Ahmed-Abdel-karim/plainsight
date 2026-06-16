@@ -11,11 +11,12 @@ import {
   NavigationControl,
   type ViewStateChangeEvent,
 } from "react-map-gl/maplibre";
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useDebouncedCallback } from "use-debounce";
 
 import { toBounds } from "@/lib/geo";
 import { zoomToResolution } from "@/lib/hex/resolution";
+import type { HexCell } from "@/lib/hex/types";
 import { HEX_FILL_LAYER_ID } from "./constants";
 import { HexInspect, HexLayers } from "./hex";
 import { OPENFREEMAP_STYLE } from "./map-styles";
@@ -24,31 +25,38 @@ import { PointsLayers } from "./points";
 import { isKnownSourceId } from "./types";
 import { useMapControls } from "./use-map-controls";
 import {
-  useListingsHexCells,
-  useMapActions,
-  useMapCity,
-  useMapStatus,
-  useSceneStore,
-} from "../stores";
+  useCityFraming,
+  useHexCells,
+  useMapError,
+  useMapFitBounds,
+  useMapHexInspect,
+  useMapIsError,
+  useMapIsSuppressed,
+  useMapResolutionChanged,
+  useMapSourceLoaded,
+  useNotifyMapLoaded,
+} from "../state";
 import { useLens } from "../use-lens";
-import { useBrowsePoints } from "../browse/use-browse-points";
 import { useResolvedTheme } from "../../theme/theme-provider";
 import MapSkeleton from "./map-skeleton";
 
 const MAX_BOUNDS_PADDING_RATIO = 0.3; // Pad maxBounds by 25% to allow some room for UI and avoid edge-clipping
 
+// Stable empty reference so the suppressed-hex case doesn't churn HexLayers' memo.
+const NO_CELLS: HexCell[] = [];
+
 export function MapCanvas() {
+  console.log("loaded");
   const mapRef = useRef<MapRef | null>(null);
   const { styleBasemapPlaceLabels } = useMapControls();
-  const {
-    setMapRef,
-    setMapStatus,
-    setHexResolution,
-    setHexInspectInfo,
-    setSourceLoaded,
-  } = useMapActions();
-  const status = useMapStatus();
-  const city = useMapCity();
+  const notifyMapLoaded = useNotifyMapLoaded();
+  const mapResolutionChanged = useMapResolutionChanged();
+  const mapSourceLoaded = useMapSourceLoaded();
+  const mapFitBounds = useMapFitBounds();
+  const mapHexInspect = useMapHexInspect();
+  const mapError = useMapError();
+  const isError = useMapIsError();
+  const city = useCityFraming();
   const theme = useResolvedTheme();
 
   // Lens drives which layer is visible/interactive. The Browse dots replace the
@@ -64,12 +72,12 @@ export function MapCanvas() {
   const mapStyle = OPENFREEMAP_STYLE[theme];
 
   // Hex cells are computed by the listings worker store (the effects below feed
-  // it) and read here as a selector — the canvas only renders them.
-  const hexCells = useListingsHexCells();
-
-  const { collection: browsePoints } = useBrowsePoints(city?.slug ?? "", {
-    enabled: isBrowse,
-  });
+  // it) and read here as a selector — the canvas only renders them. While the
+  // scene is transitioning to a new city, the supervisor (5.4) suppresses them so
+  // city B's basemap/breaks never paint city A's cells (output gate, no spinner).
+  const suppressed = useMapIsSuppressed();
+  const hexCells = useHexCells();
+  const cells = suppressed ? NO_CELLS : hexCells;
 
   // Clicking empty space (no hex under the pointer) dismisses the inspect popup;
   // the hex layer owns setting it (see HexLayers). Matters on touch, where there
@@ -79,17 +87,16 @@ export function MapCanvas() {
       const clickedHex = event.features?.some(
         (feature) => feature.layer.id === HEX_FILL_LAYER_ID,
       );
-      if (!clickedHex) setHexInspectInfo(null);
+      if (!clickedHex) mapHexInspect(null);
     },
-    [setHexInspectInfo],
+    [mapHexInspect],
   );
 
-  // Zoom adaptivity (US2): when the view settles, derive the resolution bucket
-  // and update the store only when the bucket actually changes — the bridge hook
-  // re-queries the worker off that. Debounced so a flurry of moveends coalesces.
+  // Zoom adaptivity (US2): when the view settles, derive the resolution bucket.
+  // Debounced so a flurry of moveends coalesces; same-value sends are no-ops for
+  // subscribers because XState selectors use strict equality on primitives.
   const handleMoveEnd = useDebouncedCallback((event: ViewStateChangeEvent) => {
-    const next = zoomToResolution(event.viewState.zoom);
-    if (next !== useSceneStore.getState().hexResolution) setHexResolution(next);
+    mapResolutionChanged(zoomToResolution(event.viewState.zoom));
   }, 150);
 
   // Mirror our sources' loaded state into the store as MapLibre (re)parses them,
@@ -101,32 +108,30 @@ export function MapCanvas() {
   const handleSourceData = useCallback(
     (event: MapSourceDataEvent) => {
       if (!isKnownSourceId(event.sourceId)) return;
-      setSourceLoaded(event.sourceId, !!event.isSourceLoaded);
+      mapSourceLoaded(event.sourceId, !!event.isSourceLoaded);
     },
-    [setSourceLoaded],
+    [mapSourceLoaded],
   );
 
   const handleLoad = useCallback(() => {
-    setMapRef(mapRef.current);
-    setMapStatus("ready");
+    // MAP.MOUNTED must precede MAP.READY so reconcileToReady can access mapRef.
+    notifyMapLoaded(
+      mapRef.current!,
+      zoomToResolution(mapRef.current!.getZoom()),
+    );
     styleBasemapPlaceLabels(theme);
-    // Seed the resolution bucket from the framed zoom before any user gesture.
-    setHexResolution(zoomToResolution(mapRef.current!.getZoom()));
-  }, [
-    setMapRef,
-    setMapStatus,
-    setHexResolution,
-    styleBasemapPlaceLabels,
-    theme,
-  ]);
+  }, [notifyMapLoaded, styleBasemapPlaceLabels, theme]);
+
+  // Replaces the reactions.ts fly-guard. Machine buffers this during `loading`
+  // (pendingFitBounds) and flies immediately once `ready`.
+  useEffect(() => {
+    if (!city) return;
+    mapFitBounds(city.bbox);
+  }, [city, mapFitBounds]);
 
   if (!city || !bounds) return <MapSkeleton />;
 
-  if (
-    !city.boundaries ||
-    city.boundaries.features.length === 0 ||
-    status === "error"
-  ) {
+  if (isError) {
     return (
       <div className="bg-map-bg text-map-label flex h-full min-h-80 items-center justify-center type-label">
         Map unavailable
@@ -156,26 +161,16 @@ export function MapCanvas() {
         onClick={isBrowse ? undefined : handleAnalyseClick}
         onSourceData={handleSourceData}
         onStyleData={() => styleBasemapPlaceLabels(theme)}
-        onError={() => setMapStatus("error")}
+        onError={mapError}
       >
         <HexLayers
-          cells={hexCells}
+          cells={cells}
           breaks={city.priceScale.breaks}
-          theme={theme}
           visible={!isBrowse}
         />
-        {browsePoints && (
-          <PointsLayers
-            collection={browsePoints}
-            theme={theme}
-            visible={isBrowse}
-          />
-        )}
-        <NeighbourhoodsLayers
-          boundaries={city.boundaries}
-          theme={theme}
-          interactive={isBrowse}
-        />
+
+        <PointsLayers visible={isBrowse} />
+        <NeighbourhoodsLayers interactive={isBrowse} />
         <NavigationControl
           position="top-left"
           visualizePitch={false}

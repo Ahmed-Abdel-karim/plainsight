@@ -1,9 +1,9 @@
 "use client";
 
-import { useMapCity } from "@/components/scene/stores";
+import { useCityFraming } from "@/components/scene/state";
 
 export function MapLegend() {
-  const neighbourhoodCount = useMapCity()?.neighbourhoodCount ?? 0;
+  const neighbourhoodCount = useCityFraming()?.neighbourhoodCount ?? 0;
   const label =
     neighbourhoodCount === 1
       ? "1 neighbourhood"

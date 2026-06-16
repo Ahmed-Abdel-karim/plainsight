@@ -2,7 +2,7 @@
 
 import { Popup } from "react-map-gl/maplibre";
 
-import { useHexInspectInfo, useMapCity } from "../../stores";
+import { useCityFraming, useHexInspectInfo } from "../../state";
 
 /** Compact currency label (e.g. "£149", "€198") — symbol, no fraction. */
 function formatPrice(value: number, currency: string): string {
@@ -21,7 +21,7 @@ function formatPrice(value: number, currency: string): string {
  */
 export function HexInspect() {
   const hexInspectInfo = useHexInspectInfo();
-  const city = useMapCity();
+  const city = useCityFraming();
   if (!hexInspectInfo || !city) return null;
   const { count, latitude, longitude, medianPrice } = hexInspectInfo;
   return (

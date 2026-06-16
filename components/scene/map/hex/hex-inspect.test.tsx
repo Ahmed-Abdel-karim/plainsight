@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 vi.mock("react-map-gl/maplibre", () => ({
   Popup: ({
@@ -20,24 +20,26 @@ vi.mock("react-map-gl/maplibre", () => ({
   ),
 }));
 
-import { HexInspect } from "./hex-inspect";
-import { type MapCityPayload, useSceneStore } from "../../stores";
+vi.mock("../../state", () => ({
+  useHexInspectInfo: vi.fn(),
+  useCityFraming: vi.fn(),
+}));
 
-afterEach(() => {
-  useSceneStore.setState({ hexInspectInfo: null, city: null });
-});
+import { useCityFraming, useHexInspectInfo } from "../../state";
+import { HexInspect } from "./hex-inspect";
+
+const mockUseHexInspectInfo = vi.mocked(useHexInspectInfo);
+const mockUseCityFraming = vi.mocked(useCityFraming);
 
 describe("HexInspect", () => {
   it("renders the inspect content inside a pointer-anchored Popup", () => {
-    useSceneStore.setState({
-      hexInspectInfo: {
-        longitude: -0.1,
-        latitude: 51.5,
-        medianPrice: 149,
-        count: 1234,
-      },
-      city: { currency: "GBP" } as unknown as MapCityPayload,
+    mockUseHexInspectInfo.mockReturnValue({
+      longitude: -0.1,
+      latitude: 51.5,
+      medianPrice: 149,
+      count: 1234,
     });
+    mockUseCityFraming.mockReturnValue({ currency: "GBP" } as never);
 
     render(<HexInspect />);
 
@@ -62,6 +64,9 @@ describe("HexInspect", () => {
   });
 
   it("renders nothing until inspect info is present", () => {
+    mockUseHexInspectInfo.mockReturnValue(null);
+    mockUseCityFraming.mockReturnValue({ currency: "GBP" } as never);
+
     const { container } = render(<HexInspect />);
     expect(container).toBeEmptyDOMElement();
   });

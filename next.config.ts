@@ -3,6 +3,10 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
   cacheComponents: true,
+  turbopack: {
+    // Avoid inferring /home/u/src as the workspace root when parent lockfiles exist.
+    root: process.cwd(),
+  },
   images: {
     qualities: [50, 75],
     formats: ["image/avif", "image/webp"],

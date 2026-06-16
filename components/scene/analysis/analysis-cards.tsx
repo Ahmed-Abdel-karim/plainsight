@@ -1,7 +1,6 @@
 "use client";
 
 import type { ScopeAggregates } from "@/data/contract";
-import { useFilteredAggregates } from "@/components/scene/stores";
 
 import { AnalysisCardsSkeleton } from "./analysis-cards-skeleton";
 import { KpiRow } from "./kpi-row";
@@ -9,7 +8,7 @@ import { PriceHistogram } from "./price-histogram";
 import { RoomMixBar } from "./room-mix-bar";
 import { TopHostsBar } from "./top-hosts-bar";
 import { useFilters } from "./use-filters";
-import { useMapCity } from "../stores";
+import { useAggregates, useCityFraming } from "../state";
 
 /**
  * The four distribution cards. This component only *selects and renders* — the
@@ -23,14 +22,16 @@ import { useMapCity } from "../stores";
  * until the next one lands).
  */
 export function AnalysisCards({
+  currency: defaultCurrency,
   defaultAggregates,
 }: {
+  currency: string;
   defaultAggregates: ScopeAggregates;
 }) {
-  const city = useMapCity();
-  const currency = city?.currency ?? "";
+  const city = useCityFraming();
+  const currency = city?.currency ?? defaultCurrency;
   const { isDefault } = useFilters();
-  const filtered = useFilteredAggregates();
+  const filtered = useAggregates();
 
   // Cold filtered path (a deep-linked/refreshed URL with active filters): no real
   // result yet, and the server's `defaultAggregates` are the *wrong* numbers for

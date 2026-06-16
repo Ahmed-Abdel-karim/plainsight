@@ -3,7 +3,10 @@
     "basemap",
     "bbox",
     "Geospatial",
+    "janky",
+    "lifecycles",
     "maplibre",
+    "navigations",
     "nbhd",
     "Neighbourhood",
     "neighbourhoods",
@@ -11,6 +14,8 @@
     "oklch",
     "openfreemap",
     "Plainsight",
-    "positron"
+    "pointerenter",
+    "positron",
+    "undim"
   ]
 }
