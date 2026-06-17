@@ -6,6 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import type { NeighbourhoodBoundaries } from "@/lib/geo/types";
 import { rootMachine } from "./machines/root/machine";
+import { SystemId } from "./machines/constants";
 
 /**
  * Scene actor system. `createActorContext` creates a single root actor for the
@@ -47,7 +48,12 @@ export function SceneProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <SceneActorContext.Provider logic={logic}>
+    <SceneActorContext.Provider
+      logic={logic}
+      options={{
+        systemId: SystemId.ROOT,
+      }}
+    >
       {children}
     </SceneActorContext.Provider>
   );

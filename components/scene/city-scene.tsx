@@ -1,12 +1,12 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { type CityMeta, getCityNeighbourhoodCount, type Scope } from "@/data";
 import { ListingCount } from "./listing-count";
-import { ListingDetail } from "./browse/listing-detail";
+import { ListingDetail } from "./browse";
 import { SceneDrawer } from "./scene-drawer";
 import { SidebarContent } from "./sidebar-content";
-import { LensTabs } from "./lens-tabs/lens-tabs";
-import { HexLegend } from "./map/layers/hex/hex-legend";
-import { PointsLegend } from "./map/layers/points/points-legend";
+import { LensTabs } from "./lens-tabs";
+import { HexLegend } from "./map/layers/hex";
+import { PointsLegend } from "./map/layers/points";
 import { MapLegend } from "./map-legend";
 import type { MapCityPayload } from "@/data/types";
 import { SceneUrlLoader } from "./scene-url-loader";

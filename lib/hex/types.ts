@@ -3,8 +3,7 @@
  * scene displays resolutions 5–8 (8 = the baked floor, coarser by truncation).
  */
 
-/** Displayable H3 resolutions: 8 is the baked floor, 5 the coarsest overview. */
-export type HexResolution = 5 | 6 | 7 | 8;
+export type HexResolution = 4 | 5 | 6 | 7 | 8;
 
 /**
  * One aggregated hex cell — the small, serializable unit the worker posts back

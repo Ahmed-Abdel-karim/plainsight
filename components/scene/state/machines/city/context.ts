@@ -24,7 +24,10 @@ export interface Context {
   };
 
   readonly aggregates: ScopeAggregates | null;
-  readonly hexCells: HexCell[];
+  /** `null` until the first hex result lands (drives the map's per-lens loading
+   *  shimmer); `[]` means computed-but-empty. Once set it stays a (possibly
+   *  stale) array across recomputes — stale-while-revalidate, no shimmer. */
+  readonly hexCells: HexCell[] | null;
 }
 
 export const Context: Context = {
@@ -35,5 +38,5 @@ export const Context: Context = {
     nbhd: null,
   },
   aggregates: null,
-  hexCells: [],
+  hexCells: null,
 };

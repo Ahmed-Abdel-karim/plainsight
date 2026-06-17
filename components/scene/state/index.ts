@@ -1,5 +1,5 @@
 export { SceneProvider } from "./provider";
-export * from "./hooks/use-root";
-export * from "./hooks/use-map";
-export * from "./hooks/use-ui";
-export * from "./hooks/use-city";
+export * from "./machines/root/use-root";
+export * from "./machines/map/use-map";
+export * from "./machines/ui/use-ui";
+export * from "./machines/city/use-city";

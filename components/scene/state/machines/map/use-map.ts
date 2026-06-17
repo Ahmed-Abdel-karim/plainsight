@@ -6,11 +6,11 @@ import type { MapRef } from "react-map-gl/maplibre";
 import type { BBox } from "@/lib/geo/types";
 import type { HexResolution } from "@/lib/hex/types";
 
-import type { SourceId } from "../../map/types";
-import type { HexInspectInfo } from "../machines/map/context";
-import type { MapMachineActor } from "../machines/map/machine";
-import { useRootRef } from "./use-root";
-import { createMachineStateSelector } from "./utils";
+import type { SourceId } from "../../../map/types";
+import type { HexInspectInfo } from "./context";
+import type { MapMachineActor } from "./machine";
+import { useRootRef } from "../root/use-root";
+import { createMachineStateSelector } from "../utils";
 
 export type { HexInspectInfo };
 

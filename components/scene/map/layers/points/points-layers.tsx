@@ -8,9 +8,18 @@ import { getCircleLayer } from "./styles";
 import { usePointsListeners } from "./listeners";
 import { usePointsFeatureState } from "./use-points-layer";
 import { usePointsFilter } from "./use-points-filter";
-import { useBrowsePoints } from "../../../browse/use-browse-points";
+import {
+  useBrowsePoints,
+  type BrowseCollection,
+} from "../../../browse/use-browse-points";
 import { useLens } from "../../../use-lens";
-import { useCityFraming } from "../../../state";
+import { useCityFraming, useMapIsSuppressed } from "../../../state";
+
+// Stable empty reference so blanking on a city switch doesn't churn the source.
+const EMPTY_COLLECTION: BrowseCollection = {
+  type: "FeatureCollection",
+  features: [],
+};
 
 /**
  * The Browse dot source + circle layer. The `geojson` source uses
@@ -26,17 +35,16 @@ export function PointsLayers({ visible }: { visible: boolean }) {
   const listeners = usePointsListeners(visible);
   usePointsFeatureState(visible);
   const { isBrowse } = useLens();
+  const suppressed = useMapIsSuppressed();
   const { collection } = useBrowsePoints(city?.slug ?? "", {
     enabled: isBrowse,
   });
-  if (!collection) return;
+  // Blank the dots while a city switch is in flight (the map overlay covers them
+  // anyway); they repaint from the new city's collection on CITY.READY.
+  const data = suppressed ? EMPTY_COLLECTION : collection;
+  if (!data) return;
   return (
-    <Source
-      id={POINTS_SOURCE_ID}
-      type="geojson"
-      data={collection}
-      promoteId="id"
-    >
+    <Source id={POINTS_SOURCE_ID} type="geojson" data={data} promoteId="id">
       <MapLayer
         getLayerStyles={getCircleLayer}
         visible={visible}

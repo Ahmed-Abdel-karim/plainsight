@@ -11,9 +11,9 @@ import {
   resolveFilters,
 } from "@/lib/filters/normalize";
 
-import { SceneActorContext } from "../provider";
-import type { CityMachineActor } from "../machines/city/machine";
-import { createMachineStateSelector } from "./utils";
+import { SceneActorContext } from "../../provider";
+import type { CityMachineActor } from "./machine";
+import { createMachineStateSelector } from "../utils";
 
 /**
  * Returns the current city actorRef, or `undefined` before the first
@@ -35,7 +35,12 @@ export function useCitySend() {
   return useCityRef()?.send;
 }
 
-// useCityIsReady added once the city machine gains a `ready` state.
+/** True once the city actor has loaded its data and entered `ready` (the state
+ *  in which filters apply and hex/aggregate results stream in). `false` while
+ *  `loading`/`error`, or before the first city is spawned. */
+export const useCityIsReady = createCitySelector(
+  (s) => s?.matches("ready") ?? false,
+);
 
 export const useCityFraming = createCitySelector(
   (s) => s?.context.framing ?? null,
@@ -134,3 +139,7 @@ export const useAggregates = createCitySelector(
 );
 
 export const useHexCells = createCitySelector((s) => s?.context.hexCells ?? []);
+
+export const useHexCellsPending = createCitySelector(
+  (s) => s?.context.hexCells == null,
+);

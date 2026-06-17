@@ -9,3 +9,4 @@
  * and a single composable `<…Layers>` component the canvas drops in.
  */
 export { PointsLayers } from "./points-layers";
+export { PointsLegend } from "./points-legend";

@@ -18,6 +18,7 @@ import {
 import type { HexCell, HexResolution } from "@/lib/hex/types";
 import { scopeFromNbhd } from "@/lib/search-params";
 
+import { SystemId } from "../constants";
 import type { WorkerMachineRef } from "../worker/machine";
 import * as Context from "./context";
 import type * as Events from "./events";
@@ -27,7 +28,7 @@ import type * as Input from "./input";
  *  `system.get` ref only accepts bare `{ type }` events). It is invoked by the
  *  root for the whole session, so it always exists while a city is running. */
 const toWorker = ({ system }: { system: { get: (id: string) => unknown } }) =>
-  system.get("worker") as WorkerMachineRef;
+  system.get(SystemId.WORKER) as WorkerMachineRef;
 
 export const cityMachine = setup({
   types: {
@@ -106,7 +107,7 @@ export const cityMachine = setup({
       slug: context.framing!.slug,
       filters: resolveFilters(context.filter, priceBounds(context.framing)),
       hexResolution:
-        (system.get("map")?.getSnapshot()?.context.hexResolution as
+        (system.get(SystemId.MAP)?.getSnapshot()?.context.hexResolution as
           | HexResolution
           | undefined) ?? 6,
     })),
@@ -117,14 +118,11 @@ export const cityMachine = setup({
       filters: resolveFilters(context.filter, priceBounds(context.framing)),
     })),
 
-    // --- notify city convergence (first hex result landed) ---
-    // Declarative (enqueueActions, not a plain function) so it doesn't open an
-    // `executingCustomAction` window — an imperative `system.get(...).send()`
-    // here made a downstream worker `enqueue.sendTo` spuriously warn. The `if`
-    // preserves the old `?.` tolerance for an actor that isn't present yet.
     notifyCityReady: enqueueActions(({ system, enqueue }) => {
-      for (const id of ["root", "map", "ui"] as const) {
+      console.log("notifying");
+      for (const id of [SystemId.ROOT, SystemId.MAP, SystemId.UI] as const) {
         const ref = system.get(id);
+        console.log(id, ref);
         if (ref) enqueue.sendTo(ref, { type: "CITY.READY" });
       }
     }),
@@ -142,14 +140,20 @@ export const cityMachine = setup({
       // Ask the session worker to load this city (cache hit → near-instant).
       entry: "requestLoad",
       on: {
-        "WORKER.FETCH_OK": { guard: "fetchIsCurrent", target: "ready" },
+        "WORKER.FETCH_OK": [{ guard: "fetchIsCurrent", target: "ready" }],
         "WORKER.FETCH_ERROR": { guard: "fetchIsCurrent", target: "error" },
       },
     },
 
     ready: {
-      // Kick off initial hex + aggregate compute as soon as data is loaded.
-      entry: ["requestHexes", "requestAggregates"],
+      // Data is loaded → the city has converged: tell root/map/ui to leave their
+      // navigation windows, then kick off initial hex + aggregate compute.
+      entry: [
+        "notifyCityReady",
+        "requestHexes",
+        "requestAggregates",
+        console.log,
+      ],
       on: {
         "FILTER.SET_ROOM_TYPES": {
           // assign runs first; requestHexes/Aggregates see updated context.
@@ -170,7 +174,7 @@ export const cityMachine = setup({
         "WORKER.PROCESS_RESULT": [
           {
             guard: and(["resultIsCurrent", "resultIsHexes"]),
-            actions: ["assignHexCells", "notifyCityReady"],
+            actions: ["assignHexCells"],
           },
           { guard: "resultIsCurrent", actions: ["assignAggregates"] },
           // else: a result for a city we've navigated past — dropped.

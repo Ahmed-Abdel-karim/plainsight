@@ -4,8 +4,8 @@ import { useCallback } from "react";
 
 import type { MapCityPayload } from "@/data/types";
 
-import type { Input as CityInput } from "../machines/city/input";
-import { SceneActorContext } from "../provider";
+import type { Input as CityInput } from "../city/input";
+import { SceneActorContext } from "../../provider";
 
 /**
  * Stable root actorRef. Does not subscribe to snapshots — use this when you
@@ -43,5 +43,24 @@ export function useChangeCity() {
   );
 }
 
-// useIsNavigating() / usePendingSlug() are added once root gains
-// the `navigating` sub-state and `pendingSlug` context field.
+// --- state selectors ---
+
+/**
+ * True while root is in `running.navigating` — a city switch is in flight,
+ * between `NAV.START` and the incoming city's `CITY.READY`. The map already
+ * derives its own dim from `useMapIsSuppressed`; use this for nav-pending
+ * affordances elsewhere (e.g. the city switcher) that the map styling doesn't cover.
+ */
+export function useIsNavigating() {
+  return SceneActorContext.useSelector((s) =>
+    s.matches({ running: "navigating" }),
+  );
+}
+
+/**
+ * The slug being navigated to while `navigating`, else `null`. Stamped at
+ * `NAV.START` (latest-wins on a re-click), cleared at `CITY.READY`.
+ */
+export function usePendingSlug() {
+  return SceneActorContext.useSelector((s) => s.context.pendingSlug);
+}

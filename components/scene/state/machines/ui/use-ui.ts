@@ -4,9 +4,9 @@ import { useCallback } from "react";
 
 import type { Lens } from "@/lib/search-params";
 
-import type { UiMachineActor } from "../machines/ui/machine";
-import { useRootRef } from "./use-root";
-import { createMachineStateSelector } from "./utils";
+import type { UiMachineActor } from "./machine";
+import { useRootRef } from "../root/use-root";
+import { createMachineStateSelector } from "../utils";
 
 function useUiActorRef(): UiMachineActor {
   return useRootRef().system.get("ui");

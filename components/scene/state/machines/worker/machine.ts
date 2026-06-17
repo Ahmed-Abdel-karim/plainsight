@@ -3,6 +3,7 @@ import { type ActorRefFrom, assertEvent, enqueueActions, setup } from "xstate";
 import type { ProcessRequestMessage } from "@/lib/listings/worker";
 
 import type { CityMachineActor } from "../city/machine";
+import { SystemId } from "../constants";
 import type * as Context from "./context";
 import type * as Events from "./events";
 import type { ProcessResult } from "./events";
@@ -18,7 +19,7 @@ import { transportActor } from "./transport";
  * `postMessage` pipe.
  *
  * Because it is shared, the slug rides on every request; the worker routes replies
- * to whichever city is current (`system.get("city")`), and that city drops any
+ * to whichever city is current (`system.get(SystemId.CITY)`), and that city drops any
  * reply whose slug ≠ its own. Loads are on-demand per slug — the underlying Web
  * Worker's TanStack Query cache returns a previously-visited city's rows instantly,
  * so revisiting a city is a fast `postMessage` round-trip, not a refetch.
@@ -86,7 +87,7 @@ export const workerMachine = setup({
     // city we've since navigated away from drops it).
     routeLoadReply: enqueueActions(({ event, system, enqueue }) => {
       assertEvent(event, "TRANSPORT.LOAD_REPLY");
-      const city = system.get("city") as CityMachineActor | undefined;
+      const city = system.get(SystemId.CITY) as CityMachineActor | undefined;
       if (!city) return;
       const { message } = event;
       if (message.status === "success") {
@@ -111,7 +112,7 @@ export const workerMachine = setup({
       const { message } = event;
       const slot = context.slots.get(message.payload.type);
       if (!slot) return;
-      const city = system.get("city") as CityMachineActor | undefined;
+      const city = system.get(SystemId.CITY) as CityMachineActor | undefined;
       if (slot.settle() && city) {
         if (message.status === "success") {
           enqueue.sendTo(city, {
@@ -138,7 +139,7 @@ export const workerMachine = setup({
     // the current city's own slug so its FETCH_ERROR guard accepts it.
     routeWorkerError: enqueueActions(({ event, system, enqueue }) => {
       assertEvent(event, "TRANSPORT.WORKER_ERROR");
-      const city = system.get("city") as CityMachineActor | undefined;
+      const city = system.get(SystemId.CITY) as CityMachineActor | undefined;
       if (!city) return;
       const slug = city.getSnapshot().context.framing?.slug ?? "";
       enqueue.sendTo(city, {

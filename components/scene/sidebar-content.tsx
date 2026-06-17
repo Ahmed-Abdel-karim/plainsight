@@ -2,11 +2,13 @@ import { Suspense } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import type { CityMeta, Scope } from "@/data";
-import { AnalysisCardsSkeleton } from "./analysis/analysis-cards-skeleton";
-import { FilterPanel } from "./analysis/filter-panel/filter-panel";
-import { SidebarAnalysis } from "./analysis/sidebar-analysis";
-import { SidebarFoot } from "./analysis/sidebar-foot";
-import { SidebarBrowse } from "./browse/sidebar-browse";
+import {
+  AnalysisCardsSkeleton,
+  SidebarAnalysis,
+  SidebarFoot,
+} from "./analysis";
+import { FilterPanel } from "./analysis/filter-panel";
+import { SidebarBrowse } from "./browse";
 import { CitySwitcher } from "./city-switcher";
 import { LensActivity } from "./lens-activity";
 import { ListingCount } from "./listing-count";

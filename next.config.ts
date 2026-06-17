@@ -1,4 +1,8 @@
 import type { NextConfig } from "next";
+// Sentry is wired but disabled for now. To enable: uncomment this import and
+// the withSentryConfig export at the bottom, and flip `enabled` in the
+// sentry.*.config / instrumentation-client files.
+// import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
   /* config options here */
@@ -29,3 +33,14 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+
+// --- Sentry (disabled). To enable, replace the export above with this: ---
+// export default withSentryConfig(nextConfig, {
+//   org: "ahmed-abdelkarim",
+//   project: "plainsight",
+//   authToken: process.env.SENTRY_AUTH_TOKEN, // readable prod stack traces
+//   widenClientFileUpload: true,
+//   silent: !process.env.CI,
+//   tunnelRoute: "/monitoring", // bypass ad-blockers
+//   telemetry: false,
+// });

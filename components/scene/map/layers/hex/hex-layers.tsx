@@ -8,11 +8,21 @@ import { Source } from "react-map-gl/maplibre";
 import type { Theme } from "@/components/theme/theme-provider";
 import type { HexCell } from "@/lib/hex/types";
 
+import {
+  useHexCells,
+  useMapIsSuppressed,
+  useCityFraming,
+} from "../../../state";
+import { useLens } from "../../../use-lens";
 import { HEX_SOURCE_ID } from "../../constants";
 import { MapLayer } from "../layer";
 import { getFillLayer } from "./styles";
 import { useHexListeners } from "./listeners";
 import { HexInspect } from "./hex-inspect";
+
+// Stable empty reference so the suppressed-hex case doesn't churn memos.
+const NO_CELLS: HexCell[] = [];
+const EMPTY_BREAKS: number[] = [];
 
 /** Properties carried on each hex feature (read by the fill + inspect). */
 export interface HexFeatureProps {
@@ -20,18 +30,9 @@ export interface HexFeatureProps {
   count: number;
 }
 
-interface HexLayersProps {
-  cells: HexCell[];
-  /** City quantile breaks (`priceScale.breaks`) driving the colour buckets. */
-  breaks: number[];
-  /** Hidden in the Browse lens (the dots take over); shown in Analyse (FR-006). */
-  visible?: boolean;
-}
-
-/** Turn an H3 cell into a closed GeoJSON polygon ring ([lng,lat], first==last). */
 function cellToFeature(cell: HexCell): Feature<Polygon, HexFeatureProps> {
-  const ring = cellToBoundary(cell.h3, true); // [lng, lat] pairs, open ring
-  ring.push(ring[0]); // close the ring for a valid Polygon
+  const ring = cellToBoundary(cell.h3, true);
+  ring.push(ring[0]);
   return {
     type: "Feature",
     geometry: { type: "Polygon", coordinates: [ring] },
@@ -39,13 +40,17 @@ function cellToFeature(cell: HexCell): Feature<Polygon, HexFeatureProps> {
   };
 }
 
-/**
- * The hex price source + fill layer. Cells (worker output, held in the map
- * store) become a GeoJSON FeatureCollection on the main thread; an empty set
- * yields an empty collection → no fills (FR-007). Per-layer style stays in
- * `styles.ts`; the canvas composes this and never touches the source id.
- */
-export function HexLayers({ cells, breaks, visible = true }: HexLayersProps) {
+export function HexLayers() {
+  const { isBrowse } = useLens();
+  const visible = !isBrowse;
+
+  const suppressed = useMapIsSuppressed();
+  const hexCells = useHexCells();
+  const cells = suppressed ? NO_CELLS : hexCells;
+
+  const city = useCityFraming();
+  const breaks = city?.priceScale.breaks ?? EMPTY_BREAKS;
+
   const data = useMemo<FeatureCollection<Polygon, HexFeatureProps>>(
     () => ({ type: "FeatureCollection", features: cells.map(cellToFeature) }),
     [cells],

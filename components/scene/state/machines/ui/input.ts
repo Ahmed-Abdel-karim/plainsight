@@ -1,13 +1,9 @@
-import type * as Context from "./context";
-
 /**
- * Data required to initialise the ui machine. Skeleton.
+ * Data required to initialise the ui machine. The ui machine takes no input — it
+ * is invoked by root with `input: {}`, so its initial context (lens/selection/
+ * hover) comes entirely from `Context.Context` defaults.
  */
 export interface Input {
-  /** TODO: replace with the real input fields. */
+  /** No input — see note above. */
   readonly _todo?: never;
 }
-
-/** Builds the initial context from `input`. TODO when the machine is built. */
-export const Input = (): Promise<Context.Context> =>
-  Promise.resolve({} as Context.Context);

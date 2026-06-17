@@ -32,9 +32,9 @@ export interface NavStart {
 }
 
 /**
- * City actor converged (first hex results landed). Root exits `navigating → idle`
- * and clears `pendingSlug`. Map and ui receive this directly from `city` — root
- * does not relay it.
+ * City actor converged (its data finished loading — WORKER.FETCH_OK, not any
+ * per-lens compute). Root exits `navigating → idle` and clears `pendingSlug`.
+ * Map and ui receive this directly from `city` — root does not relay it.
  */
 export interface CityReady {
   readonly type: "CITY.READY";

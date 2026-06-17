@@ -3,6 +3,7 @@ import { assertEvent, assign, enqueueActions, setup } from "xstate";
 import { syncSceneUrl } from "@/lib/search-params";
 
 import { cityMachine } from "../city/machine";
+import { SystemId } from "../constants";
 import { type MapMachineActor, mapMachine } from "../map/machine";
 import { type UiMachineActor, uiMachine } from "../ui/machine";
 import { workerMachine } from "../worker/machine";
@@ -24,14 +25,17 @@ import type * as Input from "./input";
  *     It sends requests to the session `worker` and receives slug-stamped replies.
  *
  * `running` is refined into `idle ⇄ navigating` to own the city-switch window:
- *   - `NAV.START` (city-switcher click) enters `navigating`, stamps `pendingSlug`,
- *     and fans out to `map` + `ui` so they enter their own suppressed/navigating
- *     states. Single dispatch — root is the only fan-out point.
- *   - `CITY.READY` (city converged) exits back to `idle` and clears `pendingSlug`.
+ *   - `NAV.START` (city-switcher click) sits on the `running` parent so it fires
+ *     from both children: it prefetches the slug, stamps `pendingSlug`, fans out
+ *     to `map` + `ui` (their suppressed/navigating states), and targets
+ *     `navigating`. From `idle` that's the normal entry; from `navigating` (a
+ *     re-click before the first city converged) it self-reenters and re-runs with
+ *     the latest slug — latest-wins. Single dispatch — root is the only fan-out point.
+ *   - `CITY.READY` (city's data loaded) exits back to `idle` and clears `pendingSlug`.
  *     Map and ui receive `CITY.READY` directly from `city` — root does not relay.
- *   - `CITY.CHANGED` sits on the `running` parent so it fires from both children
- *     (first city from home picker arrives in `idle`; city-switch arrives in
- *     `navigating` after `NAV.START`).
+ *   - `CITY.CHANGED` also sits on the `running` parent so it fires from both
+ *     children (first city from home picker arrives in `idle`; city-switch arrives
+ *     in `navigating` after `NAV.START`).
  *
  * Assembled with `setup().createMachine()` per the project's XState v5 file
  * layout (context / input / events / actions / machine).
@@ -61,7 +65,7 @@ export const rootMachine = setup({
     // applied) — the URL is left untouched until there's real state to mirror.
     syncUrl: ({ context, system }) => {
       const ui = (
-        system.get("ui") as UiMachineActor | undefined
+        system.get(SystemId.UI) as UiMachineActor | undefined
       )?.getSnapshot();
       const city = context.cityRef?.getSnapshot();
       if (!ui || !city) return;
@@ -87,10 +91,10 @@ export const rootMachine = setup({
     // Tell both session machines a city switch started, so they enter their
     // suppressed/navigating states. Map gets the slug (to prefetch); ui only
     // needs the signal.
-    sendNavStartToMapAndUi: enqueueActions(({ event, system, enqueue }) => {
+    sendNavStartToChildren: enqueueActions(({ event, system, enqueue }) => {
       assertEvent(event, "NAV.START");
-      const map = system.get("map") as MapMachineActor | undefined;
-      const ui = system.get("ui") as UiMachineActor | undefined;
+      const map = system.get(SystemId.MAP) as MapMachineActor | undefined;
+      const ui = system.get(SystemId.UI) as UiMachineActor | undefined;
       if (map) enqueue.sendTo(map, { type: "NAV.START", slug: event.slug });
       if (ui) enqueue.sendTo(ui, { type: "NAV.START" });
     }),
@@ -103,7 +107,7 @@ export const rootMachine = setup({
       cityRef: ({ spawn, event }) => {
         assertEvent(event, "CITY.CHANGED");
         return spawn("city", {
-          systemId: "city",
+          systemId: SystemId.CITY,
           input: { framing: event.payload, filter: event.filter },
         });
       },
@@ -116,33 +120,19 @@ export const rootMachine = setup({
   states: {
     running: {
       invoke: [
-        { src: "map", systemId: "map", input: {} },
-        { src: "ui", systemId: "ui", input: {} },
-        { src: "worker", systemId: "worker", input: {} },
+        { src: "map", systemId: SystemId.MAP, input: {} },
+        { src: "ui", systemId: SystemId.UI, input: {} },
+        { src: "worker", systemId: SystemId.WORKER, input: {} },
       ],
       initial: "idle",
       states: {
         idle: {
           on: {
-            "NAV.START": {
-              target: "navigating",
-              actions: [
-                {
-                  type: "prefetchCity",
-                  params: ({ event }) => ({ slug: event.slug }),
-                },
-                "setPendingCitySlug",
-                "sendNavStartToMapAndUi",
-              ],
-            },
             "URL.SYNC": { actions: "syncUrl" },
           },
         },
         navigating: {
           on: {
-            "NAV.START": {
-              actions: "setPendingCitySlug",
-            },
             "CITY.READY": {
               target: "idle",
               actions: ["clearPendingCitySlug", "syncUrl"],
@@ -153,6 +143,17 @@ export const rootMachine = setup({
       on: {
         "CITY.CHANGED": {
           actions: ["stopOldCity", "startNewCity"],
+        },
+        "NAV.START": {
+          target: ".navigating",
+          actions: [
+            {
+              type: "prefetchCity",
+              params: ({ event }) => ({ slug: event.slug }),
+            },
+            "setPendingCitySlug",
+            "sendNavStartToChildren",
+          ],
         },
       },
     },

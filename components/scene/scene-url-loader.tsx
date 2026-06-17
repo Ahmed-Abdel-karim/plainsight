@@ -36,6 +36,7 @@ export function SceneUrlLoader({
     // filtered when it reaches `ready` — a post-spawn FILTER event would be
     // dropped against `loading`. (On a city switch the URL is the clean new-city
     // path, so this seeds defaults — the per-city filter reset.)
+    console.log(city.cityName);
     changeCity(city, {
       roomTypes: rooms,
       priceRange: price && price.length === 2 ? [price[0], price[1]] : null,

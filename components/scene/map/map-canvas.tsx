@@ -5,7 +5,6 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import {
   AttributionControl,
   Map,
-  type MapLayerMouseEvent,
   MapRef,
   type MapSourceDataEvent,
   NavigationControl,
@@ -13,12 +12,17 @@ import {
 } from "react-map-gl/maplibre";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useDebouncedCallback } from "use-debounce";
+import { Loader2 } from "lucide-react";
 
 import { toBounds } from "@/lib/geo";
 import { zoomToResolution } from "@/lib/hex/resolution";
-import type { HexCell } from "@/lib/hex/types";
 import { HEX_FILL_LAYER_ID } from "./constants";
-import { HexLayers, NeighbourhoodsLayers, PointsLayers } from "./layers";
+import {
+  HexLayers,
+  HexLoadingOverlay,
+  NeighbourhoodsLayers,
+  PointsLayers,
+} from "./layers";
 import { OPENFREEMAP_STYLE } from "./map-styles";
 import { isKnownSourceId } from "./types";
 import { useUpdateMapTheme } from "./hooks/use-update-map-theme";
@@ -26,8 +30,6 @@ import {
   useChangeMapResolution,
   useCityFraming,
   useFitMapBounds,
-  useHexCells,
-  useInspectHex,
   useMapIsError,
   useMapIsSuppressed,
   useReportMapError,
@@ -40,18 +42,13 @@ import MapSkeleton from "./map-skeleton";
 
 const MAX_BOUNDS_PADDING_RATIO = 0.3; // Pad maxBounds by 25% to allow some room for UI and avoid edge-clipping
 
-// Stable empty reference so the suppressed-hex case doesn't churn HexLayers' memo.
-const NO_CELLS: HexCell[] = [];
-
 export function MapCanvas() {
-  console.log("loaded");
   const mapRef = useRef<MapRef | null>(null);
   const updateMapTheme = useUpdateMapTheme();
   const reportMapLoaded = useReportMapLoaded();
   const changeMapResolution = useChangeMapResolution();
   const reportSourceLoaded = useReportSourceLoaded();
   const fitMapBounds = useFitMapBounds();
-  const inspectHex = useInspectHex();
   const reportMapError = useReportMapError();
   const isError = useMapIsError();
   const city = useCityFraming();
@@ -66,18 +63,6 @@ export function MapCanvas() {
   const mapStyle = OPENFREEMAP_STYLE[theme];
 
   const suppressed = useMapIsSuppressed();
-  const hexCells = useHexCells();
-  const cells = suppressed ? NO_CELLS : hexCells;
-
-  const handleAnalyseClick = useCallback(
-    (event: MapLayerMouseEvent) => {
-      const clickedHex = event.features?.some(
-        (feature) => feature.layer.id === HEX_FILL_LAYER_ID,
-      );
-      if (!clickedHex) inspectHex(null);
-    },
-    [inspectHex],
-  );
 
   const handleMoveEnd = useDebouncedCallback((event: ViewStateChangeEvent) => {
     changeMapResolution(zoomToResolution(event.viewState.zoom));
@@ -106,13 +91,12 @@ export function MapCanvas() {
 
   if (!city || !bounds) return <MapSkeleton />;
 
-  if (isError) {
+  if (isError)
     return (
       <div className="bg-map-bg text-map-label flex h-full min-h-80 items-center justify-center type-label">
         Map unavailable
       </div>
     );
-  }
 
   return (
     <div aria-label={`Map of ${city.cityName}`} className="absolute inset-0">
@@ -127,22 +111,20 @@ export function MapCanvas() {
         }}
         mapStyle={mapStyle}
         maxBounds={maxBounds}
-        keyboard
+        keyboard={!suppressed}
         attributionControl={false}
         style={{ height: "100%", width: "100%" }}
-        interactiveLayerIds={isBrowse ? undefined : [HEX_FILL_LAYER_ID]}
+        interactiveLayerIds={
+          !suppressed && !isBrowse ? [HEX_FILL_LAYER_ID] : undefined
+        }
         onLoad={handleLoad}
         onMoveEnd={handleMoveEnd}
-        onClick={isBrowse ? undefined : handleAnalyseClick}
         onSourceData={handleSourceData}
         onStyleData={updateMapTheme}
         onError={reportMapError}
+        onZoomEnd={handleMoveEnd}
       >
-        <HexLayers
-          cells={cells}
-          breaks={city.priceScale.breaks}
-          visible={!isBrowse}
-        />
+        <HexLayers />
 
         <PointsLayers visible={isBrowse} />
         <NeighbourhoodsLayers interactive={isBrowse} />
@@ -153,6 +135,20 @@ export function MapCanvas() {
         />
         <AttributionControl compact position="bottom-right" />
       </Map>
+      {suppressed && (
+        <div
+          role="status"
+          aria-label={`Loading ${city.cityName}`}
+          className="absolute inset-0 z-20 flex items-center justify-center bg-black opacity-50 backdrop-blur-sm dark:bg-white"
+        >
+          <Loader2
+            aria-hidden
+            className="size-6 animate-spin text-muted-foreground"
+          />
+        </div>
+      )}
+
+      <HexLoadingOverlay />
     </div>
   );
 }

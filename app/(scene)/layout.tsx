@@ -1,6 +1,6 @@
 import { QueryProvider } from "@/components/query/query-provider";
 import { SceneProvider } from "@/components/scene/state";
-import { MapView } from "@/components/scene/map/map";
+import { MapView } from "@/components/scene/map";
 
 /**
  * Persistent scene shell. This layout sits *above* the `[city]` dynamic segment

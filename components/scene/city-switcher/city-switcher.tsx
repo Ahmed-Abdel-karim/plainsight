@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { CheckIcon, ChevronDownIcon } from "lucide-react";
 
 import {
@@ -10,13 +9,19 @@ import {
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { getCitiesData, type CityData } from "@/data";
-import { AsyncBoundary } from "../utils/async-boundary";
+import { AsyncBoundary } from "../../utils/async-boundary";
+import { CityLink } from "./city-link";
+import { CityTitle } from "./city-title";
 
 /**
  * Self-fetching city switcher. The full `cities` index is needed only to fill
  * the dropdown (closed by default), so it streams behind a Suspense boundary —
  * the trigger title shows instantly from the fallback (derived from `citySlug`,
  * already on hand), so there's no layout shift while the index loads.
+ *
+ * Stays a server component (the index comes from the server-only `@/data`
+ * barrel); the only interactive bit — firing `NAV.START` on click — is isolated
+ * in the `CityLink` client wrapper.
  */
 export function CitySwitcher({ citySlug }: { citySlug: string }) {
   return (
@@ -52,6 +57,9 @@ function CitySwitcherDropdown({
   cityName: string;
   citySlug: string;
 }) {
+  const nameBySlug = Object.fromEntries(
+    cities.map(({ slug, name }) => [slug, name]),
+  );
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -59,9 +67,7 @@ function CitySwitcherDropdown({
           variant="ghost"
           className="group -ml-inline justify-start gap-inline"
         >
-          <h1 className="m-0 type-title text-foreground capitalize">
-            {cityName}
-          </h1>
+          <CityTitle cityName={cityName} nameBySlug={nameBySlug} />
           <ChevronDownIcon
             aria-hidden="true"
             className="size-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180"
@@ -73,9 +79,9 @@ function CitySwitcherDropdown({
           const isActive = slug === citySlug;
           return (
             <DropdownMenuItem key={slug} asChild>
-              <Link
-                href={`/${slug}`}
-                aria-current={isActive ? "page" : undefined}
+              <CityLink
+                slug={slug}
+                isActive={isActive}
                 className="justify-between"
               >
                 <span className="flex min-w-0 items-center gap-inline">
@@ -91,7 +97,7 @@ function CitySwitcherDropdown({
                 <span className="type-caption-mono text-muted-foreground">
                   {listings.replace(" listings", "")}
                 </span>
-              </Link>
+              </CityLink>
             </DropdownMenuItem>
           );
         })}
