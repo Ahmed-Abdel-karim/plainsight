@@ -14,6 +14,12 @@ const nextConfig: NextConfig = {
   images: {
     qualities: [50, 75],
     formats: ["image/avif", "image/webp"],
+    // Listing photos are fetched from Unsplash's CDN to simulate a real listing
+    // image host. Scoped narrowly (protocol/hostname/pathname) per the Next 16
+    // security guidance — never a bare wildcard.
+    remotePatterns: [
+      { protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },
+    ],
   },
   // The repository + endpoint read `data/cities/{slug}-*.{json,geojson}` with a
   // dynamic (slug-interpolated) path, which the file tracer can't resolve

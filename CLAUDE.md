@@ -34,3 +34,27 @@ a deep path (`./city-switcher/city-switcher`).
   shape.
 - **Single-file leaf components don't get a folder.** A lone file imported
   directly is already unified; wrapping it in a folder + barrel is pure churn.
+
+## Comments
+
+Self-documenting code first — reach for a better name, a type, or a smaller
+function before a comment. Comments are review-enforced judgment, not a mechanical
+gate.
+
+- **Descriptive JSDoc on exported / public API is welcome** — functions, their
+  params, and interfaces, **where the name alone isn't enough** (e.g. the
+  `lib/filters` helpers). Keep it **as brief as it can be**; a single line is ideal,
+  but 2–3 lines + `@param` is fine when the contract genuinely needs it.
+- **Inline comments are for the non-obvious _why_** — a workaround, a deferral to
+  another layer, a subtle ordering/timing reason. **When unsure whether a "why" is
+  obvious, keep it** — a missing rationale costs more than a slightly redundant one.
+- **A rare _what_ comment is allowed for genuinely dense code** — a gnarly regex,
+  bitwise trick, or algorithm whose intent can't be read off the code.
+- **Keep comments in sync with the code.** A stale or wrong comment is worse than
+  none — update or delete it in the same change.
+- **No process artifacts in code.** No principle / story / task numbers, phase
+  names, or pointers to since-deleted code. A comment explains the code as it
+  stands, not the history that produced it.
+- **Delete noise** — comments that narrate what the code plainly does, label
+  obvious structure (`// arrange` / `// act`), or read like a conversation. A
+  comment that duplicates a name adds nothing.

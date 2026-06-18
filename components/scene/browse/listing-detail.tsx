@@ -18,7 +18,7 @@ import { useCityBoundaries } from "../use-city-boundaries";
 import { useLens } from "../use-lens";
 import { useBrowsePoints } from "./use-browse-points";
 import { ListingDetailBody } from "./listing-detail-body";
-import { ListingThumbWide } from "./listing-thumb";
+import { ListingGallery } from "./listing-gallery";
 import { ROOM_DISPLAY } from "./room-display";
 
 /** Side panel on desktop (≥lg), bottom sheet below — one component, both
@@ -92,7 +92,7 @@ export function ListingDetail() {
               <XIcon className="size-4" />
             </DrawerClose>
 
-            <ListingThumbWide variant={listing.imageVariant} />
+            <ListingGallery listing={listing} />
 
             <DrawerHeader className="gap-snug p-0">
               <div className="flex items-center gap-snug type-caption text-muted-foreground">

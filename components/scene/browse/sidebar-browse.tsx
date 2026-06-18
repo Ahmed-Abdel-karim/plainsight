@@ -94,6 +94,9 @@ export function SidebarBrowse() {
   }, [boundaries]);
 
   const emptySummary = useMemo(() => {
+    // First paint is city-less (the panel mounts before the CITY.CHANGED effect),
+    // so currency can be empty — guard the Intl format (it throws on "").
+    if (!currency) return "";
     const rooms =
       filters.roomTypes.length === 0
         ? "All room types"
@@ -105,7 +108,17 @@ export function SidebarBrowse() {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-stack">
       <div className="flex flex-col gap-snug">
-        <BrowseSummary shown={listings.length} total={total} />
+        {status === "loading" ? (
+          <p
+            role="status"
+            aria-busy="true"
+            className="type-caption text-muted-foreground"
+          >
+            Loading listings…
+          </p>
+        ) : (
+          <BrowseSummary shown={listings.length} total={total} />
+        )}
         <SortControl value={sort} onChange={setSort} />
       </div>
 

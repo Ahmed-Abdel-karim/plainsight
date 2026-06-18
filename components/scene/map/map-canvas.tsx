@@ -107,6 +107,7 @@ export function MapCanvas() {
           latitude: city.center[1],
           zoom: 11,
           bounds,
+          bearing: 0,
           fitBoundsOptions: { padding: 35 },
         }}
         mapStyle={mapStyle}

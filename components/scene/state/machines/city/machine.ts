@@ -119,10 +119,8 @@ export const cityMachine = setup({
     })),
 
     notifyCityReady: enqueueActions(({ system, enqueue }) => {
-      console.log("notifying");
       for (const id of [SystemId.ROOT, SystemId.MAP, SystemId.UI] as const) {
         const ref = system.get(id);
-        console.log(id, ref);
         if (ref) enqueue.sendTo(ref, { type: "CITY.READY" });
       }
     }),
@@ -148,12 +146,7 @@ export const cityMachine = setup({
     ready: {
       // Data is loaded → the city has converged: tell root/map/ui to leave their
       // navigation windows, then kick off initial hex + aggregate compute.
-      entry: [
-        "notifyCityReady",
-        "requestHexes",
-        "requestAggregates",
-        console.log,
-      ],
+      entry: ["notifyCityReady", "requestHexes", "requestAggregates"],
       on: {
         "FILTER.SET_ROOM_TYPES": {
           // assign runs first; requestHexes/Aggregates see updated context.

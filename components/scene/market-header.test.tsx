@@ -14,16 +14,11 @@ describe("MarketHeader", () => {
       />,
     );
 
-    const title = screen.getByRole("heading", {
-      level: 1,
-      name: "London",
-    });
-    const header = title.closest("header");
+    const header = screen.getByRole("banner");
 
-    if (header === null) {
-      throw new Error("Expected market title to be inside a header");
-    }
-
+    expect(
+      within(header).getByRole("heading", { level: 1, name: "London" }),
+    ).toBeInTheDocument();
     expect(within(header).getByText("1,000 listings")).toBeInTheDocument();
     expect(
       within(header).getByText("Data: 9/2025 snapshot"),
@@ -39,10 +34,7 @@ describe("MarketHeader", () => {
       />,
     );
 
-    const headerText = screen
-      .getByRole("heading", { name: "London" })
-      .closest("header")
-      ?.textContent?.toLowerCase();
+    const headerText = screen.getByRole("banner").textContent?.toLowerCase();
 
     expect(screen.getByText("Data: 9/2025 snapshot")).toBeInTheDocument();
     expect(headerText).toBeDefined();
