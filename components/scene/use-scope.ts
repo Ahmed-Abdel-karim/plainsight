@@ -1,12 +1,10 @@
 "use client";
 
 /**
- * Neighbourhood scope, read from the scene store (FR-013). In Browse, clicking a
+ * Neighbourhood scope, read from the city machine. In Browse, clicking a
  * boundary narrows the list, count, and dots to that neighbourhood; clearing
- * returns to the city-wide scope. The store mirrors it to the URL as a
- * `replaceState` side-effect — no `useSearchParams`, so no `cacheComponents`
- * dynamic/Suspense hole. Shared (like the lens + filters) between the sidebar and
- * the map. The public shape is unchanged, so its consumers are untouched.
+ * returns to the city-wide scope. The root machine mirrors it to the URL, so
+ * consumers do not need `useSearchParams`.
  *
  *   ?nbhd=camden   → neighbourhood scope (absent = city-wide)
  */

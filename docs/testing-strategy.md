@@ -523,20 +523,23 @@ xstate/@xstate/react, `server-only` shim, axe matchers. Plus the harnesses built
 since: **MSW** (`msw` + `test/msw/server.ts`, wired into `vitest.setup.ts`),
 **@testing-library/user-event**, the global custom render **`test/render.tsx`**
 (`renderScene`), shared **`test/scene/fake-transport.ts`** and
-**`test/fixtures/browse.ts`**, and the jsdom stubs that make the above work — a
-sized `ResizeObserver` + `getBoundingClientRect` (the virtualizer needs a
-viewport), `matchMedia`, `IntersectionObserver`, and a fixed jsdom origin so
-relative `/api/...` fetches resolve for MSW.
+**`test/fixtures/browse.ts`**, the **react-map-gl render-boundary mock**
+(`test/mocks/react-map-gl.tsx`) + the centralised **MapLibre fake**
+(`test/scene/fake-map.ts`, shared with the machines `setupSceneSystem`), the
+**`next/image`** mock, and the jsdom stubs that make the above work — a sized
+`ResizeObserver` + `getBoundingClientRect` (the virtualizer needs a viewport;
+Recharts needs a sized container), `matchMedia`, `IntersectionObserver`, and a
+fixed jsdom origin so relative `/api/...` fetches resolve for MSW.
 
 ### Phase A — Machine / state-layer tests — **DONE**
 
-Landed: the node-env `machines` project; the connected-system harness
-(`components/scene/state/machines/__tests__/harness.ts`, which boots the real
-root+map+ui+worker system and injects the fake transport);
-`__tests__/system.smoke.test.ts`; and the `map/transition-gating.test.ts`
-executable spec (the companion proof to `docs/map-machine-transition-gating.md`).
-_Pending tidy (Principles 8/9): rename `harness.ts → utils.ts` and fold the smoke
-test into a connected-system test._ The original design notes below stand.
+Landed: the node-env `machines` project; the connected-system setup
+(`components/scene/state/machines/__tests__/utils.ts`, exporting `setupSceneSystem`,
+which boots the real root+map+ui+worker system and injects the fake transport);
+the `__tests__/system.test.ts` connected-system test (boot shape + root → city →
+worker wiring); and the `map/transition-gating.test.ts` executable spec (the
+companion proof to `docs/map-machine-transition-gating.md`). The original design
+notes below stand.
 
 The headline (gating spec + connected machines) _and_ the cheapest.
 
@@ -555,9 +558,10 @@ worker: workerMachine.provide({ actors: { transport: fakeTransport } }) } })`.
 - **Connected-system helper** — `createActor(rootMachine)` + `system.get(...)` to
   reach child actors; start/teardown wrapper.
 
-### Phase B — UI-story integration — **DONE (browse slice)**
+### Phase B — UI-story integration — **DONE (all UI regions)**
 
-Stood up by the first UI story (the browse region test). What shipped:
+Stood up by the first UI story (the browse region test) and completed across the
+browse, analysis, map, and landing regions. What shipped:
 
 - **MSW** + `msw/node` server (`test/msw/server.ts`), wired into `vitest.setup.ts`,
   intercepting `fetch('/api/cities/[slug]/points')` and `/boundaries`. ✅
@@ -566,12 +570,64 @@ Stood up by the first UI story (the browse region test). What shipped:
 - **@testing-library/user-event**. ✅
 - **`renderScene()`** — the global custom render in `test/render.tsx` (real actor
   system over `QueryClient` retry-off + theme; faked transport; no-op URL sync). ✅
-- **react-map-gl render-boundary mock** (Principle 2) in `__mocks__` — **still
-  pending**; not needed by browse, deferred to the map region test.
+- **react-map-gl render-boundary mock** (Principle 2) — **done**, stood up by the
+  map region test (`test/mocks/react-map-gl.tsx`): `Source`/`Layer` re-emit their
+  data as `data-*`; a fake `MapRef` exposes the spied imperative surface; the
+  mounted mock fires `onLoad` to drive the real `reportMapLoaded` wiring. ✅
 
-### Phase C — E2E (defer until E2E slices)
+### Phase C — E2E — **SCENARIOS SETTLED, not yet built**
 
-Playwright + MapGrab + flag-gated `installMapGrab`.
+The whole unit/integration backfill (browse · analysis · map · landing regions +
+the connected machine tier) is complete and green; E2E is the only remaining layer.
+Scope: a minimal Playwright suite with **MapGrab, option A** (deterministic
+map-state assertions, no pixel diffing), Chromium-only, and a **flag-gated
+`installMapGrab`** touching map init. The runner/CI specifics still get built; the
+**scenario set and its shape are now settled** (below).
+
+#### Decision — E2E follows real user journeys, not atomic per-concern flows
+
+The earlier "~4 happy-path flows, one per concern" framing is **superseded by a
+journey shape.** E2E follows **real user journeys**; the trophy's atomic discipline
+applies to the integration tier we already built, **not** to the rationed browser
+layer. This is Playwright's documented philosophy: _test user-visible behavior_;
+**"isolated" means test-to-test independence, not a short test**; `test.step()` and
+`expect.soft()` exist precisely to support long, debuggable journeys.
+
+The journey is a **delivery vehicle** — a single forward narrative naturally walks
+through every browser-only fact (map boot, both lenses' real-pointer-hit wiring,
+the `interactiveLayerIds` swap, the hex popup, select→drawer→URL). This dissolves
+the old per-flow judgment calls (one pointer test vs two; whether city-switch earns
+its own flow; whether hover is in) — the journey covers them in context, for free.
+
+**Governing rule (keeps the journey from re-running the integration suite):** at
+each step **assert the browser-only fact** — the thing the Principle-2
+render-boundary mock had to fake — and **pass through** the integration-owned logic
+(filter math, sort comparator, panel content, already green in jsdom). This is also
+the **drift backstop** Principle 3 calls for.
+
+#### The scenario set — two `test()` blocks, both built from `test.step()`
+
+The settled scope — the full step-by-step scenario set, the verified
+implementation seams, and the CI/verification plan — lives in its own executable
+scope doc: **`docs/e2e-scenarios.md`**. In brief:
+
+- **Test 1 — the exploration journey** (the README demo path): open the city
+  selector → pick a city (**map boots in real WebGL**) → change a filter (**hex
+  re-rendered**) → zoom (**hex at new resolution**) → hover a hex (**price popup**)
+  → switch to Browse (**points/hex swap + `interactiveLayerIds`**) → filter Hotel
+  (**points narrowed**) → sort price low→high (**first card order**) → select a
+  listing on the map (**`selected` state + drawer + `?listing=`** — the drift
+  backstop).
+- **Test 2 — cold deep-link restore + theme swap** (its own `test()`, since a
+  deep-link is a fresh load _into_ a state): `goto` a fully-parameterised URL
+  (**map flew to scoped bounds + listing reflected**), then toggle theme
+  (**basemap style swaps in place, no reload**).
+
+The one app-code touch is the **flag-gated `installMapGrab`** in
+`components/scene/map/map-canvas.tsx` `handleLoad` (a `NEXT_PUBLIC_E2E` gate so it
+is absent in production); all driven controls already carry accessible roles/names.
+Runner + CI wiring (GitHub Actions Ubuntu, Chromium-only, software WebGL) is the
+only part left to build — see `docs/e2e-scenarios.md` for the detail.
 
 ### Cross-cutting — enforce now
 
@@ -610,8 +666,45 @@ architecture/decision docs.
   fixed two real component bugs: the `aria-hidden` (silent) loading skeleton → an
   accessible `role="status"` indicator, and the misleading "0 of 0" count during
   load; plus guarded the city-less first-paint empty-currency `Intl` crash.
+- **Analysis region test** (`components/scene/analysis/__tests__/`) — the four
+  distribution cards over the real machines, driven through the worker (fake
+  transport) for the filtered path. Covers the default (server-prebaked) view,
+  the below-floor degradation, the cold-filtered three-step async, and the
+  stale-while-revalidate-vs-skeleton branch. Subsumed and deleted `kpi-row.test.tsx`.
+  Recharts renders in jsdom on the existing `ResizeObserver`/`getBoundingClientRect`
+  stubs — no chart mock needed. Found and fixed the same a11y bug as browse: the
+  silent `AnalysisCardsSkeleton` → an accessible `role="status"` loading region.
+- **Map region test** (`components/scene/map/__tests__/`) — the canvas, market
+  header, and legend over the real machines, standing up the **react-map-gl
+  render-boundary mock** (`test/mocks/react-map-gl.tsx`): `Source`/`Layer` re-emit
+  the data they were handed as `data-*` (declarative side), and a fake `MapRef`
+  exposes the spied imperative surface. The mounted mock fires `onLoad`, driving the
+  _real_ `reportMapLoaded` → `MAP.MOUNTED → READY` wiring (no manual machine sends).
+  Covers: accessible skeleton → framed map; lens-driven layer contract (hex vs
+  points source/visibility/filter); the city-switch loading overlay; the framing
+  effect reaching `fitBounds`/`setMaxBounds`; and the folded `map-legend` +
+  `market-header` (+ `.a11y`) contracts (legend count, honest-snapshot content rule,
+  live-count region, axe). Subsumed and deleted those three units. Centralised the
+  MapLibre fake in `test/scene/fake-map.ts` (shared with the machines harness, which
+  was refactored onto it). Found and fixed two real a11y bugs: the silent
+  `MapSkeleton` → `role="status"`, and the map container's `aria-label` on a
+  role-less `<div>` (`aria-prohibited-attr`) → `role="region"`.
+- **Landing view test** (`components/home/home-view.test.tsx`) — the one view test
+  (the future E2E entry point): renders `HomeView` with the async `CityPicker`
+  boundary swapped for the real synchronous `CityPickerView` over `cityFixtures`, so
+  the actual market cards (route link, name, country, frame, listings, honest
+  snapshot) are exercised alongside the framing copy, with one axe assertion.
+  Subsumed and deleted `home-view.a11y`, `city-picker`, and `city-picker.a11y`.
+- **Machines-tier tidy** — renamed `__tests__/harness.ts → utils.ts` and
+  `startSceneSystem → setupSceneSystem` (Principle 8); folded `system.smoke.test.ts`
+  into `system.test.ts`, the connected-system test, reframed off the process-y
+  language and seeded with a real wiring case (a dispatched city spawns the city
+  actor and drives a worker `LOAD`).
 - Full suite green; ESLint test plugins + `tsc` clean.
 
-**Next:** the **analysis** and **map** region tests (the map one stands up the
-react-map-gl render-boundary mock), then the landing view test, then the
-machines-tier `harness.ts → utils.ts` rename + smoke fold, then Phase C (E2E).
+**Next:** Phase C — the E2E layer (Playwright + MapGrab, flag-gated
+`installMapGrab`). The **scenarios are now settled** (see Phase C above): a
+**user-journey** shape — one exploration journey + one cold deep-link/theme test,
+both built from `test.step()`, asserting only the browser-only fact at each step.
+Only the **runner + CI wiring** remains to build (no longer blocked on a decision).
+The unit/integration backfill is otherwise complete.

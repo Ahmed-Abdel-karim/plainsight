@@ -60,7 +60,7 @@ const HEX_FILL_OPACITY = 0.6;
 /**
  * The hex price fill spec. The colour is a `step` expression over the city's
  * price breaks; a theme toggle only swaps the ramp literals (no source rebuild).
- * Hidden in the Browse lens (the dots take over); shown in Analyse (FR-006).
+ * Hidden in the Browse lens because dots take over there.
  */
 export const getFillLayer = (
   theme: Theme,

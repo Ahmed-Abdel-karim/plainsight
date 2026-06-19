@@ -8,9 +8,12 @@ importers:
 
   .:
     dependencies:
+      '@mapgrab/map-interface':
+        specifier: ^1.0.2
+        version: 1.0.2(mapbox-gl@3.25.0)(maplibre-gl@5.24.0)
       '@sentry/nextjs':
         specifier: ^10.58.0
-        version: 10.58.0(@opentelemetry/core@2.8.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.8.0(@opentelemetry/api@1.9.1))(next@16.2.6(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)(webpack@5.107.2)
+        version: 10.58.0(@opentelemetry/core@2.8.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.8.0(@opentelemetry/api@1.9.1))(next@16.2.6(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)(webpack@5.107.2)
       '@tanstack/query-core':
         specifier: 5.101.0
         version: 5.101.0
@@ -52,13 +55,13 @@ importers:
         version: 5.24.0
       next:
         specifier: 16.2.6
-        version: 16.2.6(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        version: 16.2.6(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       next-themes:
         specifier: ^0.4.6
         version: 0.4.6(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       nuqs:
         specifier: ^2.8.9
-        version: 2.8.9(next@16.2.6(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
+        version: 2.8.9(next@16.2.6(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
       proxy-memoize:
         specifier: ^3.0.1
         version: 3.0.1
@@ -73,13 +76,16 @@ importers:
         version: 19.2.4(react@19.2.4)
       react-map-gl:
         specifier: ^8.1.1
-        version: 8.1.1(maplibre-gl@5.24.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+        version: 8.1.1(mapbox-gl@3.25.0)(maplibre-gl@5.24.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       recharts:
         specifier: 3.8.0
         version: 3.8.0(@types/react@19.2.15)(react-dom@19.2.4(react@19.2.4))(react-is@17.0.2)(react@19.2.4)(redux@5.0.1)
       shadcn:
         specifier: ^4.8.2
         version: 4.8.2(@types/node@20.19.41)(typescript@5.9.3)
+      sonner:
+        specifier: ^2.0.7
+        version: 2.0.7(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       tailwind-merge:
         specifier: ^3.6.0
         version: 3.6.0
@@ -105,6 +111,12 @@ importers:
       '@commitlint/config-conventional':
         specifier: ^21.0.2
         version: 21.0.2
+      '@mapgrab/playwright':
+        specifier: ^0.0.4
+        version: 0.0.4(playwright@1.61.0)
+      '@playwright/test':
+        specifier: ^1.61.0
+        version: 1.61.0
       '@tailwindcss/postcss':
         specifier: ^4
         version: 4.3.0
@@ -777,6 +789,9 @@ packages:
     resolution: {integrity: sha512-rY0o9A5ECsTQRVhv7tL/OyDpGAoUB4tTvLiW1DSzQGq4bvTPhNw1VpSNjDJc5GFZ2XuyOtSWSVN05qOtcD71qQ==}
     engines: {node: '>= 0.6'}
 
+  '@mapbox/point-geometry@0.1.0':
+    resolution: {integrity: sha512-6j56HdLTwWGO0fJPlrZtdU/B13q8Uwmo18Ck2GnGgN9PCFyKTZ3UbXeEdRFh18i9XQ92eH2VdtpJHpBD3aripQ==}
+
   '@mapbox/point-geometry@1.1.0':
     resolution: {integrity: sha512-YGcBz1cg4ATXDCM/71L9xveh4dynfGmcLDqufR+nQQy3fKwsAZsWd/x4621/6uJaeB9mwOHE6hPeDgXz9uViUQ==}
 
@@ -792,6 +807,23 @@ packages:
   '@mapbox/whoots-js@3.1.0':
     resolution: {integrity: sha512-Es6WcD0nO5l+2BOQS4uLfNPYQaNDfbot3X1XUoloz+x0mPDS3eeORZJl06HXjwBG1fOGwCRnzK88LMdxKRrd6Q==}
     engines: {node: '>=6.0.0'}
+
+  '@mapgrab/map-interface-types@0.1.2':
+    resolution: {integrity: sha512-4pfK4DBxPqccgDyLIOhWD8mhO9Af/wxuRDq4FSF4uTwb8hYwD4FGJFiGJTumS38SmMe9QXQsVA6WxF9SdU1uAQ==}
+
+  '@mapgrab/map-interface@1.0.2':
+    resolution: {integrity: sha512-uSewZmbLtau3IYxuZ14beb2Vf42r6TnRCl85tIERGiVWkZoKSyqedydclZoflW2WfJbaT5NHD1tlxZ7o31+aRw==}
+    peerDependencies:
+      mapbox-gl: '>=2.0.0'
+      maplibre-gl: '>=4.3.0'
+
+  '@mapgrab/map-locator@0.0.3':
+    resolution: {integrity: sha512-glAAnqqzwha4ztIaFyjZvQXhLWWJlkhqKk2mifQmYafCdN9oJja4atXNKSTCEQCssM+1FD6Ax/4o34mOeB4Fpw==}
+
+  '@mapgrab/playwright@0.0.4':
+    resolution: {integrity: sha512-rjt0nGjOpDK4V3/RlGHdPq64SLZLpnE/hELHSGb6VOrXd5dgKvYV8w9owIWQnslcXPhhJ+c8vqorVQgnkVgBoQ==}
+    peerDependencies:
+      playwright: '>=1.20'
 
   '@maplibre/geojson-vt@5.0.4':
     resolution: {integrity: sha512-KGg9sma45S+stfH9vPCJk1J0lSDLWZgCT9Y8u8qWZJyjFlP8MNP1WGTxIMYJZjDvVT3PDn05kN1C95Sut1HpgQ==}
@@ -969,6 +1001,11 @@ packages:
 
   '@oxc-project/types@0.132.0':
     resolution: {integrity: sha512-FESMOxil5Se014ui/Eq8fT5uHJo6nIRwH0PfJrZJXs6Gek3ZVFOrpUv3YIZT20m+extU98Hg1Ym72U58rlsxUQ==}
+
+  '@playwright/test@1.61.0':
+    resolution: {integrity: sha512-cKA5B6lpFEMyMGjxF54QihfYpB4FkEGH+qZhtArDEG+wezQAJY8Pq6C7T1SjWz+FFzt3TbyoXBQYk/0292TdJA==}
+    engines: {node: '>=18'}
+    hasBin: true
 
   '@radix-ui/number@1.1.1':
     resolution: {integrity: sha512-MkKCwxlXTgz6CFoJx3pCwn07GKp36+aZyu/u2Ln2VrA5DcdyCZkASEDBTd8x5whTQQL5CiYf4prXKLcgQdv29g==}
@@ -2243,6 +2280,18 @@ packages:
   '@ts-morph/common@0.27.0':
     resolution: {integrity: sha512-Wf29UqxWDpc+i61k3oIOzcUfQt79PIT9y/MWfAGlrkjg6lBC1hwDECLXPVJAhWjiGbfBCxZd65F/LIZF3+jeJQ==}
 
+  '@turf/bbox-clip@7.0.0':
+    resolution: {integrity: sha512-ZSReB14sSQpP5TE6g5SijVFijxMp8pyrM0PgEN1LR9Bm+nj7BmmGzHafV3lyteml2bmlFdQxkbTqcbvlVXS98g==}
+
+  '@turf/helpers@7.3.5':
+    resolution: {integrity: sha512-E/NMGV5MwbjjP7AJXBtsanC3yY8N2MQ87IGdIgkB2ji5AtBpwnH4L3gEqpYN4RlCJJWbLbzO91BbKv2waUd0eg==}
+
+  '@turf/invariant@7.3.5':
+    resolution: {integrity: sha512-ZVIvsBvjr8lO7WxC5zYNjRsjSDvyGvWkJMjuWaJjTU8x+1tmfNnw3gDX/TI2Sit83gcRYLYkNo23lB/udqx/Hg==}
+
+  '@turf/meta@7.0.0':
+    resolution: {integrity: sha512-cEXr13uFwhXq5mFBy0IK1U/QepE5qgk3zXpBYsla3lYV7cB83Vh+NNUR+r0/w/QoJqest1TG4H20F9tGYWPi/g==}
+
   '@tybys/wasm-util@0.10.2':
     resolution: {integrity: sha512-RoBvJ2X0wuKlWFIjrwffGw1IqZHKQqzIchKaadZZfnNpsAYp2mM0h36JtPCjNDAHGgYez/15uMBpfGwchhiMgg==}
 
@@ -2293,6 +2342,9 @@ packages:
 
   '@types/json5@0.0.29':
     resolution: {integrity: sha512-dRLjCWHYg4oaA77cxO64oO+7JwCwnIzkZPdrrC71jQmQtlhM556pwKo5bUzqvZndkVbeFLIIi+9TC40JNF5hNQ==}
+
+  '@types/mapbox__point-geometry@0.1.4':
+    resolution: {integrity: sha512-mUWlSxAmYLfwnRBmgYV86tgYmMIICX4kza8YnE/eIlywGe2XoOxlpVnXWwir92xRLjwyarqwpu2EJKD2pk0IUA==}
 
   '@types/node@20.19.41':
     resolution: {integrity: sha512-ECymXOukMnOoVkC2bb1Vc/w/836DXncOg5m8Xj1RH7xSHZJWNYY6Zh7EH477vcnD5egKNNfy2RpNOmuChhFPgQ==}
@@ -3604,6 +3656,11 @@ packages:
     resolution: {integrity: sha512-eKpRKAovdpZtR1WopLHxlBWvAgPny3c4gX1G5Jhwmmw4XJj0ifSD5qB5TOo8hmA0wlRKDAOAhEE1yVPgs6Fgcg==}
     engines: {node: '>=14.14'}
 
+  fsevents@2.3.2:
+    resolution: {integrity: sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==}
+    engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
+    os: [darwin]
+
   fsevents@2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
@@ -4285,6 +4342,9 @@ packages:
   magic-string@0.30.21:
     resolution: {integrity: sha512-vd2F4YUyEXKGcLHoq+TEyCjxueSeHnFxyyjNp80yg0XV4vUhnDer/lvvlqM/arB5bXQN5K2/3oinyCRyx8T2CQ==}
 
+  mapbox-gl@3.25.0:
+    resolution: {integrity: sha512-I+9oSkJVFu51xIAAQcjKophFe6zVAGWROHsszeRhX9E1OXEizgPH+8BkF7GaxmmLd9FbADdEfvULF8NxEFcB5w==}
+
   maplibre-gl@5.24.0:
     resolution: {integrity: sha512-ALyFxgtd5R+65UqZ/++lOqwWcC0SNho9c27fYSyLmG7AfnAul2o46F05aDJGPbFU57wos9dgcIySHs0Xe6ia3A==}
     engines: {node: '>=16.14.0', npm: '>=8.1.0'}
@@ -4627,6 +4687,16 @@ packages:
   pkce-challenge@5.0.1:
     resolution: {integrity: sha512-wQ0b/W4Fr01qtpHlqSqspcj3EhBvimsdh0KlHhH8HRZnMsEa0ea2fTULOXOS9ccQr3om+GcGRk4e+isrZWV8qQ==}
     engines: {node: '>=16.20.0'}
+
+  playwright-core@1.61.0:
+    resolution: {integrity: sha512-caX7TrY3Ml6egyDX0WUcTHDxodl/b51y5wJOdCEA36QviK/s2g081hvmGs8eaE3DWb6NYZQ6BjO/QkNRPenoPA==}
+    engines: {node: '>=18'}
+    hasBin: true
+
+  playwright@1.61.0:
+    resolution: {integrity: sha512-Z+7BeeqQPRRzklHsVFP4KTGIyMxKUmfeRA4WisM6G3/XW6nwGeX6fX9qYaDa+CiUqpOkb2f6X3nar05R3kSuJQ==}
+    engines: {node: '>=18'}
+    hasBin: true
 
   possible-typed-array-names@1.1.0:
     resolution: {integrity: sha512-/+5VFTchJDoVj3bhoqi6UeymcD00DAwb1nJwamzPvHEszJ4FpF6SNNbUbOS8yI56qHzdV8eK0qEfOSiodkTdxg==}
@@ -5065,6 +5135,12 @@ packages:
 
   sisteransi@1.0.5:
     resolution: {integrity: sha512-bLGGlR1QxBcynn2d5YmDX4MGjlZvy2MRBDRNHLJ8VI6l6+9FUiyTFNJ0IveOSP0bcXgVDPRcfGqA0pjaqUpfVg==}
+
+  sonner@2.0.7:
+    resolution: {integrity: sha512-W6ZN4p58k8aDKA4XPcx2hpIQXBRAgyiWVkYhT7CvK6D3iAu7xjvVyhQHg2/iaKJZ1XVJ4r7XuwGL+WGEK37i9w==}
+    peerDependencies:
+      react: ^18.0.0 || ^19.0.0 || ^19.0.0-rc
+      react-dom: ^18.0.0 || ^19.0.0 || ^19.0.0-rc
 
   sort-asc@0.2.0:
     resolution: {integrity: sha512-umMGhjPeHAI6YjABoSTrFp2zaBtXBej1a0yKkuMUyjjqu6FJsTF+JYwCswWDg+zJfk/5npWUUbd33HH/WLzpaA==}
@@ -6390,6 +6466,8 @@ snapshots:
 
   '@mapbox/jsonlint-lines-primitives@2.0.2': {}
 
+  '@mapbox/point-geometry@0.1.0': {}
+
   '@mapbox/point-geometry@1.1.0': {}
 
   '@mapbox/tiny-sdf@2.2.0': {}
@@ -6403,6 +6481,31 @@ snapshots:
       pbf: 4.0.2
 
   '@mapbox/whoots-js@3.1.0': {}
+
+  '@mapgrab/map-interface-types@0.1.2':
+    dependencies:
+      '@mapbox/point-geometry': 0.1.0
+      '@types/mapbox__point-geometry': 0.1.4
+      tslib: 2.8.1
+
+  '@mapgrab/map-interface@1.0.2(mapbox-gl@3.25.0)(maplibre-gl@5.24.0)':
+    dependencies:
+      '@mapgrab/map-interface-types': 0.1.2
+      '@mapgrab/map-locator': 0.0.3
+      '@turf/bbox-clip': 7.0.0
+      '@turf/meta': 7.0.0
+      mapbox-gl: 3.25.0
+      maplibre-gl: 5.24.0
+      tslib: 2.8.1
+
+  '@mapgrab/map-locator@0.0.3':
+    dependencies:
+      tslib: 2.8.1
+
+  '@mapgrab/playwright@0.0.4(playwright@1.61.0)':
+    dependencies:
+      '@mapgrab/map-interface-types': 0.1.2
+      playwright: 1.61.0
 
   '@maplibre/geojson-vt@5.0.4': {}
 
@@ -6579,6 +6682,10 @@ snapshots:
   '@opentelemetry/semantic-conventions@1.41.1': {}
 
   '@oxc-project/types@0.132.0': {}
+
+  '@playwright/test@1.61.0':
+    dependencies:
+      playwright: 1.61.0
 
   '@radix-ui/number@1.1.1': {}
 
@@ -7566,7 +7673,7 @@ snapshots:
     dependencies:
       '@sentry/core': 10.58.0
 
-  '@sentry/nextjs@10.58.0(@opentelemetry/core@2.8.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.8.0(@opentelemetry/api@1.9.1))(next@16.2.6(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)(webpack@5.107.2)':
+  '@sentry/nextjs@10.58.0(@opentelemetry/core@2.8.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.8.0(@opentelemetry/api@1.9.1))(next@16.2.6(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)(webpack@5.107.2)':
     dependencies:
       '@opentelemetry/api': 1.9.1
       '@opentelemetry/semantic-conventions': 1.41.1
@@ -7579,7 +7686,7 @@ snapshots:
       '@sentry/react': 10.58.0(react@19.2.4)
       '@sentry/vercel-edge': 10.58.0
       '@sentry/webpack-plugin': 5.3.0(webpack@5.107.2)
-      next: 16.2.6(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      next: 16.2.6(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       rollup: 4.62.0
       stacktrace-parser: 0.1.11
     transitivePeerDependencies:
@@ -7803,6 +7910,27 @@ snapshots:
       minimatch: 10.2.5
       path-browserify: 1.0.1
 
+  '@turf/bbox-clip@7.0.0':
+    dependencies:
+      '@turf/helpers': 7.3.5
+      '@turf/invariant': 7.3.5
+      tslib: 2.8.1
+
+  '@turf/helpers@7.3.5':
+    dependencies:
+      '@types/geojson': 7946.0.16
+      tslib: 2.8.1
+
+  '@turf/invariant@7.3.5':
+    dependencies:
+      '@turf/helpers': 7.3.5
+      '@types/geojson': 7946.0.16
+      tslib: 2.8.1
+
+  '@turf/meta@7.0.0':
+    dependencies:
+      '@turf/helpers': 7.3.5
+
   '@tybys/wasm-util@0.10.2':
     dependencies:
       tslib: 2.8.1
@@ -7848,6 +7976,8 @@ snapshots:
   '@types/json-schema@7.0.15': {}
 
   '@types/json5@0.0.29': {}
+
+  '@types/mapbox__point-geometry@0.1.4': {}
 
   '@types/node@20.19.41':
     dependencies:
@@ -8036,10 +8166,12 @@ snapshots:
   '@unrs/resolver-binding-win32-x64-msvc@1.12.2':
     optional: true
 
-  '@vis.gl/react-mapbox@8.1.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
+  '@vis.gl/react-mapbox@8.1.1(mapbox-gl@3.25.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
     dependencies:
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
+    optionalDependencies:
+      mapbox-gl: 3.25.0
 
   '@vis.gl/react-maplibre@8.1.1(maplibre-gl@5.24.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
     dependencies:
@@ -9302,6 +9434,9 @@ snapshots:
       jsonfile: 6.2.1
       universalify: 2.0.1
 
+  fsevents@2.3.2:
+    optional: true
+
   fsevents@2.3.3:
     optional: true
 
@@ -9904,6 +10039,8 @@ snapshots:
     dependencies:
       '@jridgewell/sourcemap-codec': 1.5.5
 
+  mapbox-gl@3.25.0: {}
+
   maplibre-gl@5.24.0:
     dependencies:
       '@mapbox/jsonlint-lines-primitives': 2.0.2
@@ -10017,7 +10154,7 @@ snapshots:
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
 
-  next@16.2.6(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+  next@16.2.6(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
     dependencies:
       '@next/env': 16.2.6
       '@swc/helpers': 0.5.15
@@ -10037,6 +10174,7 @@ snapshots:
       '@next/swc-win32-arm64-msvc': 16.2.6
       '@next/swc-win32-x64-msvc': 16.2.6
       '@opentelemetry/api': 1.9.1
+      '@playwright/test': 1.61.0
       sharp: 0.34.5
     transitivePeerDependencies:
       - '@babel/core'
@@ -10072,12 +10210,12 @@ snapshots:
       path-key: 4.0.0
       unicorn-magic: 0.3.0
 
-  nuqs@2.8.9(next@16.2.6(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4):
+  nuqs@2.8.9(next@16.2.6(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4):
     dependencies:
       '@standard-schema/spec': 1.0.0
       react: 19.2.4
     optionalDependencies:
-      next: 16.2.6(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      next: 16.2.6(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(@playwright/test@1.61.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
 
   object-assign@4.1.1: {}
 
@@ -10239,6 +10377,14 @@ snapshots:
 
   pkce-challenge@5.0.1: {}
 
+  playwright-core@1.61.0: {}
+
+  playwright@1.61.0:
+    dependencies:
+      playwright-core: 1.61.0
+    optionalDependencies:
+      fsevents: 2.3.2
+
   possible-typed-array-names@1.1.0: {}
 
   postcss-selector-parser@7.1.1:
@@ -10399,13 +10545,14 @@ snapshots:
 
   react-is@17.0.2: {}
 
-  react-map-gl@8.1.1(maplibre-gl@5.24.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+  react-map-gl@8.1.1(mapbox-gl@3.25.0)(maplibre-gl@5.24.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
     dependencies:
-      '@vis.gl/react-mapbox': 8.1.1(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@vis.gl/react-mapbox': 8.1.1(mapbox-gl@3.25.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@vis.gl/react-maplibre': 8.1.1(maplibre-gl@5.24.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
     optionalDependencies:
+      mapbox-gl: 3.25.0
       maplibre-gl: 5.24.0
 
   react-redux@9.3.0(@types/react@19.2.15)(react@19.2.4)(redux@5.0.1):
@@ -10828,6 +10975,11 @@ snapshots:
   signal-exit@4.1.0: {}
 
   sisteransi@1.0.5: {}
+
+  sonner@2.0.7(react-dom@19.2.4(react@19.2.4))(react@19.2.4):
+    dependencies:
+      react: 19.2.4
+      react-dom: 19.2.4(react@19.2.4)
 
   sort-asc@0.2.0: {}
 

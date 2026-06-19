@@ -3,11 +3,11 @@
 /**
  * Imperative bridge for the Browse dot layer's **feature-state** — the recolour/
  * resize channel MapLibre exposes without re-issuing source data. It reads the
- * shared hovered id (from the list or the map) and the selected listing (from the
- * URL) off the store itself and mirrors them onto the dots as `{ hover }` /
- * `{ selected }` feature-state, keyed by the promoted listing id. The GPU `filter`
- * and the source data are owned declaratively by `PointsLayers`, which composes
- * this alongside its other store-reading hooks; only this emphasis is imperative.
+ * shared hovered id (from the list or the map) and the selected listing from the
+ * actor system, then mirrors them onto the dots as `{ hover }` / `{ selected }`
+ * feature-state, keyed by the promoted listing id. The GPU `filter` and source
+ * data are owned declaratively by `PointsLayers`; only this emphasis is
+ * imperative.
  */
 import { useCallback, useEffect, useRef } from "react";
 
@@ -39,7 +39,7 @@ export function usePointsFeatureState(enabled: boolean) {
     // The source's feature-state is wiped whenever its data (re)loads — e.g. a
     // filter/city swap. While it's unloaded there's nothing to paint onto, so we
     // forget what we wrote; the false→true edge below then re-applies from
-    // scratch once parsing finishes (replaces the old `once("idle")` heuristic).
+    // scratch once parsing finishes.
     if (!loaded) {
       prevHover.current = null;
       prevSelected.current = null;

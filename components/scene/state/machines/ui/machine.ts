@@ -28,8 +28,7 @@ export const uiMachine = setup({
     events: {} as Events.Events,
   },
   actions: {
-    // Sets lens. Switching to "analyse" also clears selectedId — folds the
-    // cross-store edge that lived in coordinators/reactions.ts.
+    // Switching to "analyse" also clears the selected listing.
     assignLens: assign({
       lens: ({ context, event }) =>
         event.type === "UI.SET_LENS" ? event.lens : context.lens,

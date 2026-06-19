@@ -31,18 +31,17 @@ function rampRanges(breaks: number[], currency: string): string[] {
 }
 
 /**
- * Price-ramp legend for the hex map (FR-003). Renders the five ramp swatches and
- * their price ranges so price is never read by colour alone. Token utilities and
- * the `.map-chrome` surface keep it legible in both themes; the swatches use the
+ * Price-ramp legend for the hex map. Renders the five ramp swatches and their
+ * price ranges so price is never read by colour alone. Token utilities and the
+ * `.map-chrome` surface keep it legible in both themes; the swatches use the
  * same per-theme ramp literals as the fill layer.
  */
 export function HexLegend() {
   const city = useCityFraming();
   const theme = useResolvedTheme();
   const { isBrowse } = useLens();
-  // The hex price ramp is meaningless over the Browse dots — the room-type
-  // legend takes its place (FR-006). `useLens` is SSR-correct (the route reads
-  // the param), so this branches identically on server and first client render.
+  // The hex price ramp is meaningless over Browse dots; the room-type legend
+  // takes its place.
   if (!city || isBrowse) return null;
 
   const { breaks } = city.priceScale;

@@ -82,6 +82,11 @@ export function MapCanvas() {
       zoomToResolution(mapRef.current!.getZoom()),
     );
     updateMapTheme();
+    if (process.env.NEXT_PUBLIC_E2E === "true") {
+      void import("@mapgrab/map-interface").then(({ installMapGrab }) => {
+        if (mapRef.current) installMapGrab(mapRef.current.getMap(), "mainMap");
+      });
+    }
   }, [reportMapLoaded, updateMapTheme]);
 
   useEffect(() => {
@@ -99,7 +104,11 @@ export function MapCanvas() {
     );
 
   return (
-    <div aria-label={`Map of ${city.cityName}`} className="absolute inset-0">
+    <div
+      role="region"
+      aria-label={`Map of ${city.cityName}`}
+      className="absolute inset-0"
+    >
       <Map
         ref={mapRef}
         initialViewState={{

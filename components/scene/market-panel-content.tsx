@@ -4,39 +4,39 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { CityMeta, Scope } from "@/data";
 import {
   AnalysisCardsSkeleton,
-  SidebarAnalysis,
-  SidebarFoot,
+  AnalysisPanel,
+  DataProvenance,
 } from "./analysis";
 import { FilterPanel } from "./analysis/filter-panel";
-import { SidebarBrowse } from "./browse";
+import { BrowsePanel } from "./browse";
 import { CitySwitcher } from "./city-switcher";
 import { LensActivity } from "./lens-activity";
 import { ListingCount } from "./listing-count";
 import { Logo } from "../logo";
 
-type SidebarContentProps = {
+type MarketPanelContentProps = {
   cityMeta: CityMeta;
   scope: Scope;
 };
 
 /**
- * Analysis panel content shared by the desktop `<aside>` and the mobile Drawer
+ * Market panel content shared by the desktop `<aside>` and the mobile Drawer
  * (Rule 5: one component serves both presentations — no `isMobile` prop, no
  * duplicate). The brand row is hidden inside the bottom Drawer, matching the
  * design's `.sheet .brand-row { display: none }`.
  *
- * The lens surface is the shared `FilterPanel` + footer (rendered once, visible
+ * The lens surface is the shared `FilterPanel` + provenance footer (rendered once, visible
  * in both tabs) wrapped around a `LensActivity` toggle. The stable, meta-derived
  * scalars (`currency`, `bounds`) are threaded in from the page — like the map's
  * framing primitives — so the panel renders immediately; the scope-dependent
  * pieces (the city switcher's index, the header listing count, the analysis
  * aggregates) each still stream behind their own Suspense boundary.
  */
-export function SidebarContent({
+export function MarketPanelContent({
   scope,
   cityMeta: { slug: citySlug, country, frame, snapshotLabel },
   cityMeta,
-}: SidebarContentProps) {
+}: MarketPanelContentProps) {
   const snapshot = snapshotLabel.trim();
 
   return (
@@ -85,17 +85,17 @@ export function SidebarContent({
           <LensActivity
             analysis={
               <div className="flex min-h-0 flex-1 flex-col gap-stack overflow-y-auto">
-                <SidebarAnalysis
+                <AnalysisPanel
                   citySlug={citySlug}
                   currency={cityMeta.currency}
                   scope={scope}
                 />
               </div>
             }
-            browse={<SidebarBrowse key={citySlug} />}
+            browse={<BrowsePanel key={citySlug} />}
           />
         </Suspense>
-        <SidebarFoot />
+        <DataProvenance />
       </div>
     </>
   );

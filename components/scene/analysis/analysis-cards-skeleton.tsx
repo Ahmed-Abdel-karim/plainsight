@@ -13,7 +13,10 @@ import { ChartCard } from "./chart-card";
  */
 export function AnalysisCardsSkeleton() {
   return (
-    <>
+    // `contents` keeps the four placeholders as direct flow children (preserving
+    // the parent's gap) while still carrying the loading role for screen readers.
+    <div role="status" aria-busy="true" className="contents">
+      <span className="sr-only">Loading distributions…</span>
       <div className="grid grid-cols-3 divide-x divide-border overflow-hidden rounded-lg border border-border">
         {["Median price", "Multi-host share", "Reviews / month"].map(
           (label) => (
@@ -58,6 +61,6 @@ export function AnalysisCardsSkeleton() {
             (hosts.length * 26 + 8) to minimise shift on resolve. */}
         <Skeleton className="w-full" style={{ height: 6 * 26 + 8 }} />
       </ChartCard>
-    </>
+    </div>
   );
 }

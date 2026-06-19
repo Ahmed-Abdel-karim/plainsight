@@ -10,9 +10,9 @@ import { useChangeCity, useSelectListing, useSetLens } from "./state";
 /**
  * Client island that fires CITY.CHANGED into the XState root machine as soon as
  * the city framing resolves, and the single URL → state seeding point. Rendered
- * inside CityStoreProvider so it shares the same promise instance (React
- * deduplicates the resolution). key={slug} at the CityStoreProvider call site
- * remounts this component per city, so the effect fires exactly once per slug.
+ * inside SceneProvider so it shares the same actor system. React deduplicates
+ * the city promise resolution, and the city route remounts this component per
+ * slug, so the effect fires exactly once per city.
  *
  * The deep-link is read here, once. The write side (`UrlWriteSync` → the root
  * `syncUrl` action) no-ops until a city exists, so the URL is still intact at
@@ -36,7 +36,6 @@ export function SceneUrlLoader({
     // filtered when it reaches `ready` — a post-spawn FILTER event would be
     // dropped against `loading`. (On a city switch the URL is the clean new-city
     // path, so this seeds defaults — the per-city filter reset.)
-    console.log(city.cityName);
     changeCity(city, {
       roomTypes: rooms,
       priceRange: price && price.length === 2 ? [price[0], price[1]] : null,

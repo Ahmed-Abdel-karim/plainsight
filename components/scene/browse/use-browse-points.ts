@@ -13,8 +13,8 @@
  *
  * It is **lazy**: `enabled` gates the fetch to when Browse is active for the
  * slug. The collection is cached for the session (the tier is static, stale time
- * is Infinity), so toggling Analyse↔Browse never re-fetches (SC-001). The
- * listings worker is untouched — Browse needs no worker.
+ * is Infinity), so toggling Analyse↔Browse never re-fetches. The listings
+ * worker is untouched because Browse only needs the pre-built points tier.
  */
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
@@ -71,7 +71,7 @@ export function useBrowsePoints(
  * The filtered + sorted list rows for the active scope, filters, and sort key.
  * Memoised: features → scope narrow → `filterListings` (price/room) →
  * `sortListings` (the shared comparator). Recomputes only when one of those
- * changes — ~30–60 ms over London's ~62k, within the 300 ms budget (SC-003).
+ * changes — ~30–60 ms over London's ~62k listings in local profiling.
  */
 export function useBrowseListings(
   collection: BrowseCollection | null,

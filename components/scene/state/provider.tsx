@@ -14,8 +14,6 @@ import { SystemId } from "./machines/constants";
  * (above the `/[city]` segment), the actor — and its persistent `map`/`ui`
  * children — survive city navigation; the `city` machine is spawned fresh per
  * slug from a page-level `CITY.CHANGED` dispatch.
- *
- * Not yet connected to the app: this file only sets up the context + provider.
  */
 export const SceneActorContext = createActorContext(rootMachine);
 

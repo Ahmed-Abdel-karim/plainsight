@@ -1,11 +1,14 @@
 import type { MapRef } from "react-map-gl/maplibre";
-import { vi } from "vitest";
 import { createActor, fromCallback } from "xstate";
 
 import type {
   LoadDataResponseMessage,
   ProcessResponseMessage,
 } from "@/lib/listings/worker";
+import {
+  createFakeMaplibreMap,
+  type FakeMaplibreMap,
+} from "@/test/scene/fake-map";
 
 import { SystemId } from "../constants";
 import { rootMachine } from "../root/machine";
@@ -13,11 +16,11 @@ import { workerMachine } from "../worker/machine";
 import type { TransportCommand, TransportInput } from "../worker/transport";
 
 /**
- * Phase A test harness — boots the *real* connected actor system (root + map +
- * ui + worker), substituting only the one un-runnable boundary: the worker
- * `transport`, which would otherwise spawn a real Web Worker (impossible in
- * node/jsdom). See `docs/testing-strategy.md` (Phase A) for why injection
- * happens at the transport level rather than via the `createWorker` seam.
+ * Boots the *real* connected actor system (root + map + ui + worker), substituting
+ * only the one un-runnable boundary: the worker `transport`, which would otherwise
+ * spawn a real Web Worker (impossible in node/jsdom). Injection happens at the
+ * transport level rather than via the `createWorker` seam — see
+ * `docs/testing-strategy.md`.
  */
 
 /** The reply events the real transport sends up to the worker machine. */
@@ -65,7 +68,7 @@ function createFakeTransport() {
  * `stop()` for teardown. The `syncUrl` / `prefetchCity` actions are no-oped so a
  * test never touches the URL or the network.
  */
-export function startSceneSystem() {
+export function setupSceneSystem() {
   const transport = createFakeTransport();
 
   const testRootMachine = rootMachine.provide({
@@ -103,34 +106,14 @@ export function startSceneSystem() {
 }
 
 /**
- * The MapLibre-instance methods the map machine drives imperatively. Spied so a
- * test can assert the *contract* with MapLibre (Principle 2's imperative
- * assertion) without a real WebGL canvas — `getSource` returns a truthy stub so
- * the feature-state code paths run.
- */
-export interface FakeMaplibreMap {
-  getSource: ReturnType<typeof vi.fn>;
-  setFeatureState: ReturnType<typeof vi.fn>;
-  removeFeatureState: ReturnType<typeof vi.fn>;
-  fitBounds: ReturnType<typeof vi.fn>;
-  setMaxBounds: ReturnType<typeof vi.fn>;
-}
-
-/**
  * Mount a fake MapLibre instance into the running scene and bring the map actor
  * to `ready.interactive` (`MAP.MOUNTED` then `MAP.READY`). Returns the spied map
  * methods for assertions.
  */
 export function mountFakeMap(
-  scene: ReturnType<typeof startSceneSystem>,
+  scene: ReturnType<typeof setupSceneSystem>,
 ): FakeMaplibreMap {
-  const map: FakeMaplibreMap = {
-    getSource: vi.fn(() => ({})),
-    setFeatureState: vi.fn(),
-    removeFeatureState: vi.fn(),
-    fitBounds: vi.fn(),
-    setMaxBounds: vi.fn(),
-  };
+  const map = createFakeMaplibreMap();
   const mapRef = { getMap: () => map } as unknown as MapRef;
   scene.map?.send({ type: "MAP.MOUNTED", mapRef });
   scene.map?.send({ type: "MAP.READY" });

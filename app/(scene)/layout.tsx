@@ -1,6 +1,7 @@
 import { QueryProvider } from "@/components/query/query-provider";
 import { SceneProvider } from "@/components/scene/state";
 import { MapView } from "@/components/scene/map";
+import { SceneNotifications } from "@/components/scene/scene-notifications";
 
 /**
  * Persistent scene shell. This layout sits *above* the `[city]` dynamic segment
@@ -15,9 +16,9 @@ import { MapView } from "@/components/scene/map";
  * doesn't claim a grid cell.
  *
  * Only the WebGL canvas needs to persist across city navigation, so only `MapView`
- * lives here. The lens tabs + legends are rendered by the `[city]` route (overlaid
- * on this column via CSS) so they can read the lens/scope search params; the grid
- * container is `relative` to anchor that absolutely-positioned chrome.
+ * lives here. The lens switcher + legends are rendered by the `[city]` route
+ * (overlaid on this column via CSS); the grid container is `relative` to anchor
+ * that absolutely-positioned chrome.
  */
 export default function SceneLayout({
   children,
@@ -27,6 +28,7 @@ export default function SceneLayout({
   return (
     <QueryProvider>
       <SceneProvider>
+        <SceneNotifications />
         <main className="flex min-h-screen flex-col bg-background text-foreground lg:h-screen lg:overflow-hidden">
           <div className="relative flex min-h-screen w-full flex-1 flex-col bg-background text-foreground lg:grid lg:h-screen lg:grid-cols-[432px_minmax(0,1fr)] lg:overflow-hidden">
             {children}

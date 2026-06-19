@@ -2,60 +2,64 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { makeAggregates } from "@/test/fixtures/dataset";
 
-const getScopeAggregates = vi.fn();
+const getRepositoryScopeAggregates = vi.fn();
 
 vi.mock("./repository", () => ({
-  getRepository: () => ({ getScopeAggregates }),
+  getRepository: () => ({ getScopeAggregates: getRepositoryScopeAggregates }),
 }));
 
 import {
-  getSidebarListingCount,
-  getSidebarScopeAggregates,
+  getScopeListingCount,
+  getScopeAggregates,
   unavailableAggregates,
 } from "./loaders";
 
 describe("sidebar scope loaders", () => {
   beforeEach(() => {
-    getScopeAggregates.mockReset();
+    getRepositoryScopeAggregates.mockReset();
   });
 
   it("maps a city scope to the repository call", async () => {
     const aggregates = makeAggregates({ listingCount: 61963 });
-    getScopeAggregates.mockResolvedValue(aggregates);
+    getRepositoryScopeAggregates.mockResolvedValue(aggregates);
 
-    await expect(getSidebarScopeAggregates("london", "city")).resolves.toBe(
+    await expect(getScopeAggregates("london", "city")).resolves.toBe(
       aggregates,
     );
-    expect(getScopeAggregates).toHaveBeenCalledWith("london", { type: "city" });
+    expect(getRepositoryScopeAggregates).toHaveBeenCalledWith("london", {
+      type: "city",
+    });
   });
 
   it("maps a neighbourhood scope by id", async () => {
-    getScopeAggregates.mockResolvedValue(makeAggregates());
+    getRepositoryScopeAggregates.mockResolvedValue(makeAggregates());
 
-    await getSidebarScopeAggregates("london", "neighbourhood", "centre");
+    await getScopeAggregates("london", "neighbourhood", "centre");
 
-    expect(getScopeAggregates).toHaveBeenCalledWith("london", {
+    expect(getRepositoryScopeAggregates).toHaveBeenCalledWith("london", {
       type: "neighbourhood",
       id: "centre",
     });
   });
 
   it("returns the zeroed aggregates for a neighbourhood scope with no id, without hitting the repository", async () => {
-    await expect(
-      getSidebarScopeAggregates("london", "neighbourhood"),
-    ).resolves.toBe(unavailableAggregates);
-    expect(getScopeAggregates).not.toHaveBeenCalled();
+    await expect(getScopeAggregates("london", "neighbourhood")).resolves.toBe(
+      unavailableAggregates,
+    );
+    expect(getRepositoryScopeAggregates).not.toHaveBeenCalled();
   });
 
   it("derives the listing count from the scope aggregates", async () => {
-    getScopeAggregates.mockResolvedValue(makeAggregates({ listingCount: 42 }));
+    getRepositoryScopeAggregates.mockResolvedValue(
+      makeAggregates({ listingCount: 42 }),
+    );
 
-    await expect(getSidebarListingCount("london", "city")).resolves.toBe(42);
+    await expect(getScopeListingCount("london", "city")).resolves.toBe(42);
   });
 
   it("reports a zero listing count when the scope has no aggregates", async () => {
-    await expect(
-      getSidebarListingCount("london", "neighbourhood"),
-    ).resolves.toBe(0);
+    await expect(getScopeListingCount("london", "neighbourhood")).resolves.toBe(
+      0,
+    );
   });
 });

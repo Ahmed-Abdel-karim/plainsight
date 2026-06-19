@@ -12,7 +12,7 @@ type CityLinkProps = Omit<React.ComponentProps<typeof Link>, "href"> & {
 /**
  * Client wrapper around a per-city `<Link>`. On click it fires `NAV.START` into
  * the scene root so `map` + `ui` enter their suppressed/navigating window *before*
- * the new route streams in. Mirrors the lens-tabs split: the interactive hook
+ * the new route streams in. Mirrors the lens switcher split: the interactive hook
  * lives in this thin client component, while the server `CitySwitcher` (which
  * self-fetches the server-only cities index) supplies the presentational shell.
  *

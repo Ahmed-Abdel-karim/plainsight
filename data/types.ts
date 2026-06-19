@@ -11,7 +11,7 @@ export interface CityData {
   snapshotLabel: string;
 }
 
-/** Active filter state shared across both Analyse and Browse modes (E7). */
+/** Active filter state shared across both Analyse and Browse modes. */
 export interface ListingFilters {
   roomTypes: RoomType[]; // empty array = all types included
   priceRange: [number, number]; // [min, max] in city currency
@@ -23,14 +23,14 @@ export interface FilterBounds {
   max: number;
 }
 
-/** Sort options for the Browse listing list (E6-S5). */
+/** Sort options for the Browse listing list. */
 export type SortKey =
   | "price_asc"
   | "price_desc"
   | "reviews_desc"
   | "review_count_desc";
 
-/** Analysis scope — city-wide or drilled into one neighbourhood (E4). */
+/** Market scope: city-wide or drilled into one neighbourhood. */
 export type Scope = { type: "city" } | { type: "neighbourhood"; id: string };
 
 /** City framing streamed from the server to seed the city machine on each nav. */

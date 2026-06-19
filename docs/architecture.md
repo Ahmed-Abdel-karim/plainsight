@@ -38,7 +38,7 @@ components/
   city-picker/                    # domain: choose a city (home)
   home/                           # home view shell
   scene/                          # ★ THE feature — self-contained
-    city-scene.tsx  sidebar-content.tsx  scene-drawer.tsx  city-switcher.tsx
+    city-scene.tsx  market-panel-content.tsx  scene-drawer.tsx  city-switcher.tsx
     listing-count.tsx  market-header.tsx  map-legend.tsx
     use-city-listings.ts          #   the feature's client hook (NOT in lib/)
     analysis/                     #   sub-slice: kpis, charts, filters, use-filters

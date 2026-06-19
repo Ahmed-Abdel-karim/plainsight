@@ -32,6 +32,8 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# ...but track .env for non-secret build-time defaults (NEXT_PUBLIC_*).
+!.env
 
 # vercel
 .vercel
@@ -42,3 +44,5 @@ next-env.d.ts
 design/
 .claude/skills/**/**/node_modules
 .next.*
+playwright-report
+test-results

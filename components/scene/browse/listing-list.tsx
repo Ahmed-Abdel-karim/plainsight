@@ -7,11 +7,11 @@ import type { BrowsePointProperties } from "@/data/contract";
 import { ListingCard } from "./listing-card";
 
 /**
- * The Browse listing list — virtualized over the FULL filtered+sorted set so the
- * largest city (~62k) stays smooth (SC-002, FR-004): only the visible rows are in
- * the DOM. Hover is two-way (FR-007): a card hover sets the shared hovered id;
- * when the hover originates from the MAP, the matching row scrolls into view
- * (only then — so the list never fights the pointer while the user drives it).
+ * The Browse listing list, virtualized over the full filtered+sorted set so the
+ * largest city (~62k listings) stays smooth. Hover is two-way: a card hover sets
+ * the shared hovered id; when the hover originates from the map, the matching
+ * row scrolls into view. The list only auto-scrolls for map-driven hover so it
+ * never fights the pointer while the user drives the list.
  */
 export function ListingList({
   listings,
@@ -44,7 +44,7 @@ export function ListingList({
     getItemKey: (index) => listings[index].id,
   });
 
-  // Scroll the hovered row into view ONLY when the map drove the hover (FR-007).
+  // Only map-driven hover auto-scrolls; list-driven hover must not move the list.
   useEffect(() => {
     if (hoveredId === null || hoverSource !== "map") return;
     const index = listings.findIndex((listing) => listing.id === hoveredId);

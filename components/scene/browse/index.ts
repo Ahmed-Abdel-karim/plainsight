@@ -1,2 +1,2 @@
 export { ListingDetail } from "./listing-detail";
-export { SidebarBrowse } from "./sidebar-browse";
+export { BrowsePanel } from "./browse-panel";

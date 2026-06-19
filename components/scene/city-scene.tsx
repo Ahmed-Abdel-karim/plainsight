@@ -3,8 +3,8 @@ import { type CityMeta, getCityNeighbourhoodCount, type Scope } from "@/data";
 import { ListingCount } from "./listing-count";
 import { ListingDetail } from "./browse";
 import { SceneDrawer } from "./scene-drawer";
-import { SidebarContent } from "./sidebar-content";
-import { LensTabs } from "./lens-tabs";
+import { MarketPanelContent } from "./market-panel-content";
+import { LensSwitcher } from "./lens-switcher";
 import { HexLegend } from "./map/layers/hex";
 import { PointsLegend } from "./map/layers/points";
 import { MapLegend } from "./map-legend";
@@ -52,7 +52,7 @@ export function CityScene({
         aria-label="Market analysis"
         className="@container hidden w-full flex-col gap-section overflow-y-auto border-r border-border bg-card px-section pt-section pb-gutter lg:flex lg:h-screen lg:min-h-0"
       >
-        <SidebarContent cityMeta={cityMeta} scope={scope} />
+        <MarketPanelContent cityMeta={cityMeta} scope={scope} />
       </aside>
       <SceneDrawer
         cityName={cityMeta.name}
@@ -64,11 +64,11 @@ export function CityScene({
           />
         }
       >
-        <SidebarContent cityMeta={cityMeta} scope={scope} />
+        <MarketPanelContent cityMeta={cityMeta} scope={scope} />
       </SceneDrawer>
       <div className="pointer-events-none absolute inset-0 z-10 lg:left-108">
         <div className="absolute top-4 left-1/2 -translate-x-1/2">
-          <LensTabs />
+          <LensSwitcher />
         </div>
         <div className="absolute bottom-4 left-4 flex max-w-[calc(100%-2rem)] flex-col gap-2">
           <HexLegend />

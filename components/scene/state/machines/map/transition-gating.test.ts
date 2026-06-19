@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import { POINTS_SOURCE_ID } from "../../../map/constants";
-import { mountFakeMap, startSceneSystem } from "../__tests__/harness";
+import { mountFakeMap, setupSceneSystem } from "../__tests__/utils";
 
 /**
  * Executable spec for the map machine's transition gate — the companion proof to
@@ -15,11 +15,11 @@ import { mountFakeMap, startSceneSystem } from "../__tests__/harness";
  * the MapLibre instance is faked (no WebGL in node).
  */
 describe("map machine — transition gating (executable spec)", () => {
-  let scene: ReturnType<typeof startSceneSystem> | undefined;
+  let scene: ReturnType<typeof setupSceneSystem> | undefined;
   let map: ReturnType<typeof mountFakeMap>;
 
   function start() {
-    scene = startSceneSystem();
+    scene = setupSceneSystem();
     map = mountFakeMap(scene);
     return scene;
   }

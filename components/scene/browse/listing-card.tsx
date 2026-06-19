@@ -36,10 +36,9 @@ function ListingCover({ variant }: { variant: number }) {
 }
 
 /**
- * One row in the Browse list — a `button` (Rule 1: list rows are buttons) that
- * opens the listing's detail drawer. Room type is conveyed by **label + colour
- * cue** (never colour alone — CR-003). The hover/selected emphasis mirrors the
- * map dot's feature-state (FR-007). At least 44px tall for touch (CR-002).
+ * One row in the Browse list. It is a button because it opens the listing detail
+ * drawer. Room type is conveyed by label + colour cue, never colour alone. The
+ * row stays at least 44px tall for touch.
  */
 export function ListingCard({
   listing,

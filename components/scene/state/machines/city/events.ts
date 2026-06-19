@@ -60,3 +60,16 @@ export type Events =
   | WorkerFetchError
   | WorkerProcessResult
   | WorkerProcessError;
+
+// --- emitted events (semantic signals the UI subscribes to; no UI coupling) ---
+
+/** A city-level failure worth surfacing. `load` is the terminal data-load
+ *  failure; `process` is a recompute (`hexes`/`aggregates`) that didn't land —
+ *  the last good result stays on screen, but the user is told it's stale. */
+export interface CityErrorEmitted {
+  readonly type: "city.error";
+  readonly kind: "load" | "process";
+  readonly processType?: ProcessType;
+}
+
+export type Emitted = CityErrorEmitted;

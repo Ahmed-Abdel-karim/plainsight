@@ -6,7 +6,7 @@ import type {
 } from "./contract";
 import type { ListingFilters, Scope } from "./types";
 
-/** E4-S5 + E5: pre-baked aggregates for the current scope. Runs once per request. */
+/** Selects the pre-baked aggregates for the current market scope. */
 export function selectScopeAggregates(
   cube: CityAggregates,
   scope: Scope,
@@ -15,7 +15,7 @@ export function selectScopeAggregates(
   return cube.neighbourhoodAggregates[scope.id] ?? cube.cityAggregates;
 }
 
-/** E4-S2: static neighbourhood lookup. */
+/** Looks up a static neighbourhood by id. */
 export function selectNeighbourhood(
   cube: CityAggregates,
   id: string,
@@ -23,7 +23,7 @@ export function selectNeighbourhood(
   return cube.neighbourhoods.find((nb) => nb.id === id);
 }
 
-/** E7-S2: initial filter bounds derived from the city's priceScale. Runs once per request. */
+/** Initial listing filters derived from the city's full price range. */
 export function defaultFilters(meta: CityMeta): ListingFilters {
   return {
     roomTypes: [],

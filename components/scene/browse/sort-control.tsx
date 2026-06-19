@@ -10,10 +10,10 @@ import {
 import type { SortKey } from "@/data/types";
 
 /**
- * Sort control for the Browse list (FR-005) — the shadcn Select primitive over
- * the four reserved `SortKey`s. Changing it reorders the visible list without
- * changing the matching set (the count is unaffected). Sort is view state, not
- * URL state — a shared link restores filters + the open listing, not the order.
+ * Sort control for the Browse list. Changing it reorders the visible list
+ * without changing the matching set, so the result count is unaffected. Sort is
+ * view state, not URL state: a shared link restores filters + the open listing,
+ * not the order.
  */
 const OPTIONS: ReadonlyArray<{ value: SortKey; label: string }> = [
   { value: "price_asc", label: "Price: low to high" },

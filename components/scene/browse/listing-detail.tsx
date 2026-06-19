@@ -21,8 +21,7 @@ import { ListingDetailBody } from "./listing-detail-body";
 import { ListingGallery } from "./listing-gallery";
 import { ROOM_DISPLAY } from "./room-display";
 
-/** Side panel on desktop (≥lg), bottom sheet below — one component, both
- * presentations (CR-002). Matches the breakpoint the sidebar uses. */
+/** Side panel on desktop (>=lg), bottom sheet below. */
 function useDrawerDirection(): "right" | "bottom" {
   const [desktop, setDesktop] = useState(true);
   useEffect(() => {
@@ -36,14 +35,11 @@ function useDrawerDirection(): "right" | "bottom" {
 }
 
 /**
- * The listing detail drawer (FR-008/009/011). Opens over the map — a side panel
- * on desktop, a bottom sheet on mobile — when a listing is selected (from a card
- * or a dot), reading the selected feature's properties from the in-memory points
- * tier by id (research D5 — no fetch). The list stays mounted behind it. The
- * `listing` URL param drives open state, so the drawer is shareable and restored
- * on reload; an unknown id simply opens nothing. Closing (Esc / the close control
- * / selecting another / lens or scope change) clears the param; vaul restores
- * focus to the trigger.
+ * Listing detail drawer. Opens over the map when a listing is selected from a
+ * card or a dot, reading the selected feature from the in-memory points tier by
+ * id. The list stays mounted behind it. The `listing` URL param drives open
+ * state, so the drawer is shareable and restored on reload; an unknown id simply
+ * opens nothing. Closing clears the param; vaul restores focus to the trigger.
  */
 export function ListingDetail() {
   const city = useCityFraming();

@@ -21,7 +21,7 @@ import { createMachineStateSelector } from "../utils";
  * new city (i.e. on navigation). Converts `null` → `undefined` so
  * `useSelector` can handle the absent-actor case without a null guard.
  */
-function useCityRef(): CityMachineActor | undefined {
+export function useCityRef(): CityMachineActor | undefined {
   return SceneActorContext.useSelector((s) => s.context.cityRef ?? undefined);
 }
 

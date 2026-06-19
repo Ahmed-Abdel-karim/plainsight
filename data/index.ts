@@ -41,12 +41,12 @@ export {
   getCityMeta,
   getCityBoundaries,
   getCityNeighbourhoodCount,
-  getSidebarScopeAggregates,
-  getSidebarListingCount,
-  getSidebarFilterBounds,
+  getScopeAggregates,
+  getScopeListingCount,
+  getFilterBounds,
   unavailableAggregates,
 } from "./loaders";
-export type { SidebarScopeType } from "./loaders";
+export type { ScopeType } from "./loaders";
 
 // Server-side selectors (run once per request, produce props)
 export {

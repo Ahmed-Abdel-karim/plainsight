@@ -78,8 +78,8 @@ function emphasis(
 }
 
 /**
- * The Browse dot circle spec (FR-006): every matching listing as a circle on a
- * single GL layer that scales to ~62k where DOM markers would not (research D5).
+ * The Browse dot circle spec: every matching listing as a circle on a single GL
+ * layer that scales to ~62k where DOM markers would not.
  * Hover/selected emphasis reads MapLibre **feature-state** (set imperatively by
  * `usePointsFeatureState`); a theme toggle only swaps the colour literals.
  * Visibility is driven by the lens — shown in Browse, `none` in Analyse.

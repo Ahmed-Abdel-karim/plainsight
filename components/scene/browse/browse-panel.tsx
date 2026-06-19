@@ -36,9 +36,9 @@ const ROOM_LABEL: Record<RoomType, string> = {
  * and the neighbourhood scope via `useScope`, then derives the filtered+sorted list from
  * the lazily-fetched points tier (one compute, feeding both the count and the
  * list). The filter controls live in the shared `FilterPanel` above both tabs.
- * Serves both the desktop sidebar and the mobile sheet from one component (CR-002).
+ * Serves both the desktop sidebar and the mobile sheet from one component.
  */
-export function SidebarBrowse() {
+export function BrowsePanel() {
   const city = useCityFraming();
   const citySlug = city?.slug ?? "";
   const currency = city?.currency ?? "";
@@ -46,7 +46,7 @@ export function SidebarBrowse() {
   // (URL-shared) filter state to derive the list, plus `reset` for the empty CTA.
   const filters = useResolvedFilters();
   const reset = useResetFilters();
-  // Scope is client state (FR-013) — a neighbourhood click on the map narrows it.
+  // A neighbourhood click on the map narrows the Browse list to that scope.
   const { scope } = useScope();
   const { selectedId, selectListing } = useLens();
   const setHover = useSetHover();
@@ -58,13 +58,12 @@ export function SidebarBrowse() {
 
   // Sort is view state (not URL — a shared link restores filters + listing, not
   // order). Defaults to price ascending; reset on city switch by the `key={slug}`
-  // remount where `SidebarBrowse` is rendered (in `SidebarContent`).
+  // remount where `BrowsePanel` is rendered in `MarketPanelContent`.
   const [sort, setSort] = useState<SortKey>("price_asc");
   const listings = useBrowseListings(collection, scope, filters, sort);
 
-  // FR-010: if the selected listing leaves the filtered/scoped set, close its
-  // drawer and clear the selection (the drawer reads the full tier, so the
-  // filtered list is the authority on what is still reachable).
+  // If the selected listing leaves the filtered/scoped set, close its drawer.
+  // The filtered list is the authority on what is still reachable.
   useEffect(() => {
     if (selectedId === null || status !== "ready") return;
     if (!listings.some((listing) => listing.id === selectedId)) {

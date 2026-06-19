@@ -3,15 +3,13 @@
  * param that drives the scene (lens, selected listing, neighbourhood scope, and
  * the room/price filters).
  *
- * The live state lives in the scene store (`components/scene/scene-store`); these
- * parsers are only its (de)serialization layer. They come from `nuqs/server`, so
- * they're pure functions with no React and no `useSearchParams` — reading or
- * writing the URL through them never forces a `cacheComponents` dynamic bailout,
- * which is the whole reason the scene state moved off the nuqs client hooks. The
- * route renders fully static; the store reflects the URL in on the client
- * (`loadScene(location.search)`) and writes it back with `history.replaceState`
- * (`serializeScene`). `clearOnDefault` keeps the URL clean at the default view
- * (analyse lens, no listing, city scope, all rooms, full price range).
+ * The live state lives in the scene actor system; these parsers are only its URL
+ * serialization layer. They come from `nuqs/server`, so they're pure functions
+ * with no React and no `useSearchParams` — reading or writing through them never
+ * forces a `cacheComponents` dynamic bailout. The route renders fully static;
+ * `SceneUrlLoader` seeds the actors from `loadScene(location.search)`, and the
+ * root machine writes settled state back with `history.replaceState`
+ * (`serializeScene`). `clearOnDefault` keeps the URL clean at the default view.
  */
 import {
   createLoader,
@@ -50,17 +48,17 @@ export const filterParams = {
   price: parseAsArrayOf(parseAsInteger),
 };
 
-/** Every scene search param, keyed the same as the store state. */
+/** Every scene search param, keyed the same as the URL-backed actor state. */
 export const sceneSearchParams = {
   ...sceneParams,
   ...filterParams,
 };
 
 /**
- * Reflect the URL into the store (on first render / city navigation) and back
- * out of it. `serializeScene` is always called with the current `location.search`
- * as its base, so it merges — any param it doesn't own is preserved — and `null`
- * / default values drop their key (`clearOnDefault`).
+ * Reflect the URL into the actor system and back out of it. `serializeScene` is
+ * always called with the current `location.search` as its base, so it merges:
+ * any param it doesn't own is preserved, and `null` / default values drop their
+ * key (`clearOnDefault`).
  */
 export const loadScene = createLoader(sceneSearchParams);
 export const serializeScene = createSerializer(sceneSearchParams);
@@ -70,7 +68,7 @@ export function scopeFromNbhd(nbhd: string | null): Scope {
   return nbhd ? { type: "neighbourhood", id: nbhd } : { type: "city" };
 }
 
-/** The scene state projected onto the URL — the store's URL-backed slice. */
+/** The scene state projected onto the URL. */
 export interface SceneUrlState {
   roomTypes: RoomType[];
   priceRange: [number, number] | null;

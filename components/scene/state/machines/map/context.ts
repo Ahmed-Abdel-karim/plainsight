@@ -7,10 +7,9 @@ import type { SourceId } from "../../../map/types";
 /**
  * Map machine context — the value state the map actor owns directly.
  *
- * DRAFT (see `docs/map-machine-transition-gating.md`). The map is the
- * session-persistent bridge to the imperative MapLibre instance; this holds the
- * data it needs across `/[city]` navigation. `mapStatus` is deliberately NOT
- * here — it became the machine's top-level `loading → ready → error` states.
+ * The map is the session-persistent bridge to the imperative MapLibre instance;
+ * this holds the data it needs across `/[city]` navigation. Map readiness lives
+ * in the machine's top-level `loading → ready → error` states, not in context.
  *
  * The type and its initial value share the name `Context` so a single
  * `import * as Context from "./context"` yields both.
@@ -38,8 +37,7 @@ export interface Context {
   readonly pendingFitBounds: BBox | null;
 }
 
-/** Clicked-hex inspect popup payload. DRAFT — mirrors the old `map-ui` type;
- *  relocate/confirm during refinement. */
+/** Clicked-hex inspect popup payload. */
 export interface HexInspectInfo {
   readonly longitude: number;
   readonly latitude: number;

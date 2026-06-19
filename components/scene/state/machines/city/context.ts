@@ -6,10 +6,10 @@ import type { MapCityPayload } from "@/data/types";
 /**
  * City machine context — per-slug state owned by a single spawned city actor.
  *
- * Three groups mirror the three old stores this actor replaces:
- *   - `framing`  ← city-data store  (slug / bbox / priceScale / currency …)
- *   - `filter`   ← filter store     (roomTypes / priceRange / nbhd)
- *   - worker output ← listings store (aggregates / hexCells)
+ * Three groups define the city's state:
+ *   - `framing`: slug / bbox / priceScale / currency
+ *   - `filter`: roomTypes / priceRange / nbhd
+ *   - worker output: aggregates / hexCells
  *
  * The type and its initial value share the name `Context` so a single
  * `import * as Context from "./context"` yields both.

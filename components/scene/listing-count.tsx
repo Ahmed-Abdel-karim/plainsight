@@ -1,6 +1,6 @@
 import { type ReactNode } from "react";
 
-import { getSidebarListingCount, type Scope } from "@/data";
+import { getScopeListingCount, type Scope } from "@/data";
 import { AsyncBoundary } from "../utils/async-boundary";
 
 function formatNumber(value: number): string {
@@ -9,7 +9,7 @@ function formatNumber(value: number): string {
 
 /**
  * Streams the active scope's listing count as `"{n} listings"`. Co-located with
- * the places that show it (the sidebar header and the mobile drawer trigger) so
+ * the places that show it (the market panel header and the mobile drawer trigger) so
  * it resolves on its own cheap cube read behind a Suspense boundary instead of
  * being hoisted to the page and threaded down as a prop. The read is O(1) off
  * the already-cached aggregate cube, deduped by `"use cache"` across call sites.
@@ -29,7 +29,7 @@ export function ListingCount({
   const scopeId = scope.type === "neighbourhood" ? scope.id : undefined;
   return (
     <AsyncBoundary
-      data={() => getSidebarListingCount(citySlug, scope.type, scopeId)}
+      data={() => getScopeListingCount(citySlug, scope.type, scopeId)}
       Component={({ data }) => <>{formatNumber(data ?? 0)} listings</>}
       fallback={fallback}
     />

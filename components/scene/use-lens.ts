@@ -1,17 +1,14 @@
 "use client";
 
 /**
- * Lens + selected-listing state, read from the ui machine (E7 / FR-011).
+ * Lens + selected-listing state, read from the ui machine.
  *
  *   ?lens=browse        → the Browse lens (absent = the default `analyse` lens)
  *   ?listing=12345      → the open listing's detail drawer (absent = none)
  *
- * The store mirrors these to the URL as a `replaceState` side-effect — no
- * `useSearchParams`, so consumers don't force a `cacheComponents` dynamic/Suspense
- * hole (the reason this moved off nuqs; the route now renders statically and
- * `SceneStoreSync` reflects the URL in on the client). Shared by the sidebar
- * (which content to show) and the map (which layer is visible + interactive). The
- * public shape is unchanged, so its consumers are untouched.
+ * The root machine mirrors these to the URL as a `replaceState` side effect. No
+ * consumer reads `useSearchParams`, so the route stays static under
+ * `cacheComponents`.
  */
 import { useMemo } from "react";
 

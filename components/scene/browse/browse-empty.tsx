@@ -1,9 +1,8 @@
 import { Button } from "@/components/ui/button";
 
 /**
- * Empty state shown when the active scope + filters match no listings (FR-012):
- * a summary of what is filtering the set to zero, and a reset affordance. No list
- * rows, no dots, no drawer.
+ * Empty state shown when the active scope + filters match no listings: a
+ * summary of what is filtering the set to zero, and a reset affordance.
  */
 export function BrowseEmpty({
   summary,

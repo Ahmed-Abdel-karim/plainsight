@@ -3,8 +3,8 @@
 /**
  * The GPU `filter` expression for the Browse dot layer, read at the point of
  * use rather than threaded through the canvas. Composes the shared filter state
- * (`useResolvedFilters`) and neighbourhood scope (`useScope`) — both store-backed
- * — into the memoized MapLibre expression the circle layer consumes.
+ * (`useResolvedFilters`) and neighbourhood scope (`useScope`) into the memoized
+ * MapLibre expression the circle layer consumes.
  *
  * Keeping this beside the layer (the way `useListingsHexCells` feeds the hex
  * layer) keeps `MapCanvas` from re-rendering on every filter/scope change and

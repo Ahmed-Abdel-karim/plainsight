@@ -1,6 +1,6 @@
 import { act } from "@testing-library/react";
 
-import { ListingDetail, SidebarBrowse } from "@/components/scene/browse";
+import { BrowsePanel, ListingDetail } from "@/components/scene/browse";
 import { SystemId } from "@/components/scene/state/machines/constants";
 import type { CityMachineActor } from "@/components/scene/state/machines/city/machine";
 import type { UiMachineActor } from "@/components/scene/state/machines/ui/machine";
@@ -49,7 +49,7 @@ export function setupBrowse(options: BrowseSetupOptions = {}): BrowseSetup {
 
   const result = renderScene(
     <>
-      <SidebarBrowse />
+      <BrowsePanel />
       <ListingDetail />
     </>,
   );

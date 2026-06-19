@@ -1,12 +1,10 @@
 import type { BrowsePointProperties } from "@/data/contract";
 
 /**
- * The detail drawer's metadata body (FR-008). Renders host (+ multi-host
- * indicator), reviews/month, review count, minimum nights, and the snapshot
- * provenance — and intentionally **NO availability** (it is not in the dataset;
- * research D3). Presentational + data-driven, so it is integration-tested on its
- * own with a fixture; the drawer chrome (photo, title, price, close) lives in
- * `listing-detail.tsx`.
+ * The detail drawer's metadata body. Renders host (+ multi-host indicator),
+ * reviews/month, review count, minimum nights, and the snapshot provenance. It
+ * intentionally does not render availability because that field is not in the
+ * dataset.
  */
 export function ListingDetailBody({
   listing,

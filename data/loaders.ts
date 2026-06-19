@@ -12,9 +12,9 @@ function formatListingCount(n: number): string {
 }
 
 /**
- * E1-S1: city index for the picker page. Thin facade over the repository port —
- * the cached read lives in the active adapter; this only shapes the index
- * entries into the picker's display model (formatted listing count).
+ * City index for the picker page. Thin facade over the repository port: the
+ * cached read lives in the active adapter; this only shapes entries into the
+ * picker's display model.
  */
 export async function getCitiesData(): Promise<CityData[]> {
   const entries = await getRepository().listCities();
@@ -29,15 +29,14 @@ export async function getCitiesData(): Promise<CityData[]> {
 }
 
 /**
- * E1-S2: full city metadata for framing the scene page (name, country,
- * currency, bbox, …). Thin facade over the port; the cached read lives in the
- * adapter.
+ * Full city metadata for framing the scene page. Thin facade over the port; the
+ * cached read lives in the adapter.
  */
 export async function getCityMeta(slug: string): Promise<CityMeta | null> {
   return getRepository().getCityMeta(slug);
 }
 
-/** E4-S1: neighbourhood polygon boundaries for the map choropleth. */
+/** Neighbourhood polygon boundaries for the map layers. */
 export async function getCityBoundaries(
   slug: string,
 ): Promise<NeighbourhoodBoundaries | null> {
@@ -50,7 +49,7 @@ export async function getCityNeighbourhoodCount(slug: string): Promise<number> {
   return neighbourhoods.length;
 }
 
-export type SidebarScopeType = Scope["type"];
+export type ScopeType = Scope["type"];
 
 const emptyRoomTypeMix: ScopeAggregates["roomTypeMix"] = {
   "Entire home/apt": 0,
@@ -71,7 +70,7 @@ export const unavailableAggregates: ScopeAggregates = {
   priceHistogram: [],
 };
 
-function toScope(scopeType: SidebarScopeType, scopeId?: string): Scope | null {
+function toScope(scopeType: ScopeType, scopeId?: string): Scope | null {
   if (scopeType === "neighbourhood") {
     return scopeId ? { type: "neighbourhood", id: scopeId } : null;
   }
@@ -80,15 +79,13 @@ function toScope(scopeType: SidebarScopeType, scopeId?: string): Scope | null {
 }
 
 /**
- * E5: active-scope aggregates for the analysis sidebar cards. Facade over the
- * port — durable caching lives in the adapter's `"use cache"` (the materialised
- * cube is an O(1) lookup off the already-cached dataset), so no memo wrapper is
- * needed here; this only maps the cards' primitive scope into the port shape.
- * Currency/locale formatting stays in the leaf cards.
+ * Active-scope aggregates for the analysis panel. Facade over the port: durable
+ * caching lives in the adapter's `"use cache"`, so no memo wrapper is needed
+ * here; this only maps the panel's primitive scope into the port shape.
  */
-export async function getSidebarScopeAggregates(
+export async function getScopeAggregates(
   citySlug: string,
-  scopeType: SidebarScopeType,
+  scopeType: ScopeType,
   scopeId?: string,
 ): Promise<ScopeAggregates> {
   const scope = toScope(scopeType, scopeId);
@@ -107,7 +104,7 @@ export async function getSidebarScopeAggregates(
  * from the materialised `CityMeta` (O(1), already cached in the adapter), so it
  * doesn't shift per neighbourhood scope.
  */
-export async function getSidebarFilterBounds(
+export async function getFilterBounds(
   citySlug: string,
 ): Promise<{ min: number; max: number }> {
   const meta = await getRepository().getCityMeta(citySlug);
@@ -117,16 +114,12 @@ export async function getSidebarFilterBounds(
   return { min, max };
 }
 
-export async function getSidebarListingCount(
+export async function getScopeListingCount(
   citySlug: string,
-  scopeType: SidebarScopeType,
+  scopeType: ScopeType,
   scopeId?: string,
 ): Promise<number> {
-  const aggregates = await getSidebarScopeAggregates(
-    citySlug,
-    scopeType,
-    scopeId,
-  );
+  const aggregates = await getScopeAggregates(citySlug, scopeType, scopeId);
 
   return aggregates.listingCount;
 }

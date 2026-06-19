@@ -12,7 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
  * `ssr: false` is only valid from a Client Component, which is why this wrapper
  * exists between the server `(scene)` layout and the canvas.
  *
- * The canvas is prop-less: it reads map state from the layout's map store, so it
+ * The canvas is prop-less: it reads map state from the layout's map actor, so it
  * can be mounted once in the layout and persist across city navigation.
  */
 const MapCanvas = dynamic(

@@ -1,4 +1,4 @@
-import { getSidebarScopeAggregates, type Scope } from "@/data";
+import { getScopeAggregates, type Scope } from "@/data";
 
 import { AnalysisCards } from "./analysis-cards";
 import { AnalysisCardsSkeleton } from "./analysis-cards-skeleton";
@@ -12,7 +12,7 @@ import { AsyncBoundary } from "../../utils/async-boundary";
  * scope aggregates to the client `AnalysisCards`, which owns the filter ↔ URL
  * state + the off-thread recompute.
  */
-export function SidebarAnalysis({
+export function AnalysisPanel({
   citySlug,
   currency,
   scope,
@@ -24,7 +24,7 @@ export function SidebarAnalysis({
   const scopeId = scope.type === "neighbourhood" ? scope.id : undefined;
   return (
     <AsyncBoundary
-      data={() => getSidebarScopeAggregates(citySlug, scope.type, scopeId)}
+      data={() => getScopeAggregates(citySlug, scope.type, scopeId)}
       Component={({ data }) => (
         <AnalysisCards currency={currency} defaultAggregates={data} />
       )}

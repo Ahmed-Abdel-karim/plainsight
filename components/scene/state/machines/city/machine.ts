@@ -3,6 +3,7 @@ import {
   and,
   assertEvent,
   assign,
+  emit,
   enqueueActions,
   sendTo,
   setup,
@@ -35,6 +36,7 @@ export const cityMachine = setup({
     input: {} as Input.Input,
     context: {} as Context.Context,
     events: {} as Events.Events,
+    emitted: {} as Events.Emitted,
   },
   guards: {
     // The worker is shared across cities; drop a reply addressed to a slug we've
@@ -118,6 +120,18 @@ export const cityMachine = setup({
       filters: resolveFilters(context.filter, priceBounds(context.framing)),
     })),
 
+    // Emit semantic failure signals; the scene's notification layer turns these
+    // into toasts. Kept here (not coupled to UI) so the machine stays portable.
+    emitLoadError: emit({ type: "city.error", kind: "load" } as const),
+    emitProcessError: emit(({ event }) => {
+      assertEvent(event, "WORKER.PROCESS_ERROR");
+      return {
+        type: "city.error",
+        kind: "process",
+        processType: event.processType,
+      } as const;
+    }),
+
     notifyCityReady: enqueueActions(({ system, enqueue }) => {
       for (const id of [SystemId.ROOT, SystemId.MAP, SystemId.UI] as const) {
         const ref = system.get(id);
@@ -139,7 +153,11 @@ export const cityMachine = setup({
       entry: "requestLoad",
       on: {
         "WORKER.FETCH_OK": [{ guard: "fetchIsCurrent", target: "ready" }],
-        "WORKER.FETCH_ERROR": { guard: "fetchIsCurrent", target: "error" },
+        "WORKER.FETCH_ERROR": {
+          guard: "fetchIsCurrent",
+          target: "error",
+          actions: "emitLoadError",
+        },
       },
     },
 
@@ -172,8 +190,8 @@ export const cityMachine = setup({
           { guard: "resultIsCurrent", actions: ["assignAggregates"] },
           // else: a result for a city we've navigated past — dropped.
         ],
-        // Informational — last good result stays on screen; no action needed.
-        "WORKER.PROCESS_ERROR": {},
+        // Last good result stays on screen; emit so the UI can flag it as stale.
+        "WORKER.PROCESS_ERROR": { actions: "emitProcessError" },
       },
     },
 

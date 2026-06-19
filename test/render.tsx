@@ -13,6 +13,9 @@ import { SystemId } from "@/components/scene/state/machines/constants";
 import { rootMachine } from "@/components/scene/state/machines/root/machine";
 import { workerMachine } from "@/components/scene/state/machines/worker/machine";
 import { SceneActorContext } from "@/components/scene/state/provider";
+import { SceneNotifications } from "@/components/scene/scene-notifications";
+import { Toaster } from "@/components/ui/sonner";
+import { makeQueryClient } from "@/lib/query/client";
 
 import {
   createFakeTransport,
@@ -35,13 +38,10 @@ export interface SceneRenderResult extends RenderResult {
   queryClient: QueryClient;
 }
 
+// Retry off so error paths fail fast and deterministically; otherwise the real
+// client (incl. the fetch-error → toast `onError`), so toast paths are faithful.
 function makeTestQueryClient(): QueryClient {
-  return new QueryClient({
-    // Retry off so error paths fail fast and deterministically.
-    defaultOptions: {
-      queries: { retry: false, staleTime: Infinity, gcTime: Infinity },
-    },
-  });
+  return makeQueryClient({ retry: false });
 }
 
 export function renderScene(
@@ -77,7 +77,9 @@ export function renderScene(
             options={{ systemId: SystemId.ROOT }}
           >
             <CaptureRoot />
+            <SceneNotifications />
             {children}
+            <Toaster />
           </SceneActorContext.Provider>
         </ThemeProvider>
       </QueryClientProvider>
