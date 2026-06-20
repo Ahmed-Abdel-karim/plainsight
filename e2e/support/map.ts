@@ -5,7 +5,7 @@ import {
   HEX_FILL_LAYER_ID,
   POINTS_CIRCLE_LAYER_ID,
   POINTS_SOURCE_ID,
-} from "../../components/scene/map/constants";
+} from "../../features/scene/map/constants";
 
 // Re-export so specs assert against the same ids the app actually renders,
 // rather than re-typing string literals that would silently drift on a rename.

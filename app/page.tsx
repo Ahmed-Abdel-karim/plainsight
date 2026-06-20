@@ -1,4 +1,4 @@
-import { HomeView } from "@/components/home/home-view";
+import { HomeView } from "@/features/home";
 
 export default async function Home() {
   return <HomeView />;

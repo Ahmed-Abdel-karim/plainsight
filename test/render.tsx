@@ -9,11 +9,11 @@ import {
 import userEvent from "@testing-library/user-event";
 import { ThemeProvider } from "next-themes";
 
-import { SystemId } from "@/components/scene/state/machines/constants";
-import { rootMachine } from "@/components/scene/state/machines/root/machine";
-import { workerMachine } from "@/components/scene/state/machines/worker/machine";
-import { SceneActorContext } from "@/components/scene/state/provider";
-import { SceneNotifications } from "@/components/scene/scene-notifications";
+import { SystemId } from "@/features/scene/state/machines/constants";
+import { rootMachine } from "@/features/scene/state/machines/root/machine";
+import { workerMachine } from "@/features/scene/state/machines/worker/machine";
+import { SceneActorContext } from "@/features/scene/state/provider";
+import { SceneNotifications } from "@/features/scene/scene-notifications";
 import { Toaster } from "@/components/ui/sonner";
 import { makeQueryClient } from "@/lib/query/client";
 

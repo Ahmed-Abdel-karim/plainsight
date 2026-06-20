@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { CityScene } from "@/components/scene/city-scene";
+import { SceneView } from "@/features/scene";
 import { getCitiesData, getCityMeta, type Scope } from "@/data";
 
 export async function generateStaticParams() {
@@ -34,5 +34,5 @@ export default async function CityPage({ params }: PageProps<"/[city]">) {
   if (!meta) {
     notFound();
   }
-  return <CityScene cityMeta={meta} scope={scope} />;
+  return <SceneView cityMeta={meta} scope={scope} />;
 }

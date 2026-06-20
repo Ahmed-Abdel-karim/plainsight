@@ -2,10 +2,10 @@ import { fileURLToPath } from "node:url";
 import react from "@vitejs/plugin-react";
 import { configDefaults, defineConfig } from "vitest/config";
 
-// Scene state machines live under `components/` but are pure XState logic with no
+// Scene state machines live under `features/` but are pure XState logic with no
 // DOM, so they run in their own node-env project (faster, and proves DOM-freedom).
 // The `dom` project must skip them to avoid double-running each file in jsdom.
-const MACHINES_GLOB = "components/scene/state/**/*.test.{ts,tsx}";
+const MACHINES_GLOB = "features/scene/state/**/*.test.{ts,tsx}";
 
 const serverOnlyShim = fileURLToPath(
   new URL("./vitest.server-only.ts", import.meta.url),
@@ -44,7 +44,11 @@ export default defineConfig({
           environmentOptions: { jsdom: { url: "http://localhost:3000" } },
           // jest-dom matchers + RTL cleanup need a DOM, so only the dom project.
           setupFiles: ["./vitest.setup.ts"],
-          include: ["app/**/*.test.{ts,tsx}", "components/**/*.test.{ts,tsx}"],
+          include: [
+            "app/**/*.test.{ts,tsx}",
+            "components/**/*.test.{ts,tsx}",
+            "features/**/*.test.{ts,tsx}",
+          ],
           // Machine tests run in the `machines` (node) project instead.
           exclude: [...configDefaults.exclude, MACHINES_GLOB],
         },

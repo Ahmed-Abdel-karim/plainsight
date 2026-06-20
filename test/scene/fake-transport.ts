@@ -7,7 +7,7 @@ import type {
 import type {
   TransportCommand,
   TransportInput,
-} from "@/components/scene/state/machines/worker/transport";
+} from "@/features/scene/state/machines/worker/transport";
 
 /**
  * Drop-in replacement for the worker `transport` — the one boundary that can't

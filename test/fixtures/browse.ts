@@ -1,7 +1,7 @@
 import type { BrowsePoint, BrowsePointProperties } from "@/data/contract";
 import type { MapCityPayload } from "@/data/types";
 import type { NeighbourhoodBoundaries } from "@/lib/geo/types";
-import type { BrowseCollection } from "@/components/scene/browse/use-browse-points";
+import type { BrowseCollection } from "@/features/scene/browse/use-browse-points";
 
 /**
  * Tiny browse-tier fixtures: one city framing and a three-row points collection
