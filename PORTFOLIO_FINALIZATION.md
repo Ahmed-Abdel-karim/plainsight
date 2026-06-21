@@ -202,6 +202,42 @@ discussion + research session — we do **not** execute them ahead of their turn
   behavior on Vercel, image optimization (Unsplash remotePatterns already scoped),
   enable Sentry?, custom domain?, preview deploys per PR. (Context7 for Vercel + Next 16.)
 
+### Deployment research note: large data delivery
+
+- Current footprint: `data/cities` is 68.74 MiB; deployable source excluding
+  `.git`, `.next`, and `node_modules` is about 82 MiB. London's client tiers
+  include a ~16 MiB analytics file and ~33 MiB points file.
+- Large client tiers bypass Vercel Functions and are fetched from immutable
+  static/CDN paths. `NEXT_PUBLIC_CITY_ASSET_BASE_URL` can move delivery to an
+  external object-storage origin without changing consumers.
+- Simplest current option: versioned files under `public/data/`, served by
+  Vercel's CDN. This adds no provider or SDK and stays below the current 100 MB
+  Hobby source-upload limit, but leaves little room for data growth. Hobby
+  includes 100 GB Fast Data Transfer.
+- Best external growth option: Cloudflare R2 Standard storage — 10 GB-month,
+  1 million writes, and 10 million reads per month free; internet egress is
+  free. Production delivery needs a custom domain because `r2.dev` is
+  rate-limited and intended for development. Configure browser `GET` CORS and
+  caching for JSON/GeoJSON.
+- Easiest managed option: Vercel Blob public storage — direct CDN URLs, automatic
+  `ETag` handling, 1 GB storage and 10 GB transfer included on Hobby. It fits the
+  files but permits far less traffic than Vercel static delivery or R2.
+- Other researched options: Supabase Storage fits (1 GB storage; 5 GB cached +
+  5 GB uncached egress) but adds an unnecessary backend platform; Backblaze B2
+  includes 10 GB storage, but direct free egress is only 3× average stored data
+  unless paired with a partner CDN.
+- Recommended boundary for later discussion: keep immutable per-city assets and
+  a configurable asset base URL. Start with Vercel static delivery; retain R2 as
+  the growth path. No provider has been selected yet.
+
+Sources: [Vercel limits](https://vercel.com/docs/limits),
+[Vercel Function limits](https://vercel.com/docs/functions/limitations),
+[Vercel Blob pricing](https://vercel.com/docs/storage/vercel-blob/usage-and-pricing),
+[Cloudflare R2 pricing](https://developers.cloudflare.com/r2/pricing/),
+[R2 public buckets](https://developers.cloudflare.com/r2/data-access/public-buckets/),
+[Supabase pricing](https://supabase.com/pricing), and
+[Backblaze B2 pricing](https://www.backblaze.com/cloud-storage/pricing).
+
 **6. Documentation** _(includes the user's headline ask)_
 
 - `README.md`: what Plainsight is, the problem, live demo link, screenshots
@@ -233,8 +269,8 @@ Ran the existing net before building on it:
 - `pnpm lint:strict` (`--max-warnings=0`) → clean
 - `npx tsc --noEmit` → clean
 - `pnpm test` (`vitest run`) → **20 files, 58 tests passing**
-- `pnpm build` (`next build`, Turbopack) → compiled; PPR active (`◐` on `/[city]`),
-  static `/`, dynamic `/api/cities*`. (jsdom logs a benign `getContext()` "not
+- `pnpm build` (`next build`, Turbopack) → compiled; PPR active (`◐` on `/[city]`)
+  and static `/`; no application API routes remain. (jsdom logs a benign `getContext()` "not
   implemented" warning for MapLibre/Recharts canvas — expected, not a failure.)
 
 ### Test inventory (grounded in `vitest.config.ts` + file scan)

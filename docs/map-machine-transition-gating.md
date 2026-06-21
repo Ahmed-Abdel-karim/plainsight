@@ -89,11 +89,18 @@ city converged":
 
 - the click source dispatches `NAV.START` → root enters `navigating`/stamps
   `pendingSlug`, and the map enters `ready.suppressed` (this is the early
-  trigger that beats the route-pending window).
+  trigger that beats the route-pending window). A route-initiated switch
+  (browser Back/Forward) has no click-time `NAV.START`; root recognizes its
+  `CITY.CHANGED` as an in-scene replacement and synthesizes the same fan-out, so
+  every in-scene switch is gated alike.
 - the new page mounts and dispatches `CITY.CHANGED` with framing → root spawns a
   fresh `city`.
 - `city` emits `CITY.READY` once the worker results stamp in (and the target
   bbox is known) → root returns to `idle`, map returns to `ready.interactive`.
+- if the load terminally fails, `city` emits **`CITY.FAILED`** (the mirror of
+  `CITY.READY`) → root returns to `idle`, map returns to `ready.interactive`, ui
+  returns to `active`. The gate must end on both outcomes; the failure toast
+  comes from the city's emitted `city.error`.
 
 The map mirrors nothing and polls nothing. This is the actor-correct replacement
 for `coordinators/transition-supervisor.ts` (which today _reads_ `resultsSlug`
@@ -244,6 +251,8 @@ export const mapMachine = setup({
           on: {
             // city converged (results stamped + bbox known)
             "CITY.READY": "interactive",
+            // terminal load failure — lift the gate so the map stays operable
+            "CITY.FAILED": "interactive",
             // interactions absent here on purpose — the machine, not the view,
             // enforces the gate.
           },
