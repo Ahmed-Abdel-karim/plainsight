@@ -6,6 +6,7 @@ import { useStartNav } from "../state";
 
 type CityLinkProps = Omit<React.ComponentProps<typeof Link>, "href"> & {
   slug: string;
+  snapshotId: string;
   isActive: boolean;
 };
 
@@ -22,7 +23,13 @@ type CityLinkProps = Omit<React.ComponentProps<typeof Link>, "href"> & {
  * city is a no-op signal — there's no previous city to suppress (matches the
  * `NAV.START` contract).
  */
-export function CityLink({ slug, isActive, onClick, ...rest }: CityLinkProps) {
+export function CityLink({
+  slug,
+  snapshotId,
+  isActive,
+  onClick,
+  ...rest
+}: CityLinkProps) {
   const startNav = useStartNav();
   return (
     <Link
@@ -31,7 +38,7 @@ export function CityLink({ slug, isActive, onClick, ...rest }: CityLinkProps) {
       aria-current={isActive ? "page" : undefined}
       onClick={(event) => {
         onClick?.(event);
-        if (!isActive) startNav(slug);
+        if (!isActive) startNav(slug, snapshotId);
       }}
     />
   );

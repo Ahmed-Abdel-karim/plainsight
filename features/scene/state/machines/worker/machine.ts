@@ -34,12 +34,14 @@ function buildMessage(event: RequestEvent): ProcessRequestMessage {
       type: "hexes",
       params: { filters: event.filters, resolution: event.hexResolution },
       slug: event.slug,
+      snapshotId: event.snapshotId,
     };
   }
   return {
     type: "aggregates",
     params: { scope: event.scope, filters: event.filters },
     slug: event.slug,
+    snapshotId: event.snapshotId,
   };
 }
 
@@ -69,7 +71,12 @@ export const workerMachine = setup({
     // Ensure a city's listings are loaded; the Web Worker replies fast on a hit.
     requestLoad: enqueueActions(({ event, enqueue }) => {
       assertEvent(event, "WORKER.REQUEST_LOAD");
-      enqueue.sendTo("transport", { type: "LOAD", slug: event.slug });
+      enqueue.sendTo("transport", {
+        type: "LOAD",
+        slug: event.slug,
+        snapshotId: event.snapshotId,
+        assetUrl: event.assetUrl,
+      });
     }),
 
     // Stash the request (newest wins) then send if the slot is idle. The city
@@ -94,12 +101,14 @@ export const workerMachine = setup({
         enqueue.sendTo(city, {
           type: "WORKER.FETCH_OK",
           slug: message.slug,
+          snapshotId: message.snapshotId,
           count: message.payload.data.count,
         });
       } else {
         enqueue.sendTo(city, {
           type: "WORKER.FETCH_ERROR",
           slug: message.slug,
+          snapshotId: message.snapshotId,
           error: message.payload.error,
         });
       }
@@ -121,11 +130,14 @@ export const workerMachine = setup({
               type: message.payload.type,
               payload: message.payload.data,
               slug: message.slug,
+              snapshotId: message.snapshotId,
             } as ProcessResult,
           });
         } else {
           enqueue.sendTo(city, {
             type: "WORKER.PROCESS_ERROR",
+            slug: message.slug,
+            snapshotId: message.snapshotId,
             processType: message.payload.type,
             error: message.payload.error,
           });
@@ -142,9 +154,11 @@ export const workerMachine = setup({
       const city = system.get(SystemId.CITY) as CityMachineActor | undefined;
       if (!city) return;
       const slug = city.getSnapshot().context.framing?.slug ?? "";
+      const snapshotId = city.getSnapshot().context.framing?.snapshotId ?? "";
       enqueue.sendTo(city, {
         type: "WORKER.FETCH_ERROR",
         slug,
+        snapshotId,
         error: event.error,
       });
     }),

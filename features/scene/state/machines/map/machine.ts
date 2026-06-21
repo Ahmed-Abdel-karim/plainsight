@@ -237,6 +237,11 @@ export const mapMachine = setup({
           on: {
             // City converged (its data loaded; bbox already known from framing).
             "CITY.READY": "interactive",
+            // Terminal load failure: lift the gate so the map is operable again
+            // (a failed switch must not strand it dimmed). The new city's data
+            // never arrived — recovery is the user switching cities; the toast
+            // explains the failure.
+            "CITY.FAILED": "interactive",
             // Pointer interactions are absent here on purpose → structurally
             // ignored; the machine, not the view, enforces the gate.
           },

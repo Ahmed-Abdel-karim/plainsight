@@ -135,15 +135,20 @@ describe("scene cross-region interaction", () => {
 });
 
 describe("scene error notifications", () => {
-  it("toasts when the listings fetch fails", async () => {
+  it("toasts once, via the city lifecycle, when the listings fetch fails", async () => {
     failPoints();
     const scene = setupScene();
     scene.navigateToCity();
     scene.setLens("browse"); // browse lens triggers the /points fetch
 
+    // The active Browse load belongs to the city lifecycle (C-0011): one toast,
+    // not a second, competing query-layer "Couldn't load listings".
     expect(
-      await screen.findByText("Couldn't load listings"),
+      await screen.findByText("Couldn't load this city"),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByText("Couldn't load listings"),
+    ).not.toBeInTheDocument();
     expect(
       await axe(screen.getByRole("region", { name: /notifications/i })),
     ).toHaveNoViolations();
@@ -200,11 +205,16 @@ describe("scene error notifications", () => {
     scene.navigateToCity();
     scene.setLens("browse");
 
+    // Browse load → city lifecycle; boundaries → query layer. Distinct owners,
+    // distinct toasts, and no duplicate browse notification.
     expect(
-      await screen.findByText("Couldn't load listings"),
+      await screen.findByText("Couldn't load this city"),
     ).toBeInTheDocument();
     expect(
       await screen.findByText("Couldn't load map areas"),
     ).toBeInTheDocument();
+    expect(
+      screen.queryByText("Couldn't load listings"),
+    ).not.toBeInTheDocument();
   });
 });

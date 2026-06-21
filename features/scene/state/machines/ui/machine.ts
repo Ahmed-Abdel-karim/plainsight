@@ -1,5 +1,13 @@
-import { type ActorRefFrom, assertEvent, assign, setup } from "xstate";
+import {
+  type ActorRefFrom,
+  assertEvent,
+  assign,
+  enqueueActions,
+  setup,
+} from "xstate";
 
+import type { CityMachineActor } from "../city/machine";
+import { SystemId } from "../constants";
 import * as Context from "./context";
 import type * as Events from "./events";
 import type * as Input from "./input";
@@ -37,7 +45,6 @@ export const uiMachine = setup({
           ? null
           : context.selectedId,
     }),
-    // Sets hover. Nulls hoverSource when id is null — mirrors setHoveredListing.
     assignHover: assign({
       hoveredListingId: ({ context, event }) =>
         event.type === "UI.SET_HOVER" ? event.id : context.hoveredListingId,
@@ -55,8 +62,12 @@ export const uiMachine = setup({
         return event.id;
       },
     }),
-    // Clears selection + hover on nav start — folds the fan-out.ts reset.
-    // Lens is preserved for UX continuity across cities.
+    forwardLensToCity: enqueueActions(({ event, system, enqueue }) => {
+      assertEvent(event, "UI.SET_LENS");
+      const city = system.get(SystemId.CITY) as CityMachineActor | undefined;
+      if (city)
+        enqueue.sendTo(city, { type: "LENS.CHANGED", lens: event.lens });
+    }),
     clearSelectionAndHover: assign({
       selectedId: null,
       hoveredListingId: null,
@@ -70,7 +81,7 @@ export const uiMachine = setup({
   states: {
     active: {
       on: {
-        "UI.SET_LENS": { actions: "assignLens" },
+        "UI.SET_LENS": { actions: ["assignLens", "forwardLensToCity"] },
         "UI.SELECT": { actions: "assignSelectedId" },
         "UI.SET_HOVER": { actions: "assignHover" },
         "NAV.START": {
@@ -82,6 +93,9 @@ export const uiMachine = setup({
     navigating: {
       on: {
         "CITY.READY": { target: "active" },
+        // Terminal load failure: re-enable UI controls so the user can recover
+        // (switch city / lens). Lens persists; selection was cleared on NAV.START.
+        "CITY.FAILED": { target: "active" },
       },
     },
   },

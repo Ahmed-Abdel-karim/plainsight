@@ -5,6 +5,9 @@ import { createActorContext } from "@xstate/react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import type { NeighbourhoodBoundaries } from "@/lib/geo/types";
+import { makeLoadBrowsePoints } from "../shared/browse-points-query";
+import { cityAssetUrl } from "../shared/city-asset-url";
+import { cityMachine } from "./machines/city/machine";
 import { rootMachine } from "./machines/root/machine";
 import { SystemId } from "./machines/constants";
 
@@ -23,18 +26,29 @@ export function SceneProvider({ children }: { children: ReactNode }) {
   const logic = useMemo(
     () =>
       rootMachine.provide({
+        actors: {
+          // Inject the points loader closured over the app QueryClient so the
+          // city machine itself stays free of a data dependency.
+          city: cityMachine.provide({
+            actors: { loadBrowsePoints: makeLoadBrowsePoints(queryClient) },
+          }),
+        },
         actions: {
-          prefetchCity: (_, { slug }: { slug: string }) => {
+          prefetchCity: (
+            _,
+            { slug, snapshotId }: { slug: string; snapshotId: string },
+          ) => {
             // Prime the boundaries cache for the incoming city so the
             // neighbourhood layer doesn't wait on a cold fetch after the
             // city actor mounts. staleTime: Infinity (query defaults) means
             // a hit is instant if the user revisits the same city.
             void queryClient.prefetchQuery({
-              queryKey: ["boundaries", slug],
+              queryKey: ["boundaries", slug, snapshotId],
               queryFn: async ({ signal }) => {
-                const res = await fetch(`/api/cities/${slug}/boundaries`, {
-                  signal,
-                });
+                const res = await fetch(
+                  cityAssetUrl(slug, snapshotId, "boundaries"),
+                  { signal },
+                );
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 return (await res.json()) as NeighbourhoodBoundaries;
               },

@@ -14,10 +14,10 @@ import {
  *   - `LOAD`  — fetch+cache a city's listings (a cache hit replies near-instantly);
  *   - `POST`  — post a stamped process request.
  * The worker is session-lifetime and serves many cities, so the slug rides on
- * every command rather than being bound once at construction.
+ * every command, together with the snapshot id, rather than being bound once at construction.
  */
 export type TransportCommand =
-  | { type: "LOAD"; slug: string }
+  | { type: "LOAD"; slug: string; snapshotId: string; assetUrl: string }
   | { type: "POST"; message: ProcessRequestMessage };
 
 export interface TransportInput {
@@ -64,7 +64,11 @@ export const transportActor = fromCallback<TransportCommand, TransportInput>(
       if (event.type === "LOAD") {
         worker.postMessage({
           type: "load",
-          payload: event.slug,
+          payload: {
+            slug: event.slug,
+            snapshotId: event.snapshotId,
+            assetUrl: event.assetUrl,
+          },
         } satisfies RequestMessage);
       } else {
         worker.postMessage(event.message);

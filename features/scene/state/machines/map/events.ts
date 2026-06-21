@@ -76,6 +76,10 @@ export interface NavStart {
 export interface CityReady {
   readonly type: "CITY.READY";
 }
+/** Terminal load failure — lifts the suppressed gate back to interactive. */
+export interface CityFailed {
+  readonly type: "CITY.FAILED";
+}
 
 export type Events =
   | Init
@@ -89,4 +93,5 @@ export type Events =
   | MapHexInspect
   | MapResolutionChanged
   | NavStart
-  | CityReady;
+  | CityReady
+  | CityFailed;

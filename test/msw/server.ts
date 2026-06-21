@@ -9,10 +9,10 @@ import { boundariesFixture, browsePointsFixture } from "@/test/fixtures/browse";
  * Lifecycle (listen/reset/close) is wired in `vitest.setup.ts`.
  */
 export const handlers = [
-  http.get("/api/cities/:slug/points", () =>
+  http.get("/city-assets/:slug/:snapshot/points.geojson", () =>
     HttpResponse.json(browsePointsFixture),
   ),
-  http.get("/api/cities/:slug/boundaries", () =>
+  http.get("/city-assets/:slug/:snapshot/boundaries.geojson", () =>
     HttpResponse.json(boundariesFixture),
   ),
 ];

@@ -3,9 +3,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { makeAggregates } from "@/test/fixtures/dataset";
 
 const getRepositoryScopeAggregates = vi.fn();
+const listCities = vi.fn();
 
 vi.mock("./repository", () => ({
-  getRepository: () => ({ getScopeAggregates: getRepositoryScopeAggregates }),
+  getRepository: () => ({
+    listCities,
+    getScopeAggregates: getRepositoryScopeAggregates,
+  }),
 }));
 
 import {
@@ -17,6 +21,18 @@ import {
 describe("sidebar scope loaders", () => {
   beforeEach(() => {
     getRepositoryScopeAggregates.mockReset();
+    listCities.mockReset();
+    listCities.mockResolvedValue([
+      {
+        slug: "london",
+        snapshotId: "2025-09",
+        name: "London",
+        country: "United Kingdom",
+        frame: "Strict licensing regime",
+        snapshotLabel: " 9/2025",
+        listingCount: 61963,
+      },
+    ]);
   });
 
   it("maps a city scope to the repository call", async () => {
@@ -26,9 +42,11 @@ describe("sidebar scope loaders", () => {
     await expect(getScopeAggregates("london", "city")).resolves.toBe(
       aggregates,
     );
-    expect(getRepositoryScopeAggregates).toHaveBeenCalledWith("london", {
-      type: "city",
-    });
+    expect(getRepositoryScopeAggregates).toHaveBeenCalledWith(
+      "london",
+      "2025-09",
+      { type: "city" },
+    );
   });
 
   it("maps a neighbourhood scope by id", async () => {
@@ -36,10 +54,14 @@ describe("sidebar scope loaders", () => {
 
     await getScopeAggregates("london", "neighbourhood", "centre");
 
-    expect(getRepositoryScopeAggregates).toHaveBeenCalledWith("london", {
-      type: "neighbourhood",
-      id: "centre",
-    });
+    expect(getRepositoryScopeAggregates).toHaveBeenCalledWith(
+      "london",
+      "2025-09",
+      {
+        type: "neighbourhood",
+        id: "centre",
+      },
+    );
   });
 
   it("returns the zeroed aggregates for a neighbourhood scope with no id, without hitting the repository", async () => {

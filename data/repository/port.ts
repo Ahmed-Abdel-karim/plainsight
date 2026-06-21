@@ -18,21 +18,19 @@ import type {
   ScopeAggregates,
 } from "@/data/contract";
 import type { Scope } from "@/data/types";
-import type { NeighbourhoodBoundaries } from "@/lib/geo/types";
 
 export interface CityRepository {
   /** City index for the picker. */
   listCities(): Promise<CityIndexEntry[]>;
 
   /** Framing tier: name, snapshot label, currency, bbox, price scale, … */
-  getCityMeta(slug: string): Promise<CityMeta | null>;
-  /** Neighbourhood polygons for the choropleth. */
-  getBoundaries(slug: string): Promise<NeighbourhoodBoundaries | null>;
+  getCityMeta(slug: string, snapshotId: string): Promise<CityMeta | null>;
   /** Neighbourhood list (id, name, median, count) from the materialised cube. */
-  getNeighbourhoods(slug: string): Promise<Neighbourhood[]>;
+  getNeighbourhoods(slug: string, snapshotId: string): Promise<Neighbourhood[]>;
   /** Pre-baked aggregate cube for a scope (city-wide or one neighbourhood). */
   getScopeAggregates(
     slug: string,
+    snapshotId: string,
     scope: Scope,
   ): Promise<ScopeAggregates | null>;
 }

@@ -34,4 +34,17 @@ export interface CityReady {
   readonly type: "CITY.READY";
 }
 
-export type Events = Init | SetLens | Select | SetHover | NavStart | CityReady;
+/** City load terminally failed. Transitions navigating → active so controls
+ *  are usable again (recovery path). */
+export interface CityFailed {
+  readonly type: "CITY.FAILED";
+}
+
+export type Events =
+  | Init
+  | SetLens
+  | Select
+  | SetHover
+  | NavStart
+  | CityReady
+  | CityFailed;

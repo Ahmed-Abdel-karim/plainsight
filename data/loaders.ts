@@ -1,14 +1,16 @@
 import "server-only";
 
-import type { NeighbourhoodBoundaries } from "@/lib/geo/types";
-
 import type { CityMeta, ScopeAggregates } from "./contract";
 import { getRepository } from "./repository";
-import { defaultFilters } from "./selectors";
 import type { CityData, Scope } from "./types";
 
 function formatListingCount(n: number): string {
   return `${n.toLocaleString("en")} listings`;
+}
+
+async function getActiveCity(slug: string) {
+  const cities = await getRepository().listCities();
+  return cities.find((city) => city.slug === slug) ?? null;
 }
 
 /**
@@ -20,6 +22,7 @@ export async function getCitiesData(): Promise<CityData[]> {
   const entries = await getRepository().listCities();
   return entries.map((entry) => ({
     slug: entry.slug,
+    snapshotId: entry.snapshotId,
     name: entry.name,
     country: entry.country,
     frame: entry.frame,
@@ -33,19 +36,20 @@ export async function getCitiesData(): Promise<CityData[]> {
  * cached read lives in the adapter.
  */
 export async function getCityMeta(slug: string): Promise<CityMeta | null> {
-  return getRepository().getCityMeta(slug);
-}
-
-/** Neighbourhood polygon boundaries for the map layers. */
-export async function getCityBoundaries(
-  slug: string,
-): Promise<NeighbourhoodBoundaries | null> {
-  return getRepository().getBoundaries(slug);
+  const city = await getActiveCity(slug);
+  return city
+    ? getRepository().getCityMeta(slug, city.snapshotId)
+    : Promise.resolve(null);
 }
 
 /** Neighbourhood count for the scope label — facade over the port's list. */
 export async function getCityNeighbourhoodCount(slug: string): Promise<number> {
-  const neighbourhoods = await getRepository().getNeighbourhoods(slug);
+  const city = await getActiveCity(slug);
+  if (!city) return 0;
+  const neighbourhoods = await getRepository().getNeighbourhoods(
+    slug,
+    city.snapshotId,
+  );
   return neighbourhoods.length;
 }
 
@@ -91,27 +95,16 @@ export async function getScopeAggregates(
   const scope = toScope(scopeType, scopeId);
   if (!scope) return unavailableAggregates;
 
+  const city = await getActiveCity(citySlug);
+  if (!city) return unavailableAggregates;
+
   return (
-    (await getRepository().getScopeAggregates(citySlug, scope)) ??
-    unavailableAggregates
+    (await getRepository().getScopeAggregates(
+      citySlug,
+      city.snapshotId,
+      scope,
+    )) ?? unavailableAggregates
   );
-}
-
-/**
- * Stable price-slider bounds for the filter panel — the city's
- * `[priceScale.min, priceCap]`, the same range `defaultFilters` uses so that a
- * full-range slider is a no-op against the pre-baked aggregate cube. Derived
- * from the materialised `CityMeta` (O(1), already cached in the adapter), so it
- * doesn't shift per neighbourhood scope.
- */
-export async function getFilterBounds(
-  citySlug: string,
-): Promise<{ min: number; max: number }> {
-  const meta = await getRepository().getCityMeta(citySlug);
-  if (!meta) return { min: 0, max: 1000 };
-
-  const [min, max] = defaultFilters(meta).priceRange;
-  return { min, max };
 }
 
 export async function getScopeListingCount(

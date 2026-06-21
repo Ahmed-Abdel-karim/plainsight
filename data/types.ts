@@ -4,6 +4,7 @@ import type { BBox, LngLat } from "@/lib/geo/types";
 /** UI-facing city shape for the city picker (maps from CityIndexEntry). */
 export interface CityData {
   slug: string;
+  snapshotId: string;
   name: string;
   country: string;
   frame: string;
@@ -36,6 +37,7 @@ export type Scope = { type: "city" } | { type: "neighbourhood"; id: string };
 /** City framing streamed from the server to seed the city machine on each nav. */
 export interface MapCityPayload {
   slug: string;
+  snapshotId: string;
   cityName: string;
   bbox: BBox;
   center: LngLat;

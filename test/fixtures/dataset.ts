@@ -4,7 +4,7 @@ import type {
   CityMeta,
   RoomType,
   ScopeAggregates,
-} from "@/data";
+} from "@/data/contract";
 
 const EMPTY_ROOM_MIX: Record<RoomType, number> = {
   "Entire home/apt": 0,
@@ -37,6 +37,7 @@ export function makeAggregates(
  */
 export const datasetFixture: CityDataset = {
   slug: "london",
+  snapshotId: "2025-09",
   name: "London",
   country: "United Kingdom",
   frame: "Largest market despite licensing",
@@ -68,9 +69,10 @@ export const datasetFixture: CityDataset = {
 const { cityAggregates, neighbourhoods, neighbourhoodAggregates } =
   datasetFixture;
 
-/** The `{slug}-meta.json` framing tier. */
+/** The versioned `meta.json` framing tier. */
 export const metaFixture: CityMeta = {
   slug: datasetFixture.slug,
+  snapshotId: datasetFixture.snapshotId,
   name: datasetFixture.name,
   country: datasetFixture.country,
   frame: datasetFixture.frame,
@@ -83,7 +85,7 @@ export const metaFixture: CityMeta = {
   priceCap: datasetFixture.priceCap,
 };
 
-/** The `{slug}-aggregates.json` materialised cube. */
+/** The versioned `aggregates.json` materialised cube. */
 export const aggregatesFixture: CityAggregates = {
   cityAggregates,
   neighbourhoods,

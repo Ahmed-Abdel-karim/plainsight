@@ -34,6 +34,7 @@ import { useBrowseListings, useBrowsePoints } from "./use-browse-points";
 export function BrowsePanel() {
   const city = useCityFraming();
   const citySlug = city?.slug ?? "";
+  const snapshotId = city?.snapshotId ?? "";
   const currency = city?.currency ?? "";
   // Filter controls live in the shared `FilterPanel` above; here we only read the
   // (URL-shared) filter state to derive the list, plus `reset` for the empty CTA.
@@ -47,7 +48,9 @@ export function BrowsePanel() {
   const hoverSource = useHoverSource();
 
   // Browse is only mounted while the lens is active, so the fetch is enabled.
-  const { status, collection } = useBrowsePoints(citySlug, { enabled: true });
+  const { status, collection } = useBrowsePoints(citySlug, snapshotId, {
+    enabled: true,
+  });
 
   // Sort is view state (not URL — a shared link restores filters + listing, not
   // order). Defaults to price ascending; reset on city switch by the `key={slug}`
@@ -76,7 +79,7 @@ export function BrowsePanel() {
   // Resolve neighbourhood id → display name from the shared boundaries tier (one
   // cached fetch across the map + Browse); fall back to the raw id before it
   // arrives.
-  const boundaries = useCityBoundaries(citySlug || null);
+  const boundaries = useCityBoundaries(citySlug || null, snapshotId || null);
   const neighbourhoodNames = useMemo(() => {
     const map: Record<string, string> = {};
     for (const feature of boundaries?.features ?? []) {

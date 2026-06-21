@@ -1,4 +1,5 @@
-import { getScopeAggregates, type Scope } from "@/data";
+import { getScopeAggregates } from "@/data";
+import type { Scope } from "@/data/types";
 
 import { AnalysisCards } from "./analysis-cards";
 import { AnalysisCardsSkeleton } from "./analysis-cards-skeleton";

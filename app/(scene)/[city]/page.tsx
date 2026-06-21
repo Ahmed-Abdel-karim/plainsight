@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { SceneView } from "@/features/scene";
-import { getCitiesData, getCityMeta, type Scope } from "@/data";
+import { getCitiesData, getCityMeta } from "@/data";
+import type { Scope } from "@/data/types";
 
 export async function generateStaticParams() {
   const cities = await getCitiesData();

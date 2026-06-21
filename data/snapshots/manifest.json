@@ -1,0 +1,40 @@
+{
+  "cities": [
+    {
+      "slug": "london",
+      "snapshotId": "2025-09",
+      "name": "London",
+      "country": "United Kingdom",
+      "frame": "Largest market despite licensing",
+      "snapshotLabel": " 9/2025",
+      "listingCount": 61963
+    },
+    {
+      "slug": "berlin",
+      "snapshotId": "2025-09",
+      "name": "Berlin",
+      "country": "Germany",
+      "frame": "Well-regulated mid-market",
+      "snapshotLabel": " 9/2025",
+      "listingCount": 9264
+    },
+    {
+      "slug": "manchester",
+      "snapshotId": "2025-09",
+      "name": "Manchester",
+      "country": "United Kingdom",
+      "frame": "Compact commercialized market",
+      "snapshotLabel": " 9/2025",
+      "listingCount": 6562
+    },
+    {
+      "slug": "amsterdam",
+      "snapshotId": "2025-09",
+      "name": "Amsterdam",
+      "country": "Netherlands",
+      "frame": "Restricted yet substantial market",
+      "snapshotLabel": " 9/2025",
+      "listingCount": 5874
+    }
+  ]
+}

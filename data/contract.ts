@@ -3,8 +3,8 @@
  * -----------------------------------------------------------------------------
  * Single source of truth shared by the build pipeline (producer) and the
  * frontend (consumer). The UI NEVER parses raw Inside Airbnb files; it only
- * reads the shapes below, emitted as static JSON to data/cities (served to the
- * client via the /api/cities/... route handlers).
+ * reads the shapes below, emitted as immutable, versioned tiers under
+ * `data/snapshots/{slug}/{snapshotId}/`.
  *
  * Locked decisions:
  *  - multi-listing host = calculated_host_listings_count >= 2
@@ -59,7 +59,7 @@ export interface Listing {
 
 /**
  * One Browse-tier point feature's properties — a `Listing` minus the analytics-
- * only `h3`, carried in `data/cities/{slug}-points.geojson`. The same shape backs
+ * only `h3`, carried in the versioned `points.geojson` tier. The same shape backs
  * the map dots, the list rows, and the detail drawer. A structural subset of
  * `Listing`, so `lib/filters` (filter + sort) runs over it unchanged. There is
  * intentionally NO `availability` field — it is not in the dataset (research D3).
@@ -81,6 +81,14 @@ export type BrowsePointProperties = Pick<
 
 /** A Browse-tier GeoJSON point feature (`[lng, lat]` geometry + the row fields). */
 export type BrowsePoint = GeoJSON.Feature<GeoJSON.Point, BrowsePointProperties>;
+
+/** The Browse tier as served by a versioned city-tier URL — the shape every
+ *  Browse consumer (list, detail, map dots) and the city machine's points loader
+ *  read. */
+export type BrowseCollection = GeoJSON.FeatureCollection<
+  GeoJSON.Point,
+  BrowsePointProperties
+>;
 
 export interface ScopeAggregates {
   listingCount: number;
@@ -116,12 +124,14 @@ export interface PriceScale {
 /**
  * Snapshot-varying city metadata — everything about a city EXCEPT the heavy
  * arrays (listings) and the pre-baked aggregate cube. This is the cheap read a
- * server component needs to frame a page (the `{slug}-meta.json` tier). A real
+ * server component needs to frame a page (the versioned `meta.json` tier). A real
  * DB serves this from `cities` + `city_snapshot` without touching the
  * `listings` table.
  */
 export interface CityMeta {
   slug: string;
+  /** Immutable storage identity for this city's published snapshot. */
+  snapshotId: string;
   name: string;
   country: string;
   frame: string;
@@ -135,7 +145,7 @@ export interface CityMeta {
 }
 
 /**
- * The materialised aggregate cube for a city snapshot (the `{slug}-aggregates.json`
+ * The materialised aggregate cube for a city snapshot (the versioned `aggregates.json`
  * tier): the city-wide totals, the neighbourhood summary list for the choropleth,
  * and the pre-baked per-neighbourhood cubes. Every sidebar card and the default
  * (unfiltered) choropleth/hex read from here — an O(1) lookup, no listings parse.
@@ -158,9 +168,16 @@ export interface CityDataset extends CityMeta, CityAggregates {
 
 export interface CityIndexEntry {
   slug: string;
+  /** Active immutable snapshot selected for this city by the manifest. */
+  snapshotId: string;
   name: string;
   country: string;
   frame: string;
   snapshotLabel: string;
   listingCount: number;
+}
+
+/** Active city snapshots published by the data pipeline. */
+export interface CityManifest {
+  cities: CityIndexEntry[];
 }

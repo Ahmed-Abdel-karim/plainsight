@@ -1,7 +1,10 @@
-import type { BrowsePoint, BrowsePointProperties } from "@/data/contract";
+import type {
+  BrowseCollection,
+  BrowsePoint,
+  BrowsePointProperties,
+} from "@/data/contract";
 import type { MapCityPayload } from "@/data/types";
 import type { NeighbourhoodBoundaries } from "@/lib/geo/types";
-import type { BrowseCollection } from "@/features/scene/browse/use-browse-points";
 
 /**
  * Tiny browse-tier fixtures: one city framing and a three-row points collection
@@ -15,6 +18,7 @@ export function makeMapCityPayload(
 ): MapCityPayload {
   return {
     slug: "london",
+    snapshotId: "2025-09",
     cityName: "London",
     bbox: [-0.51, 51.28, 0.33, 51.69],
     center: [-0.12, 51.5],

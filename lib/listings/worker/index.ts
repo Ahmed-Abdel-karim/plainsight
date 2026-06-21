@@ -8,13 +8,17 @@ export {
   type ProcessResponseMessage,
 } from "./processes";
 
-export type LoadDataRequestMessage = RequestMessageType<"load", string>;
+export type LoadDataRequestMessage = RequestMessageType<
+  "load",
+  { slug: string; snapshotId: string; assetUrl: string }
+>;
 export type LoadDataResponseMessage = ResponseMessageType<
   "load",
   {
     type: "load";
     data: {
       slug: string;
+      snapshotId: string;
       count: number;
     };
   }

@@ -26,7 +26,11 @@ export function NeighbourhoodsLayers({
   const listeners = useNeighbourhoodsListeners();
   const suppressed = useMapIsSuppressed();
 
-  const boundaries = useCityBoundaries(useCityFraming()?.slug ?? null);
+  const city = useCityFraming();
+  const boundaries = useCityBoundaries(
+    city?.slug ?? null,
+    city?.snapshotId ?? null,
+  );
   // Blank the boundaries while a city switch is in flight; they repaint from the
   // new city's data on CITY.READY (the map overlay covers them meanwhile).
   const data = suppressed ? EMPTY_BOUNDARIES : boundaries;

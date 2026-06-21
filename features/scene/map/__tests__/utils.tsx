@@ -79,7 +79,11 @@ export function setupMap(options: MapSetupOptions = {}): MapSetup {
 
   const startCitySwitch = (slug = "berlin") => {
     act(() => {
-      result.root.send({ type: "NAV.START", slug });
+      result.root.send({
+        type: "NAV.START",
+        slug,
+        snapshotId: framing.snapshotId,
+      });
     });
   };
 

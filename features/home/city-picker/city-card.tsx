@@ -2,7 +2,7 @@ import { ChevronRight } from "lucide-react";
 import Image from "next/image";
 
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import type { CityData } from "@/data";
+import type { CityData } from "@/data/types";
 import { cityImages } from "./city-images";
 import { CardLink } from "./card-link";
 

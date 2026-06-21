@@ -1,11 +1,12 @@
 /**
  * The listings Web Worker entry — a generic dispatcher over the extendable
  * `processes` registry. A single TanStack Query `QueryClient` is the one source of
- * truth: it holds every visited city's parsed listings (one `["listings", slug]`
+ * truth: it holds every visited snapshot's parsed listings (one
+ * `["listings", slug, snapshotId]`
  * query each) and provides all the cache + retry control. The worker is
- * session-lifetime and serves many cities, so each request carries its own `slug`;
+ * session-lifetime and serves many cities, so each request carries its snapshot identity;
  * the load is retried with capped exponential backoff, and any process marked
- * `cacheResults` is memoised by `[type, slug, params]`, so an identical recompute
+ * `cacheResults` is memoised by `[type, slug, snapshotId, params]`, so an identical recompute
  * returns instantly without re-running `execute`. Because rows live here for the
  * whole session, revisiting a city is a cache hit — no refetch.
  *
@@ -35,8 +36,8 @@ const ctx = self as unknown as Worker;
  */
 const queryClient = new QueryClient({ defaultOptions: queryDefaults });
 
-async function loadAnalytics(slug: string): Promise<Listing[]> {
-  const res = await fetch(`/api/cities/${slug}/analytics`);
+async function loadAnalytics(assetUrl: string): Promise<Listing[]> {
+  const res = await fetch(assetUrl);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return (await res.json()) as Listing[];
 }
@@ -55,21 +56,26 @@ ctx.onmessage = async (event: MessageEvent<RequestMessage>) => {
   // The one-time city load: fetch + parse the rows (retried via the query
   // client), cache them, and report the count. A failure here is terminal.
   if (message.type === "load") {
-    const citySlug = message.payload;
+    const { slug: citySlug, snapshotId, assetUrl } = message.payload;
     try {
       const rows = await queryClient.fetchQuery({
-        queryKey: ["listings", citySlug],
-        queryFn: () => loadAnalytics(citySlug),
+        queryKey: ["listings", citySlug, snapshotId],
+        queryFn: () => loadAnalytics(assetUrl),
       });
       post({
         status: "success",
         slug: citySlug,
-        payload: { type: "load", data: { slug: citySlug, count: rows.length } },
+        snapshotId,
+        payload: {
+          type: "load",
+          data: { slug: citySlug, snapshotId, count: rows.length },
+        },
       });
     } catch (err) {
       post({
         status: "error",
         slug: citySlug,
+        snapshotId,
         payload: { type: "load", error: toError(err) },
       });
     }
@@ -88,25 +94,33 @@ ctx.onmessage = async (event: MessageEvent<RequestMessage>) => {
     const listings = queryClient.getQueryData<Listing[]>([
       "listings",
       message.slug,
+      message.snapshotId,
     ]);
     if (!listings) throw new Error("listings not loaded");
     const context: ProcessContext = { listings };
     const data = process.cacheResults
       ? await queryClient.fetchQuery({
           // Slug in the key so two cities sharing filter params don't collide.
-          queryKey: [message.type, message.slug, message.params],
+          queryKey: [
+            message.type,
+            message.slug,
+            message.snapshotId,
+            message.params,
+          ],
           queryFn: () => process.execute(message.params, context),
         })
       : process.execute(message.params, context);
     post({
       status: "success",
       slug: message.slug, // echo the request's slug for stale-reply drop (5.3)
+      snapshotId: message.snapshotId,
       payload: { type: message.type, data },
     } as ResponseMessage);
   } catch (err) {
     post({
       status: "error",
       slug: message.slug,
+      snapshotId: message.snapshotId,
       payload: { type: message.type, error: toError(err) },
     } as ResponseMessage);
   }

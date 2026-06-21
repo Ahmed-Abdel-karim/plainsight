@@ -1,6 +1,7 @@
 import { type ReactNode } from "react";
 
-import { getScopeListingCount, type Scope } from "@/data";
+import { getScopeListingCount } from "@/data";
+import type { Scope } from "@/data/types";
 import { AsyncBoundary } from "@/components/utils/async-boundary";
 
 function formatNumber(value: number): string {

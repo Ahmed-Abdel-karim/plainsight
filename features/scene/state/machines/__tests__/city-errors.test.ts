@@ -32,42 +32,107 @@ describe("city machine error signals", () => {
     const city = scene.city as CityMachineActor;
     const emitted: CityErrorEmitted[] = [];
     city.on("city.error", (event) => emitted.push(event));
-    return { city, slug: framing.slug, emitted };
+    return {
+      city,
+      slug: framing.slug,
+      snapshotId: framing.snapshotId,
+      emitted,
+    };
   }
 
   it("emits a load error and enters error on a current-slug fetch failure", () => {
-    const { city, slug, emitted } = startCity();
+    const { city, slug, snapshotId, emitted } = startCity();
 
-    city.send({ type: "WORKER.FETCH_ERROR", slug, error: new Error("boom") });
+    city.send({
+      type: "WORKER.FETCH_ERROR",
+      slug,
+      snapshotId,
+      error: new Error("boom"),
+    });
 
-    expect(city.getSnapshot().value).toBe("error");
+    expect(city.getSnapshot().value).toEqual({ analyse: "error" });
     expect(emitted).toEqual([{ type: "city.error", kind: "load" }]);
   });
 
   it("drops a fetch failure addressed to a city we've navigated past", () => {
-    const { city, emitted } = startCity();
+    const { city, snapshotId, emitted } = startCity();
 
     city.send({
       type: "WORKER.FETCH_ERROR",
       slug: "stale-slug",
+      snapshotId,
       error: new Error("boom"),
     });
 
-    expect(city.getSnapshot().value).toBe("loading");
+    expect(city.getSnapshot().value).toEqual({ analyse: "loading" });
     expect(emitted).toEqual([]);
   });
 
   it("emits a process error with its type and stays ready", () => {
-    const { city, slug, emitted } = startCity();
-    city.send({ type: "WORKER.FETCH_OK", slug, count: 3 });
+    const { city, slug, snapshotId, emitted } = startCity();
+    city.send({ type: "WORKER.FETCH_OK", slug, snapshotId, count: 3 });
 
     city.send({
       type: "WORKER.PROCESS_ERROR",
+      slug,
+      snapshotId,
       processType: "hexes",
       error: new Error("compute failed"),
     });
 
-    expect(city.getSnapshot().value).toBe("ready");
+    expect(city.getSnapshot().value).toEqual({ analyse: "ready" });
+    expect(emitted).toEqual([
+      { type: "city.error", kind: "process", processType: "hexes" },
+    ]);
+  });
+
+  it("drops a process error addressed to a city we've navigated past", () => {
+    const { city, snapshotId, slug, emitted } = startCity();
+    city.send({ type: "WORKER.FETCH_OK", slug, snapshotId, count: 3 });
+
+    city.send({
+      type: "WORKER.PROCESS_ERROR",
+      slug: "stale-slug",
+      snapshotId,
+      processType: "hexes",
+      error: new Error("compute failed"),
+    });
+
+    expect(city.getSnapshot().value).toEqual({ analyse: "ready" });
+    expect(emitted).toEqual([]);
+  });
+
+  it("routes a current-slug process error through the worker to a toast", () => {
+    scene = setupSceneSystem();
+    const framing = makeMapCityPayload();
+    scene.actor.send({
+      type: "CITY.CHANGED",
+      payload: framing,
+      filter: { roomTypes: [], priceRange: null, nbhd: null },
+    });
+    const city = scene.city as CityMachineActor;
+    const emitted: CityErrorEmitted[] = [];
+    city.on("city.error", (event) => emitted.push(event));
+    // Converge so analyse.ready posts the recompute requests (slots pending).
+    city.send({
+      type: "WORKER.FETCH_OK",
+      slug: framing.slug,
+      snapshotId: framing.snapshotId,
+      count: 3,
+    });
+
+    // A worker process error for the current city — deliverProcess must carry
+    // its slug/snapshotId through so the city's guard accepts it.
+    scene.transport.reply({
+      type: "TRANSPORT.PROCESS_REPLY",
+      message: {
+        status: "error",
+        slug: framing.slug,
+        snapshotId: framing.snapshotId,
+        payload: { type: "hexes", error: new Error("compute failed") },
+      },
+    });
+
     expect(emitted).toEqual([
       { type: "city.error", kind: "process", processType: "hexes" },
     ]);

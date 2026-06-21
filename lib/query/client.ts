@@ -4,10 +4,16 @@ import { notifyError } from "@/lib/toast";
 import { queryDefaults } from "./config";
 
 /**
- * Surfaces a toast when a main-thread fetch fails for good (after retries).
- * Keyed by the query's root key so each tier gets its own copy and a stable,
- * deduplicated toast. The listings worker runs its own client in the worker
- * thread, so analytics failures are handled there (city machine), not here.
+ * Surfaces a toast when a main-thread fetch fails for good (after retries) — but
+ * only for tiers the query layer *owns*. Active lens-load failures belong to the
+ * city lifecycle, which already toasts them via `SceneNotifications`:
+ *   - `browse-points` is the active Browse load (the city's `loadBrowsePoints`
+ *     actor fails → `city.error`), so the query layer stays silent to avoid a
+ *     second, competing notification.
+ *   - analytics runs in the worker thread's own client, handled by the city
+ *     machine there.
+ * Only optional/background tiers (boundaries) are toasted here, keyed by the
+ * query's root key for a stable, deduplicated toast.
  */
 function notifyOnQueryError(
   _error: unknown,
@@ -19,12 +25,6 @@ function notifyOnQueryError(
         "boundaries",
         "Couldn't load map areas",
         "Neighbourhood outlines may be missing.",
-      );
-    case "browse-points":
-      return notifyError(
-        "browse-points",
-        "Couldn't load listings",
-        "Try reloading the page.",
       );
   }
 }

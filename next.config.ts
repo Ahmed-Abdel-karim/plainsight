@@ -21,19 +21,26 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "images.unsplash.com", pathname: "/**" },
     ],
   },
-  // The repository + endpoint read `data/cities/{slug}-*.{json,geojson}` with a
-  // dynamic (slug-interpolated) path, which the file tracer can't resolve
-  // statically — so the files must be bundled into the relevant serverless
-  // functions explicitly. Only matters at `next build`/deploy; `next dev` reads
-  // the real filesystem. (Keys are route paths; confirm the route-group key
-  // resolves at the first deploy — it's invisible locally.)
+  async headers() {
+    return [
+      {
+        source: "/city-assets/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+    ];
+  },
+  // Only server-rendered tiers need function tracing. Browser-facing immutable
+  // tiers are delivered from public storage or the configured CDN.
   outputFileTracingIncludes: {
-    "/api/cities/[slug]/[tier]": ["./data/cities/**"],
-    "/api/cities": ["./data/cities/cities.json"],
     "/(scene)/[city]": [
-      "./data/cities/*-meta.json",
-      "./data/cities/*-aggregates.json",
-      "./data/cities/*-boundaries.geojson",
+      "./data/snapshots/manifest.json",
+      "./data/snapshots/*/*/meta.json",
+      "./data/snapshots/*/*/aggregates.json",
     ],
   },
 };

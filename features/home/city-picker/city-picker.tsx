@@ -1,5 +1,5 @@
 import { getCitiesData } from "@/data";
-import type { CityData } from "@/data";
+import type { CityData } from "@/data/types";
 import { CityCard } from "./city-card";
 
 /**

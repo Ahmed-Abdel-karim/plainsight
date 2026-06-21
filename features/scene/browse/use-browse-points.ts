@@ -1,13 +1,13 @@
 "use client";
 
 /**
- * Shared, lazy access to a city's Browse tier (`/api/cities/{slug}/points`),
+ * Shared, lazy access to a city's versioned Browse points tier,
  * backed by React Query.
  *
  * Browse mounts the same surface twice (desktop sidebar + mobile drawer) and the
  * map needs the SAME parsed features for its dot source — a naive per-consumer
  * fetch would pull the multi-megabyte tier several times. A single `useQuery`
- * keyed by `["browse-points", slug]` solves that: every consumer shares one
+ * keyed by `["browse-points", slug, snapshotId]` solves that: every consumer shares one
  * cache entry and one in-flight request (dedup), and gets the shared retry +
  * `staleTime/gcTime: Infinity` defaults from the provider (`@/lib/query/config`).
  *
@@ -19,16 +19,17 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 
-import type { BrowsePoint, BrowsePointProperties } from "@/data/contract";
+import type {
+  BrowseCollection,
+  BrowsePoint,
+  BrowsePointProperties,
+} from "@/data/contract";
 import type { ListingFilters, Scope, SortKey } from "@/data/types";
 import { filterListings, sortListings } from "@/lib/filters";
 
-export type BrowsePointsStatus = "loading" | "ready" | "error";
+import { browsePointsQueryOptions } from "../shared/browse-points-query";
 
-export type BrowseCollection = GeoJSON.FeatureCollection<
-  GeoJSON.Point,
-  BrowsePointProperties
->;
+export type BrowsePointsStatus = "loading" | "ready" | "error";
 
 export interface UseBrowsePointsResult {
   status: BrowsePointsStatus;
@@ -47,16 +48,12 @@ export interface UseBrowsePointsResult {
  */
 export function useBrowsePoints(
   slug: string,
+  snapshotId: string,
   { enabled }: { enabled: boolean },
 ): UseBrowsePointsResult {
   const query = useQuery({
-    queryKey: ["browse-points", slug],
-    queryFn: async ({ signal }) => {
-      const res = await fetch(`/api/cities/${slug}/points`, { signal });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return (await res.json()) as BrowseCollection;
-    },
-    enabled: enabled && slug !== "",
+    ...browsePointsQueryOptions(slug, snapshotId),
+    enabled: enabled && slug !== "" && snapshotId !== "",
   });
 
   const status: BrowsePointsStatus = query.isSuccess

@@ -44,12 +44,15 @@ function useDrawerDirection(): "right" | "bottom" {
 export function ListingDetail() {
   const city = useCityFraming();
   const citySlug = city?.slug ?? "";
+  const snapshotId = city?.snapshotId ?? "";
   const currency = city?.currency ?? "";
   const snapshotLabel = city?.snapshotLabel ?? "";
   const { isBrowse, selectedId, selectListing } = useLens();
   const direction = useDrawerDirection();
-  const { collection } = useBrowsePoints(citySlug, { enabled: isBrowse });
-  const boundaries = useCityBoundaries(citySlug || null);
+  const { collection } = useBrowsePoints(citySlug, snapshotId, {
+    enabled: isBrowse,
+  });
+  const boundaries = useCityBoundaries(citySlug || null, snapshotId || null);
 
   const listing = useMemo(() => {
     if (selectedId === null || !collection) return null;

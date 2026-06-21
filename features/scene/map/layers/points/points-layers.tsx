@@ -8,10 +8,8 @@ import { getCircleLayer } from "./styles";
 import { usePointsListeners } from "./listeners";
 import { usePointsFeatureState } from "./use-points-layer";
 import { usePointsFilter } from "./use-points-filter";
-import {
-  useBrowsePoints,
-  type BrowseCollection,
-} from "@/features/scene/browse/use-browse-points";
+import type { BrowseCollection } from "@/data/contract";
+import { useBrowsePoints } from "@/features/scene/browse/use-browse-points";
 import { useLens } from "@/features/scene/shared/use-lens";
 import { useCityFraming, useMapIsSuppressed } from "@/features/scene/state";
 
@@ -36,9 +34,11 @@ export function PointsLayers({ visible }: { visible: boolean }) {
   usePointsFeatureState(visible);
   const { isBrowse } = useLens();
   const suppressed = useMapIsSuppressed();
-  const { collection } = useBrowsePoints(city?.slug ?? "", {
-    enabled: isBrowse,
-  });
+  const { collection } = useBrowsePoints(
+    city?.slug ?? "",
+    city?.snapshotId ?? "",
+    { enabled: isBrowse },
+  );
   // Blank the dots while a city switch is in flight (the map overlay covers them
   // anyway); they repaint from the new city's collection on CITY.READY.
   const data = suppressed ? EMPTY_COLLECTION : collection;

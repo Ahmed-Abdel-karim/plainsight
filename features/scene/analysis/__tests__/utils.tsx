@@ -66,7 +66,12 @@ export function setupAnalysis(
 
   const finishCityLoad = () => {
     act(() => {
-      getCity().send({ type: "WORKER.FETCH_OK", slug: framing.slug, count: 3 });
+      getCity().send({
+        type: "WORKER.FETCH_OK",
+        slug: framing.slug,
+        snapshotId: framing.snapshotId,
+        count: 3,
+      });
     });
   };
 
@@ -77,6 +82,7 @@ export function setupAnalysis(
         message: {
           status: "success",
           slug: framing.slug,
+          snapshotId: framing.snapshotId,
           payload: { type: "aggregates", data },
         },
       });

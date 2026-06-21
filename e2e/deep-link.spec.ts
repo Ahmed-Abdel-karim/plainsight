@@ -10,6 +10,27 @@ import {
   waitForMapReady,
 } from "./support/map";
 
+test("cold Browse deep link does not load Analyse analytics", async ({
+  page,
+}) => {
+  const analyticsRequests: string[] = [];
+  page.on("request", (request) => {
+    if (/\/london\/[^/]+\/analytics\.json$/.test(request.url())) {
+      analyticsRequests.push(request.url());
+    }
+  });
+
+  const pointsLoaded = page.waitForResponse(
+    (response) =>
+      /\/london\/[^/]+\/points\.geojson$/.test(response.url()) && response.ok(),
+  );
+  await page.goto("/london?lens=browse");
+  await expect(page.getByRole("radio", { name: "Browse" })).toBeChecked();
+  await pointsLoaded;
+
+  expect(analyticsRequests).toEqual([]);
+});
+
 test("cold deep-link restore and basemap theme swap", async ({
   page,
   mapController,

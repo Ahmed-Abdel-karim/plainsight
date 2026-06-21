@@ -29,7 +29,8 @@ export function useRootSend() {
 export function useStartNav() {
   const send = useRootSend();
   return useCallback(
-    (slug: string) => send({ type: "NAV.START", slug }),
+    (slug: string, snapshotId: string) =>
+      send({ type: "NAV.START", slug, snapshotId }),
     [send],
   );
 }

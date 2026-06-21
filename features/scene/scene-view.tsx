@@ -1,5 +1,7 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import { type CityMeta, getCityNeighbourhoodCount, type Scope } from "@/data";
+import { getCityNeighbourhoodCount } from "@/data";
+import type { CityMeta } from "@/data/contract";
+import type { Scope } from "@/data/types";
 import { ListingCount } from "./listing-count";
 import { ListingDetail } from "./browse";
 import { SceneDrawer } from "./scene-drawer";

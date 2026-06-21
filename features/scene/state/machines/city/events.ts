@@ -1,6 +1,15 @@
 import type { RoomType } from "@/data/contract";
 import type { ProcessResult, ProcessType } from "../worker/events";
 import type { HexResolution } from "@/lib/hex/types";
+import type { Lens } from "@/lib/search-params";
+
+// --- lens event (raised at spawn from the ui snapshot; forwarded by ui on a
+// runtime switch) — routes the city to its browse / analyse leg ---
+
+export interface LensChanged {
+  readonly type: "LENS.CHANGED";
+  readonly lens: Lens;
+}
 
 // --- filter events (from UI action hooks; only honoured in city.ready) ---
 
@@ -31,12 +40,14 @@ export interface MapResolutionChanged {
 export interface WorkerFetchOk {
   readonly type: "WORKER.FETCH_OK";
   readonly slug: string;
+  readonly snapshotId: string;
   readonly count: number;
 }
 /** Terminal load failure — city exits loading → error. Slug-stamped (Rule 5.3). */
 export interface WorkerFetchError {
   readonly type: "WORKER.FETCH_ERROR";
   readonly slug: string;
+  readonly snapshotId: string;
   readonly error: Error;
 }
 /** A recompute landed. City assigns aggregates or hexCells from the result. */
@@ -44,14 +55,19 @@ export interface WorkerProcessResult {
   readonly type: "WORKER.PROCESS_RESULT";
   readonly result: ProcessResult;
 }
-/** Informational recompute error — last good result stays on screen. */
+/** Informational recompute error — last good result stays on screen. Carries the
+ *  `slug`/`snapshotId` it is for so a city that has been navigated away from
+ *  drops it (Rule 5.3), exactly like a successful `WORKER.PROCESS_RESULT`. */
 export interface WorkerProcessError {
   readonly type: "WORKER.PROCESS_ERROR";
+  readonly slug: string;
+  readonly snapshotId: string;
   readonly processType: ProcessType;
   readonly error: Error;
 }
 
 export type Events =
+  | LensChanged
   | FilterSetRoomTypes
   | FilterSetPriceRange
   | FilterSetNbhd

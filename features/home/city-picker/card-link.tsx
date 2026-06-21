@@ -3,7 +3,7 @@
 import Link from "next/link";
 import type { KeyboardEvent, ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import { CityData } from "@/data";
+import type { CityData } from "@/data/types";
 
 interface CardLinkProps {
   href: string;

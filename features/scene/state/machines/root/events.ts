@@ -29,6 +29,7 @@ export interface CityChanged {
 export interface NavStart {
   readonly type: "NAV.START";
   readonly slug: string;
+  readonly snapshotId: string;
 }
 
 /**
@@ -41,6 +42,15 @@ export interface CityReady {
 }
 
 /**
+ * City actor's load terminally failed. Root exits `navigating → idle` and clears
+ * `pendingSlug` so the gate lifts and the user can navigate again. The failure
+ * toast comes from the city's emitted `city.error`; root only ends the gate.
+ */
+export interface CityFailed {
+  readonly type: "CITY.FAILED";
+}
+
+/**
  * The projected scene selection changed and the URL should be mirrored. A bare
  * signal — the root's `syncUrl` action reads the live `ui` + `city` snapshots,
  * so no payload is carried. Handled only in `running.idle`; dropped while
@@ -50,4 +60,10 @@ export interface UrlSync {
   readonly type: "URL.SYNC";
 }
 
-export type Events = Init | CityChanged | NavStart | CityReady | UrlSync;
+export type Events =
+  | Init
+  | CityChanged
+  | NavStart
+  | CityReady
+  | CityFailed
+  | UrlSync;

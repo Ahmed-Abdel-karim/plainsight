@@ -9,6 +9,7 @@ import {
   isDefaultFilters,
   priceBounds,
   resolveFilters,
+  resolvePriceRange,
 } from "@/lib/filters/normalize";
 
 import { SceneActorContext } from "../../provider";
@@ -35,11 +36,13 @@ export function useCitySend() {
   return useCityRef()?.send;
 }
 
-/** True once the city actor has loaded its data and entered `ready` (the state
- *  in which filters apply and hex/aggregate results stream in). `false` while
- *  `loading`/`error`, or before the first city is spawned. */
+/** True once the active leg (`browse` or `analyse`) has loaded its data and
+ *  entered `ready`. `false` while a leg is `loading`/`error`, while `deciding`,
+ *  or before the first city is spawned. */
 export const useCityIsReady = createCitySelector(
-  (s) => s?.matches("ready") ?? false,
+  (s) =>
+    (s?.matches({ browse: "ready" }) || s?.matches({ analyse: "ready" })) ??
+    false,
 );
 
 export const useCityFraming = createCitySelector(
@@ -102,6 +105,21 @@ export const useResolvedFilters = createCitySelector(
   shallowEqual,
 );
 
+/**
+ * Display variant of {@link useResolvedFilters} for the filter panel: resolves
+ * the price to the concrete `[min, cap]` band so the slider handles sit on the
+ * displayed bounds. (`useResolvedFilters` opens the top to `Infinity` for the
+ * predicate — that must not reach the slider.)
+ */
+export const useDisplayFilters = createCitySelector((s): ListingFilters => {
+  const filter = s?.context.filter ?? { roomTypes: [], priceRange: null };
+  const bounds = priceBounds(s?.context.framing ?? null);
+  return {
+    roomTypes: filter.roomTypes,
+    priceRange: resolvePriceRange(filter.priceRange, bounds),
+  };
+}, shallowEqual);
+
 export const useIsDefaultFilter = createCitySelector((s) =>
   isDefaultFilters(
     s?.context.filter ?? { roomTypes: [], priceRange: null },
@@ -117,13 +135,8 @@ export function useResetFilters() {
   }, [send]);
 }
 
-/**
- * Composite matching the old `useFilters` facade's return shape, for the one
- * consumer (the filter panel) that drives every control. Setters here are
- * thin pass-throughs — normalization lives in the city machine.
- */
 export function useFilterControls() {
-  const filters = useResolvedFilters();
+  const filters = useDisplayFilters();
   const bounds = usePriceBounds();
   const isDefault = useIsDefaultFilter();
   const setRoomTypes = useSetRoomTypes();

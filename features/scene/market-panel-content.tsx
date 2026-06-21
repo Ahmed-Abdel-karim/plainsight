@@ -1,7 +1,8 @@
 import { Suspense } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import type { CityMeta, Scope } from "@/data";
+import type { CityMeta } from "@/data/contract";
+import type { Scope } from "@/data/types";
 import {
   AnalysisCardsSkeleton,
   AnalysisPanel,

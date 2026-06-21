@@ -8,7 +8,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { getCitiesData, type CityData } from "@/data";
+import { getCitiesData } from "@/data";
+import type { CityData } from "@/data/types";
 import { AsyncBoundary } from "@/components/utils/async-boundary";
 import { CityLink } from "./city-link";
 import { CityTitle } from "./city-title";
@@ -75,12 +76,13 @@ function CitySwitcherDropdown({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="min-w-56">
-        {cities.map(({ slug, name, listings }) => {
+        {cities.map(({ slug, snapshotId, name, listings }) => {
           const isActive = slug === citySlug;
           return (
             <DropdownMenuItem key={slug} asChild>
               <CityLink
                 slug={slug}
+                snapshotId={snapshotId}
                 isActive={isActive}
                 className="justify-between"
               >

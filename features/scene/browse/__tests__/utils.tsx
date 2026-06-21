@@ -57,18 +57,24 @@ export function setupBrowse(options: BrowseSetupOptions = {}): BrowseSetup {
   const ui = result.root.system.get(SystemId.UI) as UiMachineActor;
 
   const navigateToCity = () => {
-    act(() => {
-      result.root.send({ type: "CITY.CHANGED", payload: framing, filter });
-    });
+    // Lens before spawn: the city reads `ui`'s lens at spawn to pick its leg.
     act(() => {
       ui.send({ type: "UI.SET_LENS", lens: "browse" });
+    });
+    act(() => {
+      result.root.send({ type: "CITY.CHANGED", payload: framing, filter });
     });
   };
 
   const finishCityLoad = () => {
     const city = result.root.system.get(SystemId.CITY) as CityMachineActor;
     act(() => {
-      city.send({ type: "WORKER.FETCH_OK", slug: framing.slug, count: 3 });
+      city.send({
+        type: "WORKER.FETCH_OK",
+        slug: framing.slug,
+        snapshotId: framing.snapshotId,
+        count: 3,
+      });
     });
   };
 

@@ -11,7 +11,7 @@ import type {
  * Events the worker machine handles: requests *in* from the current city machine
  * (`WORKER.REQUEST_*`) and raw replies *up* from the invoked transport child
  * (`TRANSPORT.*`). The worker is a session-lifetime actor shared across cities,
- * so every request carries the `slug` it is for; the worker routes replies back
+ * so every request carries the city + snapshot it is for; the worker routes replies back
  * to `system.get("city")` and the city drops any whose slug ≠ its own. The events
  * the machine sends out — `WORKER.FETCH_*` / `WORKER.PROCESS_*` — are declared in
  * city/events.ts because city consumes them.
@@ -23,11 +23,14 @@ import type {
 export interface WorkerRequestLoad {
   readonly type: "WORKER.REQUEST_LOAD";
   readonly slug: string;
+  readonly snapshotId: string;
+  readonly assetUrl: string;
 }
 
 export interface WorkerRequestHexes {
   readonly type: "WORKER.REQUEST_HEXES";
   readonly slug: string;
+  readonly snapshotId: string;
   readonly filters: ListingFilters;
   readonly hexResolution: HexResolution;
 }
@@ -35,6 +38,7 @@ export interface WorkerRequestHexes {
 export interface WorkerRequestAggregates {
   readonly type: "WORKER.REQUEST_AGGREGATES";
   readonly slug: string;
+  readonly snapshotId: string;
   readonly scope: Scope;
   readonly filters: ListingFilters;
 }
@@ -71,5 +75,15 @@ export type ProcessType = ProcessRequestMessage["type"];
 /** A recompute result, tagged by type so the city routes it to its slab and by
  *  `slug` so the city can stamp which city the result is for (Rule 5.2). */
 export type ProcessResult =
-  | { type: "aggregates"; payload: ScopeAggregates; slug: string }
-  | { type: "hexes"; payload: HexCell[]; slug: string };
+  | {
+      type: "aggregates";
+      payload: ScopeAggregates;
+      slug: string;
+      snapshotId: string;
+    }
+  | {
+      type: "hexes";
+      payload: HexCell[];
+      slug: string;
+      snapshotId: string;
+    };

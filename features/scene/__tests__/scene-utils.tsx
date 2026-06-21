@@ -20,13 +20,19 @@ import { act, renderScene, type SceneRenderResult } from "@/test/render";
 
 /** Make the next `/points` fetch fail (call before the browse lens triggers it). */
 export function failPoints() {
-  server.use(http.get("/api/cities/:slug/points", () => HttpResponse.error()));
+  server.use(
+    http.get("/city-assets/:slug/:snapshot/points.geojson", () =>
+      HttpResponse.error(),
+    ),
+  );
 }
 
 /** Make the next `/boundaries` fetch fail (call before navigating). */
 export function failBoundaries() {
   server.use(
-    http.get("/api/cities/:slug/boundaries", () => HttpResponse.error()),
+    http.get("/city-assets/:slug/:snapshot/boundaries.geojson", () =>
+      HttpResponse.error(),
+    ),
   );
 }
 
@@ -69,6 +75,7 @@ function cityMetaFor(slug: string): CityMeta {
   const framing = makeMapCityPayload({ slug });
   return {
     slug: framing.slug,
+    snapshotId: framing.snapshotId,
     name: framing.cityName,
     country: "UK",
     frame: "",
@@ -144,7 +151,12 @@ export function setupScene(
 
   const finishCityLoad = () =>
     act(() => {
-      getCity().send({ type: "WORKER.FETCH_OK", slug: framing.slug, count: 3 });
+      getCity().send({
+        type: "WORKER.FETCH_OK",
+        slug: framing.slug,
+        snapshotId: framing.snapshotId,
+        count: 3,
+      });
     });
 
   const setLens = (lens: Lens) =>
@@ -159,6 +171,7 @@ export function setupScene(
         message: {
           status: "success",
           slug: framing.slug,
+          snapshotId: framing.snapshotId,
           payload: { type: "aggregates", data },
         },
       });
@@ -171,6 +184,7 @@ export function setupScene(
         message: {
           status: "success",
           slug: framing.slug,
+          snapshotId: framing.snapshotId,
           payload: { type: "hexes", data: cells },
         },
       });
@@ -181,6 +195,7 @@ export function setupScene(
       getCity().send({
         type: "WORKER.FETCH_ERROR",
         slug: framing.slug,
+        snapshotId: framing.snapshotId,
         error: new Error("boom"),
       });
     });
@@ -189,6 +204,8 @@ export function setupScene(
     act(() => {
       getCity().send({
         type: "WORKER.PROCESS_ERROR",
+        slug: framing.slug,
+        snapshotId: framing.snapshotId,
         processType: "hexes",
         error: new Error("compute failed"),
       });

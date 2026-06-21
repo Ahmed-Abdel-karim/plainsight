@@ -32,6 +32,12 @@ export function SceneUrlLoader({
     const { lens, listing, rooms, price, nbhd } = loadScene(
       typeof window === "undefined" ? "" : window.location.search,
     );
+    // Lens must land on the session `ui` actor BEFORE the city is spawned: the
+    // city reads `ui`'s lens at spawn (`deciding`) to pick its leg, so the
+    // snapshot has to be fresh. On first load `ui` is `active` and accepts this;
+    // on a city switch it's `navigating` and drops it (lens persists), which is
+    // correct — the persisted lens is already the right leg.
+    setLens(lens);
     // Filter rides into the city machine's input so the spawned actor is already
     // filtered when it reaches `ready` — a post-spawn FILTER event would be
     // dropped against `loading`. (On a city switch the URL is the clean new-city
@@ -41,12 +47,9 @@ export function SceneUrlLoader({
       priceRange: price && price.length === 2 ? [price[0], price[1]] : null,
       nbhd,
     });
-    // Lens + selection live on the session `ui` actor. On first load it's
-    // `active` and accepts these; on a city switch it's `navigating` and drops
-    // them (selection clears, lens persists) — exactly the desired behaviour.
-    // SELECT after SET_LENS so a `?lens=browse&listing=…` deep link keeps its
-    // listing (switching to `analyse` clears selection; browse does not).
-    setLens(lens);
+    // Selection lives on `ui` too. SELECT after SET_LENS so a
+    // `?lens=browse&listing=…` deep link keeps its listing (switching to
+    // `analyse` clears selection; browse does not).
     selectListing(listing);
   }, [city, changeCity, setLens, selectListing]);
 

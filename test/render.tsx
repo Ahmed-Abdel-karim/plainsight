@@ -9,6 +9,8 @@ import {
 import userEvent from "@testing-library/user-event";
 import { ThemeProvider } from "next-themes";
 
+import { makeLoadBrowsePoints } from "@/features/scene/shared/browse-points-query";
+import { cityMachine } from "@/features/scene/state/machines/city/machine";
 import { SystemId } from "@/features/scene/state/machines/constants";
 import { rootMachine } from "@/features/scene/state/machines/root/machine";
 import { workerMachine } from "@/features/scene/state/machines/worker/machine";
@@ -54,6 +56,9 @@ export function renderScene(
   const logic = rootMachine.provide({
     actors: {
       worker: workerMachine.provide({ actors: { transport: transport.actor } }),
+      city: cityMachine.provide({
+        actors: { loadBrowsePoints: makeLoadBrowsePoints(queryClient) },
+      }),
     },
     actions: { syncUrl: () => {}, prefetchCity: () => {} },
   });
