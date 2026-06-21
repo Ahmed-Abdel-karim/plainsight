@@ -61,6 +61,13 @@ Prior amendment (template -> 1.0.0):
 
 # Plainsight Constitution
 
+> ⚠️ **SUPERSEDED — do not follow as current guidance.** This constitution
+> predates the move to a top-level `features/` directory and the XState actor
+> migration. Its `features/`-deferral, four-layer wording, map-layer paths
+> (`components/scene/map/...`), and the entire Zustand section no longer match
+> the codebase. Current, authoritative rules live in `CLAUDE.md` and the `_docs/`
+> tree (being consolidated as the single source of truth). Kept for history only.
+
 ## Core Principles
 
 ### I. Next.js App Router Architecture

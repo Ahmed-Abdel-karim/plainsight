@@ -14,26 +14,47 @@ unless asked.**
 
 ## Folder structure
 
-A feature lives in one folder with a single `index.ts` **barrel**, which is its
-only public API. Import features through the barrel (`./city-switcher`), never via
-a deep path (`./city-switcher/city-switcher`).
+Feature-based ("screaming") architecture. Product code lives in
+`features/<feature>/`, which owns its components, hooks, utils, state, and types.
+`components/` holds **only shared, cross-feature UI** (`ui/` primitives, `theme/`,
+`query/`, chrome like `logo`). Layers flow downward only:
+`app/ → features/ → components/{ui,theme}, data, lib`; `data → lib`;
+`lib → domain-kernel` only. The **domain kernel** is the type-only shared
+vocabulary in `data/contract.ts` + `data/types.ts` (shapes and pure policy
+constants); it sits logically below `lib`, and the `data/` prefix is storage
+co-location, not an IO edge. `lib` must not touch `data/` **runtime**
+(loaders/repository/selectors). **A feature never imports another feature.**
 
-- **The barrel exports components only.** Keep it minimal — surface the public
-  entry component(s) and nothing else, so internal sub-components stay private.
-- **Utils and hooks keep direct imports** (`./analysis/format`,
-  `./browse/use-browse-points`) — they are not re-exported from the barrel. This
-  is the practical form of the `"use client"` rule below: client modules import
-  these directly, so routing them through a barrel that also re-exports server
-  components could drag server-only code into the client graph.
+- **Decompose a feature into sub-domain folders** (`scene/{map,browse,analysis}`),
+  plus `scene/state/` for the actor system and `scene/shared/` for cross-sub-domain
+  hooks/utils/constants. **No sub-domain imports another sub-domain's internals** —
+  shared code goes to `shared/` (or `state/` for actor hooks).
+- **Barrels are public API only.** One `index.ts` at each **feature root** (its
+  external surface) and at **cohesive subsystems with a real cross-consumer API**
+  (`scene/state`, `scene/map/layers` + each layer, `scene/{analysis,browse,map}`).
+  **No barrels on leaf folders.** Within a feature, import modules **directly**
+  (relative or `@/`), never through a re-export barrel — barrels cost tree-shaking,
+  so they earn their place only by marking a boundary.
+- **Server/client never share a barrel.** A barrel a client module imports must
+  not re-export server-only code (`server-only`/`"use cache"` loaders, server
+  components) into the client graph. Client-safe types stay importable without
+  pulling server code — client modules import `@/data/contract`, not the `@/data`
+  barrel.
+- **Imports / aliases.** Cross-feature & shared → absolute `@/…`
+  (`@/components/ui/button`, `@/data`, `@/lib/filters`, `@/features/scene`).
+  Within a feature → relative for near siblings; switch to absolute
+  `@/features/<f>/…` once a relative path would need **more than two `../`**. No
+  `../../../` chains.
 - **Co-locate a sub-component in its parent's file** (a component used only by one
   parent), **unless it sits on the other side of the `"use client"` boundary** —
-  then it's a separate file in the same folder, behind the same barrel. A
-  `"use client"` directive applies to the whole module, so a client wrapper around
-  a server component (e.g. `city-switcher/city-link.tsx` beside the server
-  `city-switcher.tsx`) must be its own file. See `lens-tabs/` for the canonical
-  shape.
+  then it's a separate file in the same folder. A `"use client"` directive applies
+  to the whole module, so a client wrapper around a server component (e.g.
+  `city-switcher/city-link.tsx` beside the server `city-switcher.tsx`) must be its
+  own file. See `city-switcher/` for the canonical shape.
 - **Single-file leaf components don't get a folder.** A lone file imported
   directly is already unified; wrapping it in a folder + barrel is pure churn.
+- **Skeletons colocate in the component's file; routes compose, don't fetch.**
+  Push `"use client"` to leaf nodes; pages compose components behind Suspense.
 
 ## Comments
 

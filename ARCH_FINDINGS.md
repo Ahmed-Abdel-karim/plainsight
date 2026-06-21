@@ -5,6 +5,16 @@
 > concerns, and proposed step order so later chats can continue without
 > re-deriving the context.
 
+> **Update — folder architecture restructured (feature-based).** Product code
+> moved from `components/scene/` to `features/scene/` (and `features/home/`);
+> `components/` is now shared UI only (`ui/`, `theme/`, `query/`, `logo`). Deep
+> relative chains were replaced by `@/…` aliases, the `browse → analysis/format`
+> sideways dep was removed via `scene/shared/`, and the barrel rule is now
+> **public-API-only** (feature roots + cross-consumer subsystems; direct imports
+> within a feature). This supersedes the earlier "barrel = full public API" note
+> in Finding 6 — the `scene/state` hooks barrel is still kept, now as a subsystem
+> public API. See the rewritten "Folder structure" section of `CLAUDE.md`.
+
 ## Goal
 
 Finalize Plainsight as a senior React / Next.js portfolio project without adding
@@ -113,8 +123,10 @@ human-directed:
   implementation stages.
 - Some implementation residue remains, including at least one stray
   `console.log`.
-- Some public exports are broader than the documented "feature barrel exports
-  components only" rule.
+- ~~Some public exports are broader than the documented "feature barrel exports
+  components only" rule.~~ Resolved: the rule was changed — the barrel is now a
+  feature's full public API (components, hooks, utils, types), so the broad
+  state-hook barrel is intentional and compliant.
 - Accessibility semantics should stay tied to the UI's real behavior. The lens
   control is now a segmented mode switch, not detached tabs.
 
@@ -185,10 +197,11 @@ Preferred direction:
 The broad shape is correct:
 
 - `app/(scene)/layout.tsx` owns persistent providers and `MapView`.
-- `app/(scene)/[city]/page.tsx` resolves city metadata and renders `CityScene`.
-- `CityScene` creates a promise for city framing and passes it to the client URL
+- `app/(scene)/[city]/page.tsx` resolves city metadata and renders `SceneView`.
+- `SceneView` creates a promise for city framing and passes it to the client URL
   seeding island.
-- Data still flows through server loaders and route handlers.
+- Small server-facing tiers flow through server loaders; immutable browser tiers
+  are fetched directly from the configured public asset origin.
 
 Risks / cleanup targets:
 
@@ -213,24 +226,24 @@ Cleanup targets:
 - Keep presentational UI separated from stateful controllers where it already
   exists, e.g. `FilterPanel` and `FilterPanelUi`.
 - Avoid over-generalizing leaf components used once.
-- Check if repeated room labels belong in one shared module instead of duplicated
-  records.
+- ~~Check if repeated room labels belong in one shared module instead of
+  duplicated records.~~ Done. Five scattered room-type maps (three byte-identical
+  short-label records in `browse-panel`, `filter-panel-ui`, `room-mix-bar`; the
+  long-label + dot pairing in `browse/room-display` and `points-legend`) are
+  collapsed into one `components/scene/room-display.ts` module exposing
+  `{ short, long, dot }` per `RoomType`. The map circle layer's hex ramp
+  (`map/layers/points/styles.ts`) stays separate — MapLibre can't read the
+  Tailwind tokens. Labels are unchanged per call site, so no behaviour change.
 
 ### 6. Hook and selector surface
 
-The app has useful narrow hooks, but the state barrel currently exports all hook
-modules with `export *`.
-
-Question:
-
-- Should `components/scene/state/index.ts` remain a convenience state barrel, or
-  should it explicitly export only the public hooks used outside the state folder?
-
-Preferred direction:
-
-- Do not over-tighten if it creates churn.
-- At minimum, align the file with the documented public API rule or update the
-  rule to acknowledge that state hooks are a deliberate exception.
+Status: resolved. The state barrel exports its hook modules with `export *`
+(`SceneProvider` plus the four `use-*` machine hooks). The `CLAUDE.md` rule was
+changed so a barrel is a feature's full public API — components, hooks, utils,
+and types — rather than components only. With XState the hooks _are_ the public
+surface, so the broad export is intentional and compliant. The machine guts
+(`rootMachine`, `setup()`, actions, actor definitions) stay unexported, so no
+internals leak.
 
 ### 7. Accessibility decisions
 
@@ -292,10 +305,17 @@ Applied dictionary:
 
 ### Step 2: Low-risk residue cleanup
 
-- Remove stray `console.log`.
-- Remove stale "not yet connected" comment.
-- Replace old `SceneStoreSync` reference.
-- Remove spec/task IDs from comments in `data/`, `lib/`, and components.
+Status: complete. A full sweep (`console.`, `TODO`/`FIXME`, `E#-S#`, `FR-###`,
+old names, "not yet connected") finds no remaining source residue — the only
+matches are inside `data/cities/*.geojson` listing names (London postcodes like
+`E14`, "HACKNEY"), which are real data, not code. The last two stray IDs
+(`E6-S5` in `lib/filters/sort.ts`, `FR-007` in `lib/hex/aggregate.ts`) are
+removed in the working tree.
+
+- ~~Remove stray `console.log`.~~ done
+- ~~Remove stale "not yet connected" comment.~~ done
+- ~~Replace old `SceneStoreSync` reference.~~ done
+- ~~Remove spec/task IDs from comments in `data/`, `lib/`, and components.~~ done
 
 ### Step 3: Naming pass
 
@@ -305,9 +325,9 @@ Applied dictionary:
 
 ### Step 4: Public API / barrel pass
 
-- Review `components/scene/state/index.ts`.
-- Decide whether broad state-hook exports are intentional.
-- Align comments and imports with the decision.
+Status: resolved. See Finding 6 — the `CLAUDE.md` barrel rule now treats a
+barrel as a feature's full public API, so the broad state-hook exports are
+intentional and compliant. No code change needed; the guidance is the change.
 
 ### Step 5: Accessibility semantics decision
 
@@ -338,5 +358,6 @@ after the app is green.
    `analysis` while UI keeps `Analyse`?
 3. Is `lens` the right product word, or should code move toward `mode` / `view`?
 4. Are the lens controls tabs, or are they a segmented mode switch?
-5. Should state hooks be exported through a broad state barrel, or should each
-   public hook be explicitly named?
+5. ~~Should state hooks be exported through a broad state barrel, or should each
+   public hook be explicitly named?~~ Resolved: broad barrel. The `CLAUDE.md`
+   rule now makes the barrel a feature's full public API.

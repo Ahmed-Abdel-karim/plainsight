@@ -1,5 +1,11 @@
 Plainsight — Module Architecture (AI implementation guide)
 
+> ⚠️ **SUPERSEDED — do not follow as current guidance.** This describes the old
+> `components/scene/` four-layer model and the "defer `features/`" decision —
+> both reversed. The app is now feature-based (`features/scene`, `features/home`;
+> `components/` is shared UI only) on the XState actor system, not Zustand.
+> Current rules live in `CLAUDE.md` and `_docs/`. Kept for history only.
+
 Companion to Constitution **Principle VI — Layered Feature Architecture** and the
 **Project Rules → Module Boundaries** section. The constitution states the obligations; this
 doc explains the model, shows the tree, and gives the rationale. When the two disagree, the
@@ -21,7 +27,10 @@ lib/         shared kernel — pure / framework-light: geo, filters, the listing
 `components/` → may import `data/`, `lib/`, and `components/ui/`. A feature MAY import shared
 UI; it MUST NOT import another sibling feature, and MUST NOT import `app/`.
 `data/` → may import `lib/` (types/pure helpers). MUST NOT import `components/`, `app/`.
-`lib/` → imports nothing from `data/`, `components/`, or `app/`. It is the bottom.
+`lib/` → may model against the **domain kernel** — the type-only shared vocabulary in
+`data/contract.ts` + `data/types.ts` (shapes and pure policy constants), which sits logically
+below `lib`; the `data/` prefix is storage co-location, not an IO edge. `lib/` MUST NOT import
+`data/` **runtime** (loaders/repository/selectors), `components/`, or `app/`.
 
 ## Target tree
 
@@ -38,7 +47,7 @@ components/
   city-picker/                    # domain: choose a city (home)
   home/                           # home view shell
   scene/                          # ★ THE feature — self-contained
-    city-scene.tsx  market-panel-content.tsx  scene-drawer.tsx  city-switcher.tsx
+    scene-view.tsx  market-panel-content.tsx  scene-drawer.tsx  city-switcher.tsx
     listing-count.tsx  market-header.tsx  map-legend.tsx
     use-city-listings.ts          #   the feature's client hook (NOT in lib/)
     analysis/                     #   sub-slice: kpis, charts, filters, use-filters

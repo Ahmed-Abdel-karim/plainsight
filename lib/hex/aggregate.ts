@@ -20,7 +20,7 @@ export interface HexInput {
  * Aggregate listings into hex cells at `resolution`. Each row's baked res-8 cell
  * is truncated to the active resolution with `cellToParent`, then grouped to
  * `{ count, medianPrice }`. Rows without an `h3` are skipped; cells with no
- * listings are simply absent (FR-007 — empty, not filled).
+ * listings are simply absent — empty, not filled.
  */
 export function aggregateHexes(
   listings: readonly HexInput[],
