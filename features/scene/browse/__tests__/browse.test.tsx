@@ -4,7 +4,7 @@ import { axe } from "vitest-axe";
 // next/image → plain <img> for jsdom (list cover + detail gallery).
 vi.mock("next/image", () => import("@/test/mocks/next-image"));
 
-import { screen } from "@/test/render";
+import { screen, waitFor } from "@/test/render";
 
 import {
   findDetailDrawer,
@@ -125,6 +125,49 @@ describe("browse region", () => {
       expect(detail.queryByText(/availability|\b365\b/i)).toBeNull();
     },
   );
+
+  // The row is a native <button>, so the keyboard opens the drawer the same way a
+  // click does. Focus-trap/focus-return across the portal is a real-browser
+  // concern (jsdom doesn't run vaul's FocusScope), so it lives in E2E, not here.
+  it.each(["{Enter}", "[Space]"])(
+    "opens the detail drawer when a row is activated with %s",
+    async (key) => {
+      const scene = setupBrowse();
+      scene.navigateToCity();
+
+      const card = await findListingButton(/Bright loft/i);
+      card.focus();
+      await scene.user.keyboard(key);
+
+      expect(card).toHaveAttribute("aria-pressed", "true");
+      expect(await findDetailDrawer()).toBeInTheDocument();
+    },
+  );
+
+  it("clears the selection when the detail drawer is dismissed with Escape", async () => {
+    const scene = setupBrowse();
+    scene.navigateToCity();
+
+    const card = await findListingButton(/Bright loft/i);
+    await scene.user.click(card);
+    await findDetailDrawer();
+
+    await scene.user.keyboard("{Escape}");
+    // vaul keeps the closed node mounted in jsdom (no animation-end to unmount),
+    // so assert the user-visible effect: the row is no longer pressed.
+    await waitFor(() => expect(card).toHaveAttribute("aria-pressed", "false"));
+  });
+
+  it("has no axe violations with the detail drawer open", async () => {
+    const scene = setupBrowse();
+    scene.navigateToCity();
+
+    const card = await findListingButton(/Bright loft/i);
+    await scene.user.click(card);
+    await findDetailDrawer();
+
+    expect(await axe(scene.container)).toHaveNoViolations();
+  });
 
   it("shows the Sort control reflecting the default option", async () => {
     const scene = setupBrowse();
