@@ -1,0 +1,3 @@
+pnpm lint:strict
+pnpm exec tsc --noEmit
+pnpm test

@@ -73,14 +73,16 @@ const eslintConfig = defineConfig([
                 "lib/ is the bottom layer — it must not import app/, components/, or features/.",
             },
             {
-              // lib/ stays free of data's runtime (loaders/repository/selectors),
-              // but the type-only data/contract + data/types are the shared domain
-              // vocabulary the kernel is allowed to model against.
+              // data/contract.ts + data/types.ts ARE the shared domain kernel —
+              // the type-only vocabulary lib's pure computation models against.
+              // They sit logically below lib; the `data/` prefix is storage
+              // co-location, not an IO dependency. Only data's runtime
+              // (loaders/repository/selectors) is the IO layer lib must not reach.
               target: "./lib",
               from: "./data",
               except: ["./contract.ts", "./types.ts"],
               message:
-                "lib/ must not import data/ runtime (loaders/repository/selectors); only the type-only data/contract + data/types are allowed.",
+                "lib/ may model against the data/contract + data/types domain kernel, but must not import data/ runtime (loaders/repository/selectors).",
             },
             {
               target: "./data",
@@ -98,6 +100,13 @@ const eslintConfig = defineConfig([
               target: "./features",
               from: ["./app"],
               message: "features/ must not import app/.",
+            },
+            {
+              target: "./app",
+              from: "./features",
+              except: ["./home/index.ts", "./scene/index.ts"],
+              message:
+                "app/ must import features through their root public API.",
             },
             {
               target: "./features/home",
