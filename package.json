@@ -19,7 +19,7 @@
     "prepare": "husky || true"
   },
   "engines": {
-    "node": "22.x"
+    "node": "24.x"
   },
   "dependencies": {
     "@mapgrab/map-interface": "^1.0.2",
