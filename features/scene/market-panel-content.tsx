@@ -68,18 +68,17 @@ export function MarketPanelContent({
         <p className="max-w-sm type-caption text-muted-foreground">{frame}</p>
         <div
           className="flex items-center gap-snug type-caption-mono text-muted-foreground"
-          aria-label={`Data snapshot, ${snapshot}`}
+          aria-label={`Data snapshot, Inside Airbnb, ${snapshot}`}
         >
           <span
             className="size-snug rounded-full bg-muted-foreground"
             aria-hidden="true"
           />
-          Data: {snapshot}
+          Data: Inside Airbnb · {snapshot}
         </div>
       </header>
       <div className="flex min-h-0 flex-1 flex-col gap-stack">
         <FilterPanel cityMeta={cityMeta} />
-
         <Suspense fallback={<AnalysisCardsSkeleton />}>
           <LensActivity
             analysis={

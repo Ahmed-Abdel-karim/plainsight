@@ -1,6 +1,6 @@
 "use client";
 
-import { XIcon } from "lucide-react";
+import { Cross2Icon } from "@radix-ui/react-icons";
 import { useEffect, useMemo, useState } from "react";
 
 import {
@@ -88,7 +88,7 @@ export function ListingDetail() {
               aria-label="Close listing details"
               className="absolute top-3 right-3 z-10 flex size-7 items-center justify-center rounded-md bg-muted/80 text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:outline-none"
             >
-              <XIcon className="size-4" />
+              <Cross2Icon className="size-4" />
             </DrawerClose>
 
             <ListingGallery listing={listing} />

@@ -1,4 +1,4 @@
-import { ChevronRight } from "lucide-react";
+import { ChevronRightIcon } from "@radix-ui/react-icons";
 import Image from "next/image";
 
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -31,7 +31,7 @@ export function CityCard({ city }: { city: CityData }) {
                   {city.country}
                 </p>
               </div>
-              <ChevronRight
+              <ChevronRightIcon
                 className="mt-0.5 size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-foreground"
                 aria-hidden="true"
               />

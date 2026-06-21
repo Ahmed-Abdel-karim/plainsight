@@ -44,7 +44,15 @@ export function PointsLayers({ visible }: { visible: boolean }) {
   const data = suppressed ? EMPTY_COLLECTION : collection;
   if (!data) return;
   return (
-    <Source id={POINTS_SOURCE_ID} type="geojson" data={data} promoteId="id">
+    <Source
+      id={POINTS_SOURCE_ID}
+      type="geojson"
+      data={data}
+      promoteId="id"
+      attribution={
+        city ? `Inside Airbnb Date: ${city.snapshotLabel.trim()}` : undefined
+      }
+    >
       <MapLayer
         getLayerStyles={getCircleLayer}
         visible={visible}

@@ -66,7 +66,14 @@ export function HexLayers() {
   return (
     <>
       <HexInspect />
-      <Source id={HEX_SOURCE_ID} type="geojson" data={data}>
+      <Source
+        id={HEX_SOURCE_ID}
+        type="geojson"
+        data={data}
+        attribution={
+          city ? `Inside Airbnb Date: ${city.snapshotLabel.trim()}` : undefined
+        }
+      >
         <MapLayer
           getLayerStyles={getHexLayerStyles}
           visible={visible}

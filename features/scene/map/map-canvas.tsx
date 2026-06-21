@@ -12,7 +12,7 @@ import {
 } from "react-map-gl/maplibre";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useDebouncedCallback } from "use-debounce";
-import { Loader2 } from "lucide-react";
+import { ReloadIcon } from "@radix-ui/react-icons";
 
 import { toBounds } from "@/lib/geo";
 import { zoomToResolution } from "@/lib/hex/resolution";
@@ -155,7 +155,7 @@ export function MapCanvas() {
           aria-label={`Loading ${city.cityName}`}
           className="absolute inset-0 z-20 flex items-center justify-center bg-black opacity-50 backdrop-blur-sm dark:bg-white"
         >
-          <Loader2
+          <ReloadIcon
             aria-hidden
             className="size-6 animate-spin text-muted-foreground"
           />
