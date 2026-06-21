@@ -46,6 +46,13 @@ export function useReportMapMounted() {
   );
 }
 
+/** Drops the map ref when the canvas is torn down, so the session-persistent
+ *  actor never operates on a removed MapLibre instance. */
+export function useReportMapUnmounted() {
+  const send = useMapSend();
+  return useCallback(() => send({ type: "MAP.UNMOUNTED" }), [send]);
+}
+
 export function useReportMapReady() {
   const send = useMapSend();
   return useCallback(() => send({ type: "MAP.READY" }), [send]);

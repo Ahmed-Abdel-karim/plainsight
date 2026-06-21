@@ -32,6 +32,10 @@ export interface MapMounted {
   readonly type: "MAP.MOUNTED";
   readonly mapRef: MapRef;
 }
+/** The canvas was torn down (`map.remove()` ran) — drop the now-dead ref. */
+export interface MapUnmounted {
+  readonly type: "MAP.UNMOUNTED";
+}
 export interface MapReady {
   readonly type: "MAP.READY";
 }
@@ -84,6 +88,7 @@ export interface CityFailed {
 export type Events =
   | Init
   | MapMounted
+  | MapUnmounted
   | MapReady
   | MapError
   | MapSourceLoaded

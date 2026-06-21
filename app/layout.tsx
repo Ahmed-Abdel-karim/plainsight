@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Toaster } from "@/components/ui/sonner";
+import { QueryProvider } from "@/components/query/query-provider";
+import { SceneProvider } from "@/features/scene";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -48,7 +50,9 @@ export default function RootLayout({
           enableSystem={false}
         >
           <ThemeToggle />
-          {children}
+          <QueryProvider>
+            <SceneProvider>{children}</SceneProvider>
+          </QueryProvider>
           <Toaster />
         </ThemeProvider>
       </body>

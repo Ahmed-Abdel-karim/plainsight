@@ -27,42 +27,55 @@ export interface TransportInput {
 
 /**
  * The raw `postMessage` pipe — the only imperative escape hatch in the worker
- * stack. It owns nothing but the wire: on start it spawns the worker (but loads
- * nothing until told). It forwards every worker reply up **uninterpreted** (the
- * machine decides what they mean and runs the coalescing `settle`), and posts the
- * `load` / process requests the machine hands it. It terminates the worker on stop.
+ * stack. It owns nothing but the wire: it forwards every worker reply up
+ * **uninterpreted** (the machine decides what they mean and runs the coalescing
+ * `settle`), and posts the `load` / process requests the machine hands it. It
+ * terminates the worker on stop.
+ *
+ * The worker thread is created **lazily on the first command**, not on start: the
+ * worker actor is session-lifetime and now mounts on the home page too (the scene
+ * providers live in the root layout), but only the city machine ever sends a
+ * command, so `/` never pays for a `new Worker()` or its bundle.
  */
 export const transportActor = fromCallback<TransportCommand, TransportInput>(
   ({ input, sendBack, receive }) => {
-    const worker = (input.createWorker ?? createListingsWorker)();
+    let worker: Worker | undefined;
 
-    worker.addEventListener(
-      "message",
-      ({ data }: MessageEvent<ResponseMessage>) => {
-        if (data.payload.type === "load") {
-          sendBack({
-            type: "TRANSPORT.LOAD_REPLY",
-            message: data as LoadDataResponseMessage,
-          });
-        } else {
-          sendBack({
-            type: "TRANSPORT.PROCESS_REPLY",
-            message: data as ProcessResponseMessage,
-          });
-        }
-      },
-    );
+    const getWorker = () => {
+      if (worker) return worker;
+      worker = (input.createWorker ?? createListingsWorker)();
 
-    worker.addEventListener("error", (event: ErrorEvent) => {
-      sendBack({
-        type: "TRANSPORT.WORKER_ERROR",
-        error: new Error(event.message || "worker error"),
+      worker.addEventListener(
+        "message",
+        ({ data }: MessageEvent<ResponseMessage>) => {
+          if (data.payload.type === "load") {
+            sendBack({
+              type: "TRANSPORT.LOAD_REPLY",
+              message: data as LoadDataResponseMessage,
+            });
+          } else {
+            sendBack({
+              type: "TRANSPORT.PROCESS_REPLY",
+              message: data as ProcessResponseMessage,
+            });
+          }
+        },
+      );
+
+      worker.addEventListener("error", (event: ErrorEvent) => {
+        sendBack({
+          type: "TRANSPORT.WORKER_ERROR",
+          error: new Error(event.message || "worker error"),
+        });
       });
-    });
+
+      return worker;
+    };
 
     receive((event) => {
+      const w = getWorker();
       if (event.type === "LOAD") {
-        worker.postMessage({
+        w.postMessage({
           type: "load",
           payload: {
             slug: event.slug,
@@ -71,10 +84,10 @@ export const transportActor = fromCallback<TransportCommand, TransportInput>(
           },
         } satisfies RequestMessage);
       } else {
-        worker.postMessage(event.message);
+        w.postMessage(event.message);
       }
     });
 
-    return () => worker.terminate();
+    return () => worker?.terminate();
   },
 );

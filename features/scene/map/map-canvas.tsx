@@ -34,6 +34,7 @@ import {
   useMapIsSuppressed,
   useReportMapError,
   useReportMapLoaded,
+  useReportMapUnmounted,
   useReportSourceLoaded,
 } from "../state";
 import { useLens } from "../shared/use-lens";
@@ -48,6 +49,7 @@ export function MapCanvas() {
   const reportMapLoaded = useReportMapLoaded();
   const changeMapResolution = useChangeMapResolution();
   const reportSourceLoaded = useReportSourceLoaded();
+  const reportMapUnmounted = useReportMapUnmounted();
   const fitMapBounds = useFitMapBounds();
   const reportMapError = useReportMapError();
   const isError = useMapIsError();
@@ -93,6 +95,8 @@ export function MapCanvas() {
     if (!city) return;
     fitMapBounds(city.bbox);
   }, [city, fitMapBounds]);
+
+  useEffect(() => reportMapUnmounted, [reportMapUnmounted]);
 
   if (!city || !bounds) return <MapSkeleton />;
 

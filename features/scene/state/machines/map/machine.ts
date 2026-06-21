@@ -20,7 +20,14 @@ const MAX_BOUNDS_PADDING_RATIO = 0.3;
 
 // --- private helpers (map-specific MapLibre utilities) ---
 
-const getMap = (context: Context.Context) => context.mapRef?.getMap();
+// A removed MapLibre instance still answers method calls but throws *inside*
+// them (its `style` is gone), so the `?.` guard at call sites isn't enough — the
+// ref is non-null, just dead. `_removed` is MapLibre's teardown flag; treat a
+// removed map as absent so every call site no-ops instead of crashing.
+const getMap = (context: Context.Context) => {
+  const map = context.mapRef?.getMap();
+  return map && !(map as { _removed?: boolean })._removed ? map : undefined;
+};
 
 const applyBounds = (map: MaplibreMap, bbox: BBox) => {
   map.fitBounds(toBounds(bbox), { animate: false, zoom: 2 });
@@ -88,6 +95,10 @@ export const mapMachine = setup({
       mapRef: ({ event }) =>
         event.type === "MAP.MOUNTED" ? event.mapRef : null,
     }),
+    // Canvas torn down (e.g. leaving the scene for the home picker): the actor
+    // outlives the MapLibre instance, so forget the dead ref and the sources it
+    // had loaded — a fresh mount re-reports both.
+    clearMapRef: assign({ mapRef: null, loadedSources: {} }),
     markSourceLoaded: assign({
       loadedSources: ({ context, event }) =>
         event.type === "MAP.SOURCE_LOADED"
@@ -189,6 +200,10 @@ export const mapMachine = setup({
   on: {
     // Mount can arrive in any state; capture the ref then proceed.
     "MAP.MOUNTED": { actions: "captureMapRef" },
+    // Unmount can also arrive in any state. Drop the dead ref and restart the
+    // lifecycle so the next mount re-runs MAP.MOUNTED → MAP.READY and
+    // `applyCurrentStateToMap` re-syncs selection/hover onto the new instance.
+    "MAP.UNMOUNTED": { target: ".loading", actions: "clearMapRef" },
   },
   states: {
     loading: {
