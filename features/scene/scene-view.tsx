@@ -1,10 +1,11 @@
 import { Skeleton } from "@/components/ui/skeleton";
-import { getCityNeighbourhoodCount } from "@/data";
+import { getCityScopeCounts } from "@/data";
 import type { CityMeta } from "@/data/contract";
 import type { Scope } from "@/data/types";
 import { ListingCount } from "./listing-count";
 import { ListingDetail } from "./browse";
 import { SceneDrawer } from "./scene-drawer";
+import { ScenePanels } from "./scene-panels";
 import { MarketPanelContent } from "./market-panel-content";
 import { LensSwitcher } from "./lens-switcher";
 import { HexLegend } from "./map/layers/hex";
@@ -35,39 +36,41 @@ export function SceneView({
   scope: Scope;
   cityMeta: CityMeta;
 }) {
-  // Cheap framing promise: everything but the neighbourhood count comes straight
-  // off the already-read meta; the count is the one extra (cached) read. Built
+  // Cheap framing promise: everything but the scope counts comes straight off
+  // the already-read meta; the counts are one extra (cached) cube read. Built
   // here (server) and passed unresolved so the client provider can `use()` it.
-  const cityPromise: Promise<MapCityPayload> = getCityNeighbourhoodCount(
+  const cityPromise: Promise<MapCityPayload> = getCityScopeCounts(
     cityMeta.slug,
-  ).then((neighbourhoodCount) => ({
+  ).then((counts) => ({
     ...cityMeta,
     cityName: cityMeta.name,
-    neighbourhoodCount,
+    ...counts,
   }));
 
   return (
     <>
       <SceneUrlLoader cityPromise={cityPromise} />
       <UrlWriteSync />
-      <aside
-        aria-label="Market analysis"
-        className="@container hidden w-full flex-col gap-section overflow-y-auto border-r border-border bg-card px-section pt-section pb-gutter lg:flex lg:h-screen lg:min-h-0"
-      >
-        <MarketPanelContent cityMeta={cityMeta} scope={scope} />
-      </aside>
-      <SceneDrawer
-        cityName={cityMeta.name}
-        triggerCount={
-          <ListingCount
-            citySlug={cityMeta.slug}
-            scope={scope}
-            fallback={<Skeleton className="h-3 w-16" />}
-          />
+      <ScenePanels
+        aside={
+          <aside
+            aria-label="Market analysis"
+            className="@container hidden w-full flex-col gap-section overflow-y-auto border-r border-border bg-card px-section pt-section pb-gutter lg:flex lg:h-screen lg:min-h-0"
+          >
+            <MarketPanelContent cityMeta={cityMeta} scope={scope} />
+          </aside>
         }
-      >
-        <MarketPanelContent cityMeta={cityMeta} scope={scope} />
-      </SceneDrawer>
+        drawer={
+          <SceneDrawer
+            cityName={cityMeta.name}
+            triggerCount={
+              <ListingCount fallback={<Skeleton className="h-3 w-16" />} />
+            }
+          >
+            <MarketPanelContent cityMeta={cityMeta} scope={scope} />
+          </SceneDrawer>
+        }
+      />
       <div className="pointer-events-none absolute inset-0 z-10 lg:left-108">
         <div className="absolute top-16 left-1/2 -translate-x-1/2 lg:top-4">
           <LensSwitcher />

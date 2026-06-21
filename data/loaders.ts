@@ -42,15 +42,42 @@ export async function getCityMeta(slug: string): Promise<CityMeta | null> {
     : Promise.resolve(null);
 }
 
-/** Neighbourhood count for the scope label — facade over the port's list. */
-export async function getCityNeighbourhoodCount(slug: string): Promise<number> {
+/**
+ * Scope listing totals that frame the client header/trigger: the city-wide
+ * count, the neighbourhood count for the scope label, and an unfiltered
+ * per-neighbourhood total map so a client neighbourhood selection updates the
+ * header without a server round trip. All read from the already-cached cube.
+ */
+export async function getCityScopeCounts(slug: string): Promise<{
+  cityListingCount: number;
+  neighbourhoodCount: number;
+  neighbourhoodListingCounts: Record<string, number>;
+}> {
   const city = await getActiveCity(slug);
-  if (!city) return 0;
-  const neighbourhoods = await getRepository().getNeighbourhoods(
-    slug,
-    city.snapshotId,
-  );
-  return neighbourhoods.length;
+  if (!city) {
+    return {
+      cityListingCount: 0,
+      neighbourhoodCount: 0,
+      neighbourhoodListingCounts: {},
+    };
+  }
+
+  const repo = getRepository();
+  const [neighbourhoods, cityAggregates] = await Promise.all([
+    repo.getNeighbourhoods(slug, city.snapshotId),
+    repo.getScopeAggregates(slug, city.snapshotId, { type: "city" }),
+  ]);
+
+  const neighbourhoodListingCounts: Record<string, number> = {};
+  for (const nb of neighbourhoods) {
+    neighbourhoodListingCounts[nb.id] = nb.listingCount;
+  }
+
+  return {
+    cityListingCount: cityAggregates?.listingCount ?? 0,
+    neighbourhoodCount: neighbourhoods.length,
+    neighbourhoodListingCounts,
+  };
 }
 
 export type ScopeType = Scope["type"];

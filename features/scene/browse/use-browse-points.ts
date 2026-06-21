@@ -25,7 +25,7 @@ import type {
   BrowsePointProperties,
 } from "@/data/contract";
 import type { ListingFilters, Scope, SortKey } from "@/data/types";
-import { filterListings, sortListings } from "@/lib/filters";
+import { projectList } from "@/lib/listings/projection";
 
 import { browsePointsQueryOptions } from "../shared/browse-points-query";
 
@@ -65,10 +65,15 @@ export function useBrowsePoints(
 }
 
 /**
- * The filtered + sorted list rows for the active scope, filters, and sort key.
- * Memoised: features → scope narrow → `filterListings` (price/room) →
- * `sortListings` (the shared comparator). Recomputes only when one of those
- * changes — ~30–60 ms over London's ~62k listings in local profiling.
+ * The filtered + sorted list rows for the active scope, filters, and sort key —
+ * the same `projectList` the worker uses for Analyse, run live here over the
+ * Browse points tier (`BrowsePointProperties`, a structural subset of `Listing`).
+ * One projection backs both paths, so the list and the map dots can never
+ * disagree with Analyse on what "the active set" is. Memoised; recomputes only
+ * when scope/filters/sort change — ~30–60 ms over London's ~62k rows locally.
+ *
+ * `projectList` is the only import pulled from the projection module, so the
+ * worker's hex/aggregate code tree-shakes out of the Browse chunk.
  */
 export function useBrowseListings(
   collection: BrowseCollection | null,
@@ -76,18 +81,11 @@ export function useBrowseListings(
   filters: ListingFilters,
   sort: SortKey,
 ): BrowsePointProperties[] {
-  const scopeId = scope.type === "neighbourhood" ? scope.id : null;
   return useMemo(() => {
     if (!collection) return [];
     const rows = collection.features.map(
       (feature: BrowsePoint) => feature.properties,
     );
-    // Scope narrow — the live twin of `scopeListings` (a single equality, kept
-    // inline so the Browse chunk doesn't pull the worker's hex aggregation).
-    const scoped =
-      scopeId === null
-        ? rows
-        : rows.filter((row) => row.neighbourhoodId === scopeId);
-    return sortListings(filterListings(scoped, filters), sort);
-  }, [collection, scopeId, filters, sort]);
+    return projectList(rows, { scope, filters }, sort);
+  }, [collection, scope, filters, sort]);
 }

@@ -23,6 +23,8 @@ export function makeMapCityPayload(
     bbox: [-0.51, 51.28, 0.33, 51.69],
     center: [-0.12, 51.5],
     neighbourhoodCount: 1,
+    cityListingCount: 3,
+    neighbourhoodListingCounts: { centre: 2 },
     priceScale: { breaks: [50, 100, 150, 200], min: 10, max: 500 },
     priceCap: 450,
     currency: "GBP",

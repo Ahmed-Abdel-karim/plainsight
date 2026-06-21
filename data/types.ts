@@ -42,6 +42,11 @@ export interface MapCityPayload {
   bbox: BBox;
   center: LngLat;
   neighbourhoodCount: number;
+  /** Unfiltered city-wide listing total — the city-scope header count. */
+  cityListingCount: number;
+  /** Unfiltered listing total per neighbourhood id, so the client header/trigger
+   *  follows a neighbourhood selection without a server round trip. */
+  neighbourhoodListingCounts: Record<string, number>;
   priceScale: PriceScale;
   priceCap: number;
   currency: string;

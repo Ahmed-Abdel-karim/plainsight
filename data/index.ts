@@ -16,7 +16,7 @@ export type { CityRepository } from "./repository";
 export {
   getCitiesData,
   getCityMeta,
-  getCityNeighbourhoodCount,
+  getCityScopeCounts,
   getScopeAggregates,
   getScopeListingCount,
   unavailableAggregates,

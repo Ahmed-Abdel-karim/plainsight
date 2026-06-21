@@ -59,8 +59,6 @@ export function MarketPanelContent({
             className="font-mono text-foreground tabular-nums"
           >
             <ListingCount
-              citySlug={citySlug}
-              scope={scope}
               fallback={
                 <Skeleton className="inline-block h-4 w-20 align-middle" />
               }

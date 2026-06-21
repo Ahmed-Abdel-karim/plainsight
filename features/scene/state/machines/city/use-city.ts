@@ -11,6 +11,7 @@ import {
   resolveFilters,
   resolvePriceRange,
 } from "@/lib/filters/normalize";
+import { isDefaultView } from "@/lib/listings/query";
 
 import { SceneActorContext } from "../../provider";
 import type { CityMachineActor } from "./machine";
@@ -91,6 +92,20 @@ export const useNbhd = createCitySelector(
   (s) => s?.context.filter.nbhd ?? null,
 );
 
+/** The active scope's unfiltered listing total, selected from the city actor's
+ *  server-seeded framing: the per-neighbourhood total, falling back to the
+ *  city-wide total when city-scoped (or a neighbourhood id is missing). `null`
+ *  until framing is seeded. Mirrors `selectScopeAggregates`'s neighbourhood-or-
+ *  city selection, applied to the count cube. */
+export const useScopeListingCount = createCitySelector((s) => {
+  const framing = s?.context.framing;
+  if (!framing) return null;
+  const nbhd = s.context.filter.nbhd;
+  return nbhd === null
+    ? framing.cityListingCount
+    : (framing.neighbourhoodListingCounts[nbhd] ?? framing.cityListingCount);
+});
+
 export const usePriceBounds = createCitySelector(
   (s) => priceBounds(s?.context.framing ?? null),
   shallowEqual,
@@ -123,6 +138,16 @@ export const useDisplayFilters = createCitySelector((s): ListingFilters => {
 export const useIsDefaultFilter = createCitySelector((s) =>
   isDefaultFilters(
     s?.context.filter ?? { roomTypes: [], priceRange: null },
+    priceBounds(s?.context.framing ?? null),
+  ),
+);
+
+/** True when the active view is the city-wide default — no neighbourhood and
+ *  default room/price filters. This is the projection the server pre-bakes, so a
+ *  consumer can show the server default instead of waiting on a live recompute. */
+export const useIsDefaultView = createCitySelector((s) =>
+  isDefaultView(
+    s?.context.filter ?? { roomTypes: [], priceRange: null, nbhd: null },
     priceBounds(s?.context.framing ?? null),
   ),
 );

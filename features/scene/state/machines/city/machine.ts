@@ -19,7 +19,9 @@ import {
   resolveFilters,
 } from "@/lib/filters/normalize";
 import type { HexCell, HexResolution } from "@/lib/hex/types";
-import { scopeFromNbhd, type Lens } from "@/lib/search-params";
+import type { ListingQuery } from "@/lib/listings/projection";
+import { queryKey, resolveQuery } from "@/lib/listings/query";
+import { type Lens } from "@/lib/search-params";
 
 import { SystemId } from "../constants";
 import type { UiMachineActor } from "../ui/machine";
@@ -34,28 +36,23 @@ import type * as Input from "./input";
 const toWorker = ({ system }: { system: { get: (id: string) => unknown } }) =>
   system.get(SystemId.WORKER) as WorkerMachineRef;
 
-/** Signature of the inputs an aggregates request depends on (resolved filters +
- *  scope). Built from explicit, order-stable fields — `roomTypes` is sorted so a
- *  reordered-but-equal selection still matches. Used to skip a redundant
- *  recompute when nothing changed. */
-const aggregatesRequestKey = (context: Context.Context) => {
-  const filters = resolveFilters(context.filter, priceBounds(context.framing));
-  return JSON.stringify({
-    scope: scopeFromNbhd(context.filter.nbhd),
-    roomTypes: [...filters.roomTypes].sort(),
-    priceRange: filters.priceRange,
-  });
-};
+/** The city's current selection resolved into a `{ scope, filters }` query — the
+ *  single input the worker aggregates request and its dedupe key both derive
+ *  from, so the request and the staleness check can never drift apart. */
+const cityQuery = (context: Context.Context): ListingQuery =>
+  resolveQuery(context.filter, priceBounds(context.framing));
 
-/** The worker aggregates request for the city's current scope + filters. */
-const aggregatesRequest = (context: Context.Context) =>
-  ({
+/** The worker aggregates request for the city's current query. */
+const aggregatesRequest = (context: Context.Context) => {
+  const query = cityQuery(context);
+  return {
     type: "WORKER.REQUEST_AGGREGATES",
     slug: context.framing!.slug,
     snapshotId: context.framing!.snapshotId,
-    scope: scopeFromNbhd(context.filter.nbhd),
-    filters: resolveFilters(context.filter, priceBounds(context.framing)),
-  }) as const;
+    scope: query.scope,
+    filters: query.filters,
+  } as const;
+};
 
 export const cityMachine = setup({
   types: {
@@ -168,18 +165,18 @@ export const cityMachine = setup({
     // `requestAggregatesIfStale` can later tell whether a recompute is needed.
     requestAggregates: enqueueActions(({ context, system, enqueue }) => {
       enqueue.sendTo(toWorker({ system }), aggregatesRequest(context));
-      enqueue.assign({ aggregatesFilterKey: aggregatesRequestKey(context) });
+      enqueue.assign({ aggregatesFilterKey: queryKey(cityQuery(context)) });
     }),
-    // Entry-time variant: recompute only if absent or the filter changed since
-    // (e.g. a filter set while in the browse leg, which doesn't recompute).
+    // Entry-time variant: recompute only if absent or the query changed since
+    // (e.g. a filter/scope set while in the browse leg, which doesn't recompute).
     requestAggregatesIfStale: enqueueActions(({ context, system, enqueue }) => {
       if (
         context.aggregates !== null &&
-        context.aggregatesFilterKey === aggregatesRequestKey(context)
+        context.aggregatesFilterKey === queryKey(cityQuery(context))
       )
         return;
       enqueue.sendTo(toWorker({ system }), aggregatesRequest(context));
-      enqueue.assign({ aggregatesFilterKey: aggregatesRequestKey(context) });
+      enqueue.assign({ aggregatesFilterKey: queryKey(cityQuery(context)) });
     }),
 
     markAnalyticsLoaded: assign({ analyticsLoaded: true }),
