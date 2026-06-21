@@ -70,6 +70,8 @@ export function FilterPanelUi({
           <span className="type-caption-mono text-foreground tabular-nums">
             {formatCurrency(priceRange[0], currency)} –{" "}
             {formatCurrency(priceRange[1], currency)}
+            {/* Cap is a 99th-pct UI ceiling; the top handle there means "and above". */}
+            {priceRange[1] === bounds.max ? "+" : ""}
           </span>
         </div>
         <Slider

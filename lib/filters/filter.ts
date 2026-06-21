@@ -14,7 +14,9 @@ export type FilterableListing = Pick<Listing, "roomType" | "price">;
  * Generic over the row shape.
  *
  * - `roomTypes: []` means "all types" (no room-type constraint).
- * - `priceRange` is an inclusive `[min, max]` band in the city's currency.
+ * - `priceRange` is an inclusive `[min, max]` band in the city's currency; an
+ *   `Infinity` upper bound means no cap (the slider's top handle is at the
+ *   `priceCap` ceiling — see `resolvePriceBand`).
  */
 export function filterListings<T extends FilterableListing>(
   listings: readonly T[],

@@ -63,7 +63,8 @@ export function normalizePriceRange(
     : range;
 }
 
-/** Resolve a stored (maybe-null) range to a concrete `[min, max]` band. */
+/** Resolve a stored (maybe-null) range to a concrete `[min, max]` band — for the
+ *  slider's geometry, where the handles must sit on the displayed bounds. */
 export function resolvePriceRange(
   range: [number, number] | null,
   bounds: FilterBounds,
@@ -71,17 +72,33 @@ export function resolvePriceRange(
   return range ?? [bounds.min, bounds.max];
 }
 
+/**
+ * Resolve a stored range to the inclusive band the price predicate consumes.
+ * `bounds.max` is the city's `priceCap` — a 99th-percentile UI ceiling, not a
+ * real maximum — so a top handle parked at it means "and above": resolve the
+ * upper to `Infinity` so the top ~1% is never silently dropped. `null` (full
+ * range) is likewise open at the top.
+ */
+export function resolvePriceBand(
+  range: [number, number] | null,
+  bounds: FilterBounds,
+): [number, number] {
+  if (!range) return [bounds.min, Infinity];
+  return [range[0], range[1] >= bounds.max ? Infinity : range[1]];
+}
+
 // --- combined ---
 
-/** Resolve the stored filter to the concrete `ListingFilters` the worker /
- *  predicates consume (null price → full range). */
+/** Resolve the stored filter to the `ListingFilters` the worker / predicates
+ *  consume. The price top is left open (`Infinity`) at the cap — see
+ *  `resolvePriceBand`. */
 export function resolveFilters(
   filter: StoredFilter,
   bounds: FilterBounds,
 ): ListingFilters {
   return {
     roomTypes: filter.roomTypes,
-    priceRange: resolvePriceRange(filter.priceRange, bounds),
+    priceRange: resolvePriceBand(filter.priceRange, bounds),
   };
 }
 
