@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Plainsight
 
-## Getting Started
+Explore short-term rental markets — where listings are, what they cost, and who
+controls them. Plainsight renders four cities (London, Berlin, Manchester,
+Amsterdam) on an interactive map with a market-analysis panel, all from a single
+dated public snapshot. Read-only, no tracking, no sign-up.
 
-First, run the development server:
+## Data
+
+- **Listings data:** [Inside Airbnb](https://insideairbnb.com) — dated public
+  snapshots (September 2025). Every figure traces to one immutable snapshot; no
+  estimates and no live data. Inside Airbnb data is published under
+  [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+- **Base map:** [OpenFreeMap](https://openfreemap.org), built on
+  [© OpenStreetMap](https://www.openstreetmap.org/copyright) contributors.
+- **Listing photos:** placeholder images from Unsplash, standing in for a real
+  listing-image host.
+
+## Tech
+
+Next.js 16 (App Router, Cache Components / PPR) · React 19 · TypeScript ·
+MapLibre via react-map-gl · XState v5 (scene orchestration) · TanStack Query ·
+Tailwind CSS v4 · Web Worker for off-main-thread analytics. Snapshots ship as
+immutable, versioned static assets — no database or application backend.
+
+## Getting started
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+All build-time defaults are non-secret `NEXT_PUBLIC_*` values (see `.env`):
 
-## Learn More
+- `NEXT_PUBLIC_SITE_URL` — deploy origin; sets `metadataBase` for canonical/OG
+  URLs. Defaults to `http://localhost:3000`.
+- `NEXT_PUBLIC_CITY_ASSET_BASE_URL` — origin for the immutable city tiers.
+  Defaults to the same-origin `/city-assets`; point it at a CDN/object store to
+  serve them externally.
 
-To learn more about Next.js, take a look at the following resources:
+## Scripts
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+`pnpm build` · `pnpm start` · `pnpm test` (Vitest) · `pnpm test:e2e`
+(Playwright) · `pnpm lint`

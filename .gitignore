@@ -46,3 +46,5 @@ design/
 .next.*
 playwright-report
 test-results
+# Local-only archive of removed working docs / SpecKit (untracked reference)
+.archive/
