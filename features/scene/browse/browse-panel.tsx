@@ -12,7 +12,7 @@ import {
   useHoverSource,
   useResetFilters,
   useResolvedFilters,
-  useSetHover,
+  useSetMapHover,
 } from "../state";
 import { useCityBoundaries } from "../shared/use-city-boundaries";
 import { useLens } from "../shared/use-lens";
@@ -43,7 +43,7 @@ export function BrowsePanel() {
   // A neighbourhood click on the map narrows the Browse list to that scope.
   const { scope } = useScope();
   const { selectedId, selectListing } = useLens();
-  const setHover = useSetHover();
+  const setHover = useSetMapHover();
   const hoveredId = useHoveredListingId();
   const hoverSource = useHoverSource();
 

@@ -5,7 +5,9 @@ import { createActorContext } from "@xstate/react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { makeLoadBrowsePoints } from "../shared/browse-points-query";
+import { applyMapTheme } from "../shared/map-theme";
 import { cityMachine } from "./machines/city/machine";
+import { mapMachine } from "./machines/map/machine";
 import { rootMachine } from "./machines/root/machine";
 import { makePrefetch, type SnapshotById } from "./machines/root/prefetch";
 import { RouteListener } from "./machines/navigation/route-listener";
@@ -39,6 +41,17 @@ export function SceneProvider({
           // city machine itself stays free of a data dependency.
           city: cityMachine.provide({
             actors: { ensureBrowseReady: makeLoadBrowsePoints(queryClient) },
+          }),
+          // Inject the basemap label restyle so the map machine owns the timing
+          // (MAP.STYLE_LOADED) without importing the map sub-domain's styles.
+          map: mapMachine.provide({
+            actions: {
+              applyMapTheme: ({ context, event }) => {
+                if (event.type !== "MAP.STYLE_LOADED") return;
+                const map = context.mapRef?.getMap();
+                if (map) applyMapTheme(map, event.theme);
+              },
+            },
           }),
         },
       }),

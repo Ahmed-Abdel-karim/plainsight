@@ -1,5 +1,6 @@
 import type { MapRef } from "react-map-gl/maplibre";
 
+import type { Theme } from "@/components/theme/theme-provider";
 import type { BBox } from "@/lib/geo/types";
 import type { HexResolution } from "@/lib/hex/types";
 import type { SourceId } from "@/features/scene/map/types";
@@ -43,8 +44,11 @@ export interface MapSourceLoaded {
 }
 
 // --- interactions (only honoured in interaction.interactive) ---
-export interface MapSelect {
-  readonly type: "MAP.SELECT";
+/** Mirror the `ui` selection onto the points source. Sent by `ui` whenever
+ *  `UI.SELECT` lands (the single selection action); the map owns the paint
+ *  because it owns the `MapRef`. */
+export interface MapPaintSelect {
+  readonly type: "MAP.PAINT_SELECT";
   readonly id: number | null;
 }
 export interface MapHover {
@@ -64,6 +68,12 @@ export interface MapResolutionChanged {
   readonly type: "MAP.RESOLUTION_CHANGED";
   readonly hexResolution: HexResolution;
 }
+/** MapLibre (re)loaded its style — re-apply the basemap label theming. Carries
+ *  the resolved theme because the machine has no React context. */
+export interface MapStyleLoaded {
+  readonly type: "MAP.STYLE_LOADED";
+  readonly theme: Theme;
+}
 
 // --- suppression (shared coordinator pair) ---
 export interface Suspend {
@@ -80,10 +90,11 @@ export type Events =
   | MapReady
   | MapError
   | MapSourceLoaded
-  | MapSelect
+  | MapPaintSelect
   | MapHover
   | MapFitBounds
   | MapHexInspect
   | MapResolutionChanged
+  | MapStyleLoaded
   | Suspend
   | Resume;

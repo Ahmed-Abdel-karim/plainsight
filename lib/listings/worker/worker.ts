@@ -14,7 +14,7 @@
  * Messages use the framework's `{ status, payload }` envelope; the caller routes
  * a reply by `payload.type` (`"load"` ⇒ the city fetch; otherwise a process).
  */
-import { isCancelledError, QueryClient } from "@tanstack/query-core";
+import { CancelledError, QueryClient } from "@tanstack/query-core";
 
 import type { Listing } from "@/data/contract";
 import { fetchJson } from "@/lib/fetch-json";
@@ -90,7 +90,7 @@ ctx.onmessage = async (event: MessageEvent<RequestMessage>) => {
     } catch (err) {
       // A cancelled load was abandoned on purpose — stay silent so no stale
       // FETCH_ERROR reaches the (already gone) city.
-      if (isCancelledError(err)) return;
+      if (err instanceof CancelledError) return;
       post({
         status: "error",
         slug: citySlug,

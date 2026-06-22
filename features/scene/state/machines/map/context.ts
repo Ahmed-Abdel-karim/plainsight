@@ -22,6 +22,18 @@ export interface Context {
   /** h3 resolution derived from map zoom; the worker reads it cross-actor. */
   readonly hexResolution: HexResolution;
 
+  /** The points-source feature currently painted with `{ hover: true }`. The map
+   *  owns this because it owns the `MapRef`; `MAP.HOVER` reads it to unpaint the
+   *  outgoing feature before painting the incoming one, so no whole-source clear
+   *  is needed. */
+  readonly mapHoveredListingId: number | null;
+
+  /** The points-source feature currently painted with `{ selected: true }`. The
+   *  selection itself lives on `ui` (`UI.SELECT`, the single action every surface
+   *  dispatches); the map mirrors it via `MAP.PAINT_SELECT` and keeps this id to
+   *  unpaint the outgoing feature and to repaint after a source reload. */
+  readonly mapSelectedListingId: number | null;
+
   /** Which of our sources currently hold parsed data (gates feature-state
    *  re-apply). Fed by `MAP.SOURCE_LOADED`. */
   readonly loadedSources: Partial<Record<SourceId, boolean>>;
@@ -48,6 +60,8 @@ export interface HexInspectInfo {
 export const Context: Context = {
   mapRef: null,
   hexResolution: 6,
+  mapHoveredListingId: null,
+  mapSelectedListingId: null,
   loadedSources: {},
   hexInspectInfo: null,
   pendingFitBounds: null,

@@ -37,15 +37,6 @@ export function useSelectListing() {
   );
 }
 
-export function useSetHover() {
-  const send = useUiSend();
-  return useCallback(
-    (id: number | null, source: "list" | "map") =>
-      send({ type: "UI.SET_HOVER", id, source }),
-    [send],
-  );
-}
-
 // --- state selectors ---
 
 export const useLens = createUiSelector((s) => s.context.lens);

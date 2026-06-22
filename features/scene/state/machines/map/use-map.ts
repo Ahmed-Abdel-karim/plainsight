@@ -3,6 +3,7 @@
 import { useCallback } from "react";
 import type { MapRef } from "react-map-gl/maplibre";
 
+import type { Theme } from "@/components/theme/theme-provider";
 import type { BBox } from "@/lib/geo/types";
 import type { HexResolution } from "@/lib/hex/types";
 
@@ -72,6 +73,15 @@ export function useReportSourceLoaded() {
   );
 }
 
+/** Reports a MapLibre style (re)load so the machine re-applies label theming. */
+export function useReportStyleLoaded() {
+  const send = useMapSend();
+  return useCallback(
+    (theme: Theme) => send({ type: "MAP.STYLE_LOADED", theme }),
+    [send],
+  );
+}
+
 export function useChangeMapResolution() {
   const send = useMapSend();
   return useCallback(
@@ -102,14 +112,6 @@ export function useSetMapHover() {
   return useCallback(
     (id: number | null, source: "list" | "map" | null) =>
       send({ type: "MAP.HOVER", id, source }),
-    [send],
-  );
-}
-
-export function useSelectMapFeature() {
-  const send = useMapSend();
-  return useCallback(
-    (id: number | null) => send({ type: "MAP.SELECT", id }),
     [send],
   );
 }

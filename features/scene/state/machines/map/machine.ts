@@ -105,30 +105,51 @@ export const mapMachine = setup({
     ),
     clearPendingFitBounds: assign({ pendingFitBounds: null }),
 
+    // Injected at the provider boundary (see provider.tsx); the restyle helper
+    // lives in shared/map-theme. Placeholder so the machine stays self-contained.
+    applyMapTheme: enqueueActions(() => {}),
+
     // --- side-effecting MapLibre calls ---
-    applySelect: enqueueActions(({ context, event, system, enqueue }) => {
-      assertEvent(event, "MAP.SELECT");
+    // Mirror the ui selection onto the points source: unpaint the outgoing
+    // feature (read from context), paint the incoming one, and remember it.
+    paintSelect: enqueueActions(({ context, event, enqueue }) => {
+      assertEvent(event, "MAP.PAINT_SELECT");
       const { id } = event;
       const map = getMap(context);
+      const prev = context.mapSelectedListingId;
       enqueue(() => {
         if (map?.getSource(POINTS_SOURCE_ID)) {
-          map.removeFeatureState({ source: POINTS_SOURCE_ID }, "selected");
+          if (prev !== null)
+            safeSetFeatureState(map, prev, { selected: false });
           if (id !== null) safeSetFeatureState(map, id, { selected: true });
         }
       });
-      const ui = system.get(SystemId.UI) as UiMachineActor | undefined;
-      if (ui) enqueue.sendTo(ui, { type: "UI.SELECT", id });
+      enqueue.assign({ mapSelectedListingId: id });
     }),
+    // The points source's feature-state is wiped whenever its data (re)loads;
+    // repaint the current selection once the new data is parsed.
+    reapplySelection: ({ context, event }) => {
+      assertEvent(event, "MAP.SOURCE_LOADED");
+      if (event.sourceId !== POINTS_SOURCE_ID || !event.loaded) return;
+      const map = getMap(context);
+      if (!map?.getSource(POINTS_SOURCE_ID)) return;
+      if (context.mapSelectedListingId !== null)
+        safeSetFeatureState(map, context.mapSelectedListingId, {
+          selected: true,
+        });
+    },
     applyHover: enqueueActions(({ context, event, system, enqueue }) => {
       assertEvent(event, "MAP.HOVER");
       const { id, source } = event;
       const map = getMap(context);
+      const prev = context.mapHoveredListingId;
       enqueue(() => {
         if (map?.getSource(POINTS_SOURCE_ID)) {
-          map.removeFeatureState({ source: POINTS_SOURCE_ID }, "hover");
+          if (prev !== null) safeSetFeatureState(map, prev, { hover: false });
           if (id !== null) safeSetFeatureState(map, id, { hover: true });
         }
       });
+      enqueue.assign({ mapHoveredListingId: id });
       const ui = system.get(SystemId.UI) as UiMachineActor | undefined;
       if (ui)
         enqueue.sendTo(ui, {
@@ -149,20 +170,35 @@ export const mapMachine = setup({
       if (!map?.getSource(POINTS_SOURCE_ID)) return;
       map.removeFeatureState({ source: POINTS_SOURCE_ID });
     },
+    // Whole-source clear above wiped the painted hover/selected; forget the ids
+    // so the next paint doesn't try to unpaint an already-cleared feature.
+    resetMapHover: assign({ mapHoveredListingId: null }),
+    resetMapSelect: assign({ mapSelectedListingId: null }),
     // Entry to `lifecycle.ready` — sync the imperative layer to durable truth
     // once. clearPendingFitBounds runs AFTER this in the entry array, so
     // context.pendingFitBounds is still readable here.
-    applyCurrentStateToMap: ({ context, system }) => {
+    applyCurrentStateToMap: enqueueActions(({ context, system, enqueue }) => {
       const map = getMap(context);
       if (!map) return;
-      if (context.pendingFitBounds) applyBounds(map, context.pendingFitBounds);
-      const uiCtx = system.get(SystemId.UI)?.getSnapshot()?.context;
-      if (!uiCtx || !map.getSource(POINTS_SOURCE_ID)) return;
-      if (uiCtx.selectedId !== null)
-        safeSetFeatureState(map, uiCtx.selectedId, { selected: true });
-      if (uiCtx.hoveredListing)
-        safeSetFeatureState(map, uiCtx.hoveredListing.id, { hover: true });
-    },
+      const uiCtx = (
+        system.get(SystemId.UI) as UiMachineActor | undefined
+      )?.getSnapshot()?.context;
+      enqueue(() => {
+        if (context.pendingFitBounds)
+          applyBounds(map, context.pendingFitBounds);
+        if (!uiCtx || !map.getSource(POINTS_SOURCE_ID)) return;
+        if (uiCtx.selectedId !== null)
+          safeSetFeatureState(map, uiCtx.selectedId, { selected: true });
+        if (uiCtx.hoveredListing)
+          safeSetFeatureState(map, uiCtx.hoveredListing.id, { hover: true });
+      });
+      // Keep the painted-truth ids in sync so a later paint unpaints the right
+      // feature and a source reload repaints the right selection.
+      enqueue.assign({
+        mapSelectedListingId: uiCtx?.selectedId ?? null,
+        mapHoveredListingId: uiCtx?.hoveredListing?.id ?? null,
+      });
+    }),
   },
 }).createMachine({
   id: "map",
@@ -172,6 +208,10 @@ export const mapMachine = setup({
     // Drop the dead ref and restart the lifecycle region only — interaction
     // keeps its place, so unmounting mid-nav and returning is still suspended.
     "MAP.UNMOUNTED": { target: ".lifecycle.loading", actions: "clearMapRef" },
+    // Selection is gated upstream on `ui` (dropped while navigating), so the
+    // paint is a pure side effect here, valid in any lifecycle/interaction state.
+    "MAP.PAINT_SELECT": { actions: "paintSelect" },
+    "MAP.STYLE_LOADED": { actions: "applyMapTheme" },
   },
   type: "parallel",
   states: {
@@ -190,7 +230,9 @@ export const mapMachine = setup({
           entry: ["applyCurrentStateToMap", "clearPendingFitBounds"],
           on: {
             "MAP.FIT_BOUNDS": { actions: "flyTo" },
-            "MAP.SOURCE_LOADED": { actions: "markSourceLoaded" },
+            "MAP.SOURCE_LOADED": {
+              actions: ["markSourceLoaded", "reapplySelection"],
+            },
             "MAP.RESOLUTION_CHANGED": {
               actions: ["setResolution", "forwardResolutionToCity"],
             },
@@ -204,14 +246,18 @@ export const mapMachine = setup({
       states: {
         interactive: {
           on: {
-            "MAP.SELECT": { actions: "applySelect" },
             "MAP.HOVER": { actions: "applyHover" },
             "MAP.HEX_INSPECT": { actions: "setHexInspect" },
             SUSPEND: "suspended",
           },
         },
         suspended: {
-          entry: ["clearInteractionState", "resetHexInspect"],
+          entry: [
+            "clearInteractionState",
+            "resetHexInspect",
+            "resetMapHover",
+            "resetMapSelect",
+          ],
           on: {
             RESUME: "interactive",
           },

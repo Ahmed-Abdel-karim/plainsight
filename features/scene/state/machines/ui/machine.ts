@@ -8,6 +8,7 @@ import {
 
 import { createEventAssigner } from "../utils";
 import type { CityMachineActor } from "../city/machine";
+import type { MapMachineActor } from "../map/machine";
 import { SystemId } from "../constants";
 import * as Context from "./context";
 import type * as Events from "./events";
@@ -39,14 +40,7 @@ export const uiMachine = setup({
     events: {} as Events.Events,
   },
   actions: {
-    assignLens: assign({
-      lens: ({ context, event }) =>
-        event.type === "UI.SET_LENS" ? event.lens : context.lens,
-      selectedId: ({ context, event }) =>
-        event.type === "UI.SET_LENS" && event.lens === "analyse"
-          ? null
-          : context.selectedId,
-    }),
+    assignLens: assignFromEvent("UI.SET_LENS", "lens", "lens"),
     assignHover: assignFromEvent("UI.SET_HOVER", "hoveredListing", (event) =>
       event.id ? { id: event.id, source: event.source } : null,
     ),
@@ -56,6 +50,20 @@ export const uiMachine = setup({
       const city = system.get(SystemId.CITY) as CityMachineActor | undefined;
       if (city)
         enqueue.sendTo(city, { type: "LENS.CHANGED", lens: event.lens });
+    }),
+    // Analyse has no listing selection — clear it through the same UI.SELECT
+    // action (raised, not an inline write) so the map paint stays in sync.
+    clearSelectionOnAnalyse: enqueueActions(({ event, enqueue }) => {
+      assertEvent(event, "UI.SET_LENS");
+      if (event.lens === "analyse")
+        enqueue.raise({ type: "UI.SELECT", id: null });
+    }),
+    // The selection lives here; the map owns the MapRef, so mirror every change
+    // to it. No loop — MAP.PAINT_SELECT only paints, it never forwards back.
+    notifyMapSelect: enqueueActions(({ event, system, enqueue }) => {
+      assertEvent(event, "UI.SELECT");
+      const map = system.get(SystemId.MAP) as MapMachineActor | undefined;
+      if (map) enqueue.sendTo(map, { type: "MAP.PAINT_SELECT", id: event.id });
     }),
     clearSelectionAndHover: assign({
       selectedId: null,
@@ -69,8 +77,14 @@ export const uiMachine = setup({
   states: {
     active: {
       on: {
-        "UI.SET_LENS": { actions: ["assignLens", "forwardLensToCity"] },
-        "UI.SELECT": { actions: "assignSelectedId" },
+        "UI.SET_LENS": {
+          actions: [
+            "assignLens",
+            "forwardLensToCity",
+            "clearSelectionOnAnalyse",
+          ],
+        },
+        "UI.SELECT": { actions: ["assignSelectedId", "notifyMapSelect"] },
         "UI.SET_HOVER": { actions: "assignHover" },
         SUSPEND: {
           target: "navigating",

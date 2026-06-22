@@ -30,10 +30,10 @@ describe("map machine — interaction gating (executable spec)", () => {
   });
 
   describe("while interaction.interactive", () => {
-    it("applies a selection to the map and forwards it to ui", () => {
+    it("paints a ui selection onto the map", () => {
       const s = start();
 
-      s.map?.send({ type: "MAP.SELECT", id: 42 });
+      s.ui?.send({ type: "UI.SELECT", id: 42 });
 
       expect(map.setFeatureState).toHaveBeenCalledWith(
         { source: POINTS_SOURCE_ID, id: 42 },
@@ -71,10 +71,13 @@ describe("map machine — interaction gating (executable spec)", () => {
 
     it("structurally ignores pointer interactions — the gate", () => {
       const s = start();
+      // Mirror the real fan-out: both regions suspend together. Selection is
+      // gated on ui (UI.* dropped while navigating); hover/inspect on the map.
       s.map?.send({ type: "SUSPEND" });
+      s.ui?.send({ type: "SUSPEND" });
       map.setFeatureState.mockClear();
 
-      s.map?.send({ type: "MAP.SELECT", id: 99 });
+      s.ui?.send({ type: "UI.SELECT", id: 99 });
       s.map?.send({ type: "MAP.HOVER", id: 99, source: "map" });
       s.map?.send({
         type: "MAP.HEX_INSPECT",
@@ -82,6 +85,7 @@ describe("map machine — interaction gating (executable spec)", () => {
       });
 
       expect(map.setFeatureState).not.toHaveBeenCalled();
+      expect(s.ui?.getSnapshot().context.selectedId).toBeNull();
       expect(s.map?.getSnapshot().matches({ interaction: "suspended" })).toBe(
         true,
       );
@@ -108,14 +112,16 @@ describe("map machine — interaction gating (executable spec)", () => {
     it("restores pointer interaction once the new city has converged", () => {
       const s = start();
       s.map?.send({ type: "SUSPEND" });
+      s.ui?.send({ type: "SUSPEND" });
       s.map?.send({ type: "RESUME" });
+      s.ui?.send({ type: "RESUME" });
 
       expect(s.map?.getSnapshot().matches({ interaction: "interactive" })).toBe(
         true,
       );
 
       map.setFeatureState.mockClear();
-      s.map?.send({ type: "MAP.SELECT", id: 5 });
+      s.ui?.send({ type: "UI.SELECT", id: 5 });
       expect(map.setFeatureState).toHaveBeenCalledWith(
         { source: POINTS_SOURCE_ID, id: 5 },
         { selected: true },

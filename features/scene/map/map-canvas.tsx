@@ -25,7 +25,6 @@ import {
 } from "./layers";
 import { OPENFREEMAP_STYLE } from "./map-styles";
 import { isKnownSourceId } from "./types";
-import { useUpdateMapTheme } from "./hooks/use-update-map-theme";
 import {
   useChangeMapResolution,
   useCityFraming,
@@ -36,6 +35,7 @@ import {
   useReportMapLoaded,
   useReportMapUnmounted,
   useReportSourceLoaded,
+  useReportStyleLoaded,
 } from "../state";
 import { useLens } from "../shared/use-lens";
 import { useResolvedTheme } from "@/components/theme/theme-provider";
@@ -45,7 +45,7 @@ const MAX_BOUNDS_PADDING_RATIO = 0.3; // Pad maxBounds by 25% to allow some room
 
 export function MapCanvas() {
   const mapRef = useRef<MapRef | null>(null);
-  const updateMapTheme = useUpdateMapTheme();
+  const reportStyleLoaded = useReportStyleLoaded();
   const reportMapLoaded = useReportMapLoaded();
   const changeMapResolution = useChangeMapResolution();
   const reportSourceLoaded = useReportSourceLoaded();
@@ -78,18 +78,23 @@ export function MapCanvas() {
     [reportSourceLoaded],
   );
 
+  const handleStyleData = useCallback(
+    () => reportStyleLoaded(theme),
+    [reportStyleLoaded, theme],
+  );
+
   const handleLoad = useCallback(() => {
     reportMapLoaded(
       mapRef.current!,
       zoomToResolution(mapRef.current!.getZoom()),
     );
-    updateMapTheme();
+    reportStyleLoaded(theme);
     if (process.env.NEXT_PUBLIC_E2E === "true") {
       void import("@mapgrab/map-interface").then(({ installMapGrab }) => {
         if (mapRef.current) installMapGrab(mapRef.current.getMap(), "mainMap");
       });
     }
-  }, [reportMapLoaded, updateMapTheme]);
+  }, [reportMapLoaded, reportStyleLoaded, theme]);
 
   useEffect(() => {
     if (!city) return;
@@ -134,7 +139,7 @@ export function MapCanvas() {
         onLoad={handleLoad}
         onMoveEnd={handleMoveEnd}
         onSourceData={handleSourceData}
-        onStyleData={updateMapTheme}
+        onStyleData={handleStyleData}
         onError={reportMapError}
         onZoomEnd={handleMoveEnd}
       >
