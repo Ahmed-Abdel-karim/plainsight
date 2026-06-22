@@ -37,9 +37,11 @@ describe("map region", () => {
 
     expect(queryMapSkeleton()).toBeNull();
     expect(getMapRegion("London")).toBeInTheDocument();
-    expect(scene.map.getSnapshot().matches({ ready: "interactive" })).toBe(
-      true,
-    );
+    expect(
+      scene.map
+        .getSnapshot()
+        .matches({ lifecycle: "ready", interaction: "interactive" }),
+    ).toBe(true);
   });
 
   it("in the analyse lens, hands the map the hex layer and the neighbourhoods source", async () => {

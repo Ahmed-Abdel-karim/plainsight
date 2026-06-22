@@ -193,22 +193,19 @@ export const cityMachine = setup({
       } as const;
     }),
 
+    // Notify the coordinator only; root translates CITY.READY → RESUME for
+    // map + ui. City stays decoupled from the other machines.
     notifyCityReady: enqueueActions(({ system, enqueue }) => {
-      for (const id of [SystemId.ROOT, SystemId.MAP, SystemId.UI] as const) {
-        const ref = system.get(id);
-        if (ref) enqueue.sendTo(ref, { type: "CITY.READY" });
-      }
+      const root = system.get(SystemId.ROOT);
+      if (root) enqueue.sendTo(root, { type: "CITY.READY" });
     }),
 
-    // Terminal failure counterpart of notifyCityReady. A load that never
-    // converges must still end the navigation gate, or root/map/ui stay stuck in
-    // their suppressed states. The toast (emitLoadError) tells the user what
-    // failed; this leaves them an operable recovery path.
+    // Terminal failure counterpart. A load that never converges must still end
+    // the navigation window, or map/ui stay suppressed — root resumes them on
+    // CITY.FAILED. The toast (emitLoadError) tells the user what failed.
     notifyCityFailed: enqueueActions(({ system, enqueue }) => {
-      for (const id of [SystemId.ROOT, SystemId.MAP, SystemId.UI] as const) {
-        const ref = system.get(id);
-        if (ref) enqueue.sendTo(ref, { type: "CITY.FAILED" });
-      }
+      const root = system.get(SystemId.ROOT);
+      if (root) enqueue.sendTo(root, { type: "CITY.FAILED" });
     }),
 
     raiseInitialLens: enqueueActions(({ system, enqueue }) => {

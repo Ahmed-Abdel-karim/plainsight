@@ -106,7 +106,6 @@ export function setupSceneSystem({ failBrowse = false } = {}) {
     },
     actions: {
       syncUrl: () => {},
-      prefetchCity: () => {},
     },
   });
 
@@ -129,6 +128,9 @@ export function setupSceneSystem({ failBrowse = false } = {}) {
     },
     get worker() {
       return actor.system.get(SystemId.WORKER);
+    },
+    get navigation() {
+      return actor.system.get(SystemId.NAVIGATION);
     },
     get city() {
       return actor.system.get(SystemId.CITY);

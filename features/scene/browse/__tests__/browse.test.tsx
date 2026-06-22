@@ -65,10 +65,10 @@ describe("browse region", () => {
 
     const card = await findListingButton(/Bright loft/i);
     await scene.user.hover(card);
-    expect(scene.ui.getSnapshot().context.hoveredListingId).toBe(42);
+    expect(scene.ui.getSnapshot().context.hoveredListing?.id).toBe(42);
 
     await scene.user.unhover(card);
-    expect(scene.ui.getSnapshot().context.hoveredListingId).toBeNull();
+    expect(scene.ui.getSnapshot().context.hoveredListing).toBeNull();
   });
 
   it.each([

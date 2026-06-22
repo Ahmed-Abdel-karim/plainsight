@@ -53,7 +53,9 @@ export const useLens = createUiSelector((s) => s.context.lens);
 export const useSelectedId = createUiSelector((s) => s.context.selectedId);
 
 export const useHoveredListingId = createUiSelector(
-  (s) => s.context.hoveredListingId,
+  (s) => s.context.hoveredListing?.id ?? null,
 );
 
-export const useHoverSource = createUiSelector((s) => s.context.hoverSource);
+export const useHoverSource = createUiSelector(
+  (s) => s.context.hoveredListing?.source ?? null,
+);

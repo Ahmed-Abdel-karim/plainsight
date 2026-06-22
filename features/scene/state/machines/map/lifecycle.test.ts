@@ -22,11 +22,17 @@ describe("map machine — instance lifecycle", () => {
   it("drops the ref and returns to loading on MAP.UNMOUNTED", () => {
     scene = setupSceneSystem();
     mountFakeMap(scene);
-    expect(scene.map?.getSnapshot().value).toEqual({ ready: "interactive" });
+    expect(
+      scene.map
+        ?.getSnapshot()
+        .matches({ lifecycle: "ready", interaction: "interactive" }),
+    ).toBe(true);
 
     scene.map?.send({ type: "MAP.UNMOUNTED" });
 
-    expect(scene.map?.getSnapshot().value).toBe("loading");
+    expect(scene.map?.getSnapshot().matches({ lifecycle: "loading" })).toBe(
+      true,
+    );
     expect(scene.map?.getSnapshot().context.mapRef).toBeNull();
   });
 

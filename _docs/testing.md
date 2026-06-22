@@ -1,7 +1,5 @@
 # Testing Strategy
 
-Draft placeholder. Fill this after the refactor.
-
 ## Purpose
 
 Plainsight tests protect user-visible behavior, architecture boundaries, and

@@ -1,8 +1,14 @@
 ## Active work: scene → XState v5 migration
 
-The deep design reference is `docs/map-machine-transition-gating.md`. We work
+The deep design reference is `docs/scene-navigation-architecture.md`
+(`docs/map-machine-transition-gating.md` is superseded background). We work
 **one step at a time, confirm between steps; draft to review, don't wire/test
 unless asked.**
+
+## Issue tracking
+
+To file a GitHub issue from a finding, use the `/issue` skill (or follow
+`_docs/issue-tracking.md` directly). Labels come from `.github/labels.sh`.
 
 ## Folder structure
 

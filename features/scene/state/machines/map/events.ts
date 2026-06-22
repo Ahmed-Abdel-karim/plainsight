@@ -7,18 +7,11 @@ import type { HexInspectInfo } from "./context";
 import type * as Input from "./input";
 
 /**
- * Map machine events. DRAFT (see `docs/map-machine-transition-gating.md`).
- *
- * Grouped by source:
- *   - `MAP.*`  — pushed up from the React/MapLibre bridge (mount, lifecycle,
- *                interactions).
- *   - `NAV.START` / `CITY.READY` — the transition window. `NAV.START` (fired at
- *                click, slug known from the href) sends the map to
- *                `ready.suppressed`; `CITY.READY` (city converged) returns it to
- *                `ready.interactive`.
- *
- * `CITY.CHANGED { framing }` is intentionally a *root* event, not a map event —
- * root spawns the city from it; the map only cares about NAV.START / CITY.READY.
+ * Map machine events, grouped by source:
+ *   - `MAP.*`        — the React/MapLibre bridge (mount, lifecycle, interactions)
+ *   - `SUSPEND` / `RESUME` — the coordinator's suppression pair (map shares it
+ *     with ui). `SUSPEND` enters `interaction: "suspended"`; `RESUME` returns to
+ *     `interactive`.
  */
 
 /** Auto-fired when the actor starts; carries the machine `input`. */
@@ -49,7 +42,7 @@ export interface MapSourceLoaded {
   readonly loaded: boolean;
 }
 
-// --- interactions (only honoured in instance.ready) ---
+// --- interactions (only honoured in interaction.interactive) ---
 export interface MapSelect {
   readonly type: "MAP.SELECT";
   readonly id: number | null;
@@ -72,17 +65,12 @@ export interface MapResolutionChanged {
   readonly hexResolution: HexResolution;
 }
 
-// --- data region (transition window) ---
-export interface NavStart {
-  readonly type: "NAV.START";
-  readonly slug: string;
+// --- suppression (shared coordinator pair) ---
+export interface Suspend {
+  readonly type: "SUSPEND";
 }
-export interface CityReady {
-  readonly type: "CITY.READY";
-}
-/** Terminal load failure — lifts the suppressed gate back to interactive. */
-export interface CityFailed {
-  readonly type: "CITY.FAILED";
+export interface Resume {
+  readonly type: "RESUME";
 }
 
 export type Events =
@@ -97,6 +85,5 @@ export type Events =
   | MapFitBounds
   | MapHexInspect
   | MapResolutionChanged
-  | NavStart
-  | CityReady
-  | CityFailed;
+  | Suspend
+  | Resume;

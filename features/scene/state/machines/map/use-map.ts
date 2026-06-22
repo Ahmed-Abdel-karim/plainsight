@@ -118,13 +118,17 @@ export function useSelectMapFeature() {
 
 const createMapSelector = createMachineStateSelector(useMapActorRef);
 
-export const useMapIsReady = createMapSelector((s) => s.matches("ready"));
-
-export const useMapIsSuppressed = createMapSelector((s) =>
-  s.matches({ ready: "suppressed" }),
+export const useMapIsReady = createMapSelector((s) =>
+  s.matches({ lifecycle: "ready" }),
 );
 
-export const useMapIsError = createMapSelector((s) => s.matches("error"));
+export const useMapIsSuppressed = createMapSelector((s) =>
+  s.matches({ interaction: "suspended" }),
+);
+
+export const useMapIsError = createMapSelector((s) =>
+  s.matches({ lifecycle: "error" }),
+);
 
 export const useMapRef = createMapSelector((s) => s.context.mapRef);
 

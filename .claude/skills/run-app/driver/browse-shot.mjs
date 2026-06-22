@@ -56,17 +56,17 @@ const errors = [];
 const page = await browser.newPage({ viewport: { width: 1280, height: 860 } });
 page.on("pageerror", (e) => errors.push(String(e)));
 
-// 1) Analyse (default) — the lens tab should be present over the map.
+// 1) Analyse (default) — the lens switcher should be present over the map. It is
+// a single-select ToggleGroup (role="group" "Market lens" with role="radio"
+// items), not a tablist — see lens-switcher.tsx.
 await page.goto(`${BASE_URL}/${CITY}`, { waitUntil: "domcontentloaded" });
-await page.waitForSelector('[role="tablist"]', { timeout: 30000 });
-const analyseTab = page.getByRole("tab", { name: "Analyse" });
-const browseTab = page.getByRole("tab", { name: "Browse" });
+const lensGroup = page.getByRole("group", { name: "Market lens" });
+await lensGroup.waitFor({ timeout: 30000 });
+const analyseTab = page.getByRole("radio", { name: "Analyse" });
+const browseTab = page.getByRole("radio", { name: "Browse" });
+check("lens switcher over the map", (await lensGroup.count()) > 0);
 check(
-  "lens tablist over the map",
-  (await page.locator('[role="tablist"]').count()) > 0,
-);
-check(
-  "Analyse + Browse tabs present",
+  "Analyse + Browse options present",
   (await analyseTab.count()) > 0 && (await browseTab.count()) > 0,
 );
 // Analyse shows the filter panel + charts (the dashboard). Listing list absent.
@@ -75,7 +75,7 @@ check(
   (await page.getByRole("list", { name: /Listings matching/ }).count()) === 0,
 );
 
-// 2) Switch to Browse via the tab.
+// 2) Switch to Browse via the lens switcher.
 await browseTab.click();
 const list = page.getByRole("list", { name: /Listings matching/ });
 await list.waitFor({ timeout: 30000 });

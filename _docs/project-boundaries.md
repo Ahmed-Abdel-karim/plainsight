@@ -1,8 +1,8 @@
 # Project Boundaries
 
-> Draft for review. This document defines the product outcomes and operating
-> constraints of Plainsight v1. Architecture documents describe how the system
-> satisfies them; ADRs record why significant implementation choices were made.
+> This document defines the product outcomes and operating constraints of
+> Plainsight v1. Architecture documents describe how the system satisfies them;
+> ADRs record why significant implementation choices were made.
 
 ## Application Overview
 

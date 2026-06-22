@@ -1,3 +1,10 @@
+> **SUPERSEDED** — the implemented design is documented in
+> `docs/scene-navigation-architecture.md`. This file is kept as historical
+> background: it captured the exploration (nested suppression, root-owned gate,
+> prefetch-on-`NAV.START`) that the final design moved past (parallel map regions,
+> a dedicated `navigation` path tracker, a flat root coordinator, `SUSPEND`/
+> `RESUME`). Read it for rationale, not for current behaviour.
+
 Plainsight — Map machine + the navigation→ready window (design sketch)
 
 Companion to `XSTATE_HANDOFF.md` and `XSTATE_MIGRATION.md`. This is a **design
@@ -314,10 +321,100 @@ type CityReady = { type: "CITY.READY" }; // emitted by city when results land
 (`CITY.CHANGED { framing }` is a **root** event, not a map event — root spawns the
 city from it; the map only cares about `NAV.START` and `CITY.READY`.)
 
+## Navigation boundary contract (DECIDED)
+
+The navigation lifecycle is extracted out of `root` into a dedicated
+**`navigation`** machine, and the fan-out is reframed so the nav machine knows
+nothing about any child's internals. This supersedes "root owns the navigation
+lifecycle" above: root shrinks to a **bootstrap** that invokes
+`map`/`ui`/`worker`/`navigation`; `navigation` owns the window.
+
+**One-line boundary:** _nav owns "where we're going and the gate"; each machine
+owns "what that means for me."_
+
+### 1. The `navigation` machine owns the window
+
+- **Route listener.** A `fromCallback` actor, invoked while running, that
+  subscribes to **`pathname` only** (the `/[city]` segment) — never
+  `searchParams`. This is what makes `syncUrl`'s search-param writes safe: they
+  can't re-trigger the listener (no feedback loop), while Back/Forward across
+  cities still fires it. This replaces pages imperatively dispatching
+  `CITY.CHANGED`.
+- **The gate** — `idle ⇄ navigating` and `pendingSlug` (latest-wins).
+- **The `city` actor lifecycle** — spawn/stop. Safe to move off root because
+  `systemId` is global to the actor system: `system.get(SystemId.CITY)` still
+  resolves for `map`/`ui`/`worker` even though `city` is now spawned under
+  `navigation`.
+- **The fan-out — as a broadcaster only** (see §3).
+
+### 2. Two phases, one gate — not merged into one event
+
+A click produces the **eager** signal _before_ the route commits; the listener
+produces the **committed** signal when `pathname` changes (and is the _only_
+signal on Back/Forward, which has no click).
+
+- Eager click → opens the gate (`navigating`), broadcasts suppression, announces
+  the prefetch target.
+- Committed listener → spawns/swaps the `city` actor with its framing payload.
+- Because the eager click already moved nav to `navigating`, the committed event
+  lands with the gate **already open** and only swaps the city — it does **not**
+  re-run the suppression fan-out. Only Back/Forward lands in `idle` and
+  synthesizes suppression (today's `isInSceneCityChange`, restated for the new
+  home). So merging the two into a single event/action is unsafe: a click would
+  otherwise double-fire the eager and committed work.
+
+### 3. Generic broadcast vocabulary — nav stays dumb
+
+The nav machine emits exactly two events that **every** child interprets in its
+own terms (chosen over per-child vocab that nav would have to translate):
+
+- `NAV.STARTED { slug, snapshotId }` — eager
+- `NAV.SETTLED` — converged/settled (covers both `CITY.READY` and `CITY.FAILED`
+  outcomes; the gate must end on either)
+
+Nav carries no machine-specific meaning. Per-machine interpretation:
+
+| machine | `NAV.STARTED`                                                                   | `NAV.SETTLED`         |
+| ------- | ------------------------------------------------------------------------------- | --------------------- |
+| **map** | → `ready.suppressed` (payload **ignored** — it only cares that it's suppressed) | → `ready.interactive` |
+| **ui**  | → `navigating` + clear `selectedId`/hover (keep `lens`)                         | → `active`            |
+
+The map's older `NAV.START` trigger and its `CITY.READY`/`CITY.FAILED`-on-
+suppressed exits collapse into this single phase pair.
+
+### 4. Prefetch is per-machine, not nav's job
+
+The broadcast **announces the target** (`slug`/`snapshotId`); each machine
+prefetches **its own** resource off it. The boundaries prefetch currently in
+`provider.tsx`'s injected `prefetchCity` moves to whoever owns boundaries; the
+map prefetches its own bounds/tiles if it wants. Nav does not orchestrate
+prefetch — it only says where we're going.
+
+### Business assumption — one snapshot per city (for now)
+
+**One city = one snapshot** is a business rule. `snapshotId` is therefore
+**derived from the slug**, never carried in the URL:
+
+- Reconciliation stays keyed on **`pathname` (slug only)**; the URL never gains a
+  `snapshotId` param, so no new feedback-loop surface (cf. the `pathname`-only
+  listener in §1).
+- A single **`slug → snapshotId` lookup at the extractor (edge)** is the one
+  resolution point. The eager click and every external/committed source
+  (Back/Forward, deep link, reload) resolve `snapshotId` the same way — so there
+  is no "missing `snapshotId` on Back/Forward" case: it's always derived, never
+  assumed from the eager payload. `getCityMeta(slug)`
+  (`app/(scene)/[city]/page.tsx`) resolves it server-side; the cities index the
+  switcher holds carries it client-side — reuse those.
+- **Revisit only** if a city ever exposes multiple user-selectable snapshots;
+  then `snapshotId` becomes real route state and earns a URL param.
+
 ## Root machine — the navigation lifecycle
 
-Root gains the `navigating` state and `pendingSlug`; this is where the
-route-pending window is owned. Sketch of the additions to today's skeleton:
+> Superseded by **"Navigation boundary contract (DECIDED)"** above: the gate and
+> `pendingSlug` now live in the dedicated `navigation` machine, not `root`. The
+> sketch below is kept as the shape of that machine's `running` region (read
+> `navigation` where it says `root`); `root` itself is reduced to a bootstrap
+> that invokes `map`/`ui`/`worker`/`navigation`.
 
 ```ts
 // components/scene/machine/root/context.ts  (SKETCH — additions)
@@ -368,13 +465,16 @@ running: {
 
 1. `hexInspectInfo` — keep in `map` (spatial, dies with viewport) or move to
    `ui` alongside `selectedId` (it is a selection).
-2. Whether `CITY.READY` is emitted by `city` directly to `map`
-   (`sendTo`/`system.get('map')`) or relayed through `root`. Prefer direct via
-   the receptionist to avoid root becoming a router.
-3. **`NAV.START` fan-out.** Does the city-picker `<Link>` send `NAV.START` to
-   both root and map, or only to root with the map reading it off
-   `system.get('map')` from a root action? Prefer a single dispatch the
-   interested actors subscribe to, over the click site knowing every consumer.
+
+Resolved by the **Navigation boundary contract** above:
+
+2. ~~Whether `CITY.READY` is emitted by `city` directly to `map` or relayed
+   through `root`.~~ → The nav machine is the single fan-out point and broadcasts
+   a generic `NAV.SETTLED`; children subscribe to that, not to a relay. Nav, not
+   root, owns this — and it broadcasts rather than routing per-child.
+3. ~~`NAV.START` fan-out — click site vs. root reading off `system.get`.~~ → A
+   single generic broadcast (`NAV.STARTED`/`NAV.SETTLED`) the interested actors
+   subscribe to; the click site and nav machine know no child internals (§3).
 
 Decided (recorded above, kept here for traceability):
 
@@ -393,14 +493,15 @@ Decided (recorded above, kept here for traceability):
 - **Readiness-race deferral** → option D (reconcile on `ready`): one-field
   `pendingFitBounds` buffer + `applyCurrentStateToMap` entry; no event queue.
 
-## Reminder — prefetch on navigation intent (TODO when wiring `NAV.START`)
+## Reminder — prefetch on navigation intent (per-machine, off `NAV.STARTED`)
 
-When `NAV.START` fires we already know the target slug (and its `CityMeta`) from
-the link's `href`. Use that moment to **warm the data proactively** instead of
-the current reactive pattern, where each region waits until the city data is back
-and the component has rendered, then fetches in a `useEffect`/Suspense on mount.
+Prefetch is **not** the nav machine's job (boundary contract §4). The eager
+`NAV.STARTED { slug, snapshotId }` broadcast _announces the target_; each machine
+prefetches **its own** resource off it, instead of the current reactive pattern
+where each region waits until the city data is back and the component has
+rendered, then fetches in a `useEffect`/Suspense on mount.
 
-On `NAV.START { slug }` we should:
+On `NAV.STARTED { slug }`, each owner warms its own resource:
 
 - **`router.prefetch`** the `/[city]` route (RSC payload) so the page segment is
   warm by the time the click resolves.
@@ -410,10 +511,10 @@ On `NAV.START { slug }` we should:
   the new components hydrate against a warm cache instead of firing a cold fetch
   in `useEffect` after they mount.
 - **Hand the next city's framing to the worker early** if it is cheaply known at
-  click, so `requestHexes`/`requestAggregates` can start before `CITY.CHANGED`
-  rather than after the sidebar renders.
+  click, so `requestHexes`/`requestAggregates` can start before the committed
+  route event rather than after the sidebar renders.
 
 Net effect: the dimmed window is spent _fetching_, not waiting-then-fetching, so
-`CITY.READY` lands sooner and the loader (delayed ~150ms) often never shows.
+`NAV.SETTLED` lands sooner and the loader (delayed ~150ms) often never shows.
 Trigger can even be earlier than click — on `pointerenter`/`focus` of the link
-(hover-intent prefetch) — but `NAV.START` is the guaranteed floor.
+(hover-intent prefetch) — but `NAV.STARTED` is the guaranteed floor.

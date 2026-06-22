@@ -26,9 +26,9 @@ export interface MapSetup extends SceneRenderResult {
   navigateToCity: () => void;
   /** Act: switch the active lens (default is `analyse`). */
   setLens: (lens: Lens) => void;
-  /** Act: begin a city switch (the click-time `NAV.START`, suppressing the map). */
+  /** Act: begin a city switch (NAV.STARTED → root fans SUSPEND, suppressing the map). */
   startCitySwitch: (slug?: string) => void;
-  /** Act: the incoming city converged (`CITY.READY`), releasing suppression. */
+  /** Act: the incoming city converged (CITY.READY → root fans RESUME). */
   finishCitySwitch: () => void;
   /** The spied MapLibre instance the machine drives, once the canvas has mounted. */
   getMapInstance: () => FakeMaplibreMap | undefined;
@@ -79,17 +79,13 @@ export function setupMap(options: MapSetupOptions = {}): MapSetup {
 
   const startCitySwitch = (slug = "berlin") => {
     act(() => {
-      result.root.send({
-        type: "NAV.START",
-        slug,
-        snapshotId: framing.snapshotId,
-      });
+      result.root.send({ type: "NAV.STARTED", path: `/${slug}` });
     });
   };
 
   const finishCitySwitch = () => {
     act(() => {
-      getMap().send({ type: "CITY.READY" });
+      result.root.send({ type: "CITY.READY" });
     });
   };
 

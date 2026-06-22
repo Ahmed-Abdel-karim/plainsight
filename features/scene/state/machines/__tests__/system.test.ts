@@ -11,11 +11,13 @@ type PostCommand = Extract<TransportCommand, { type: "POST" }>;
 const posts = (commands: TransportCommand[]): PostCommand[] =>
   commands.filter((c): c is PostCommand => c.type === "POST");
 
+const filter = { roomTypes: [], priceRange: null, nbhd: null };
+
 /**
- * Connected scene system — the real root + map + ui + worker actors wired together,
- * driven by events and asserted on snapshots (no DOM, no Web Worker). The map gate
- * has its own executable spec (`map/transition-gating.test.ts`); this pins the boot
- * shape and the root → city → worker wiring everything else builds on.
+ * Connected scene system — the real root + map + ui + worker + navigation actors,
+ * driven by events and asserted on snapshots (no DOM, no Web Worker). The path
+ * tracker itself is specced in `navigation/navigation.test.ts`; this pins the
+ * coordinator wiring: city spawn + worker load, and the SUSPEND/RESUME fan-out.
  */
 describe("connected scene system", () => {
   let scene: ReturnType<typeof setupSceneSystem> | undefined;
@@ -25,13 +27,13 @@ describe("connected scene system", () => {
     scene = undefined;
   });
 
-  it("boots into running.idle with map, ui and worker invoked, and no city yet", () => {
+  it("boots with map, ui, worker and navigation invoked, and no city yet", () => {
     scene = setupSceneSystem();
 
-    expect(scene.actor.getSnapshot().value).toEqual({ running: "idle" });
     expect(scene.map).toBeDefined();
     expect(scene.ui).toBeDefined();
     expect(scene.worker).toBeDefined();
+    expect(scene.navigation).toBeDefined();
     expect(scene.city).toBeUndefined();
   });
 
@@ -39,11 +41,7 @@ describe("connected scene system", () => {
     scene = setupSceneSystem();
     const framing = makeMapCityPayload();
 
-    scene.actor.send({
-      type: "CITY.CHANGED",
-      payload: framing,
-      filter: { roomTypes: [], priceRange: null, nbhd: null },
-    });
+    scene.actor.send({ type: "CITY.CHANGED", payload: framing, filter });
 
     expect(scene.city).toBeDefined();
     expect(scene.transport.commands).toContainEqual({
@@ -57,11 +55,7 @@ describe("connected scene system", () => {
   it("fans a converged city out to both the map (hexes) and analysis (aggregates)", () => {
     scene = setupSceneSystem();
     const framing = makeMapCityPayload();
-    scene.actor.send({
-      type: "CITY.CHANGED",
-      payload: framing,
-      filter: { roomTypes: [], priceRange: null, nbhd: null },
-    });
+    scene.actor.send({ type: "CITY.CHANGED", payload: framing, filter });
 
     (scene.city as CityMachineActor).send({
       type: "WORKER.FETCH_OK",
@@ -78,11 +72,7 @@ describe("connected scene system", () => {
   it("fans a filter change out to both a hex and an aggregate recompute", () => {
     scene = setupSceneSystem();
     const framing = makeMapCityPayload();
-    scene.actor.send({
-      type: "CITY.CHANGED",
-      payload: framing,
-      filter: { roomTypes: [], priceRange: null, nbhd: null },
-    });
+    scene.actor.send({ type: "CITY.CHANGED", payload: framing, filter });
     const city = scene.city as CityMachineActor;
     city.send({
       type: "WORKER.FETCH_OK",
@@ -127,60 +117,45 @@ describe("connected scene system", () => {
     ).toBe(true);
   });
 
-  // A switcher click fires NAV.START before CITY.CHANGED; browser Back/Forward
-  // remounts the route and fires CITY.CHANGED alone. The root must recognize the
-  // latter as navigation so every in-scene switch enters the same gate.
-  describe("route-initiated city change (Back/Forward) is gated like a click", () => {
-    const filter = { roomTypes: [], priceRange: null, nbhd: null };
-    const citySlug = (scene: ReturnType<typeof setupSceneSystem>) =>
-      (scene.city as CityMachineActor).getSnapshot().context.framing?.slug;
-
-    it("opens the gate when a route change replaces a different city", () => {
-      scene = setupSceneSystem();
-      const map = mountFakeMap(scene);
-
-      // First entry — no outgoing city to suppress, so it stays ungated.
-      scene.actor.send({
-        type: "CITY.CHANGED",
-        payload: makeMapCityPayload({ slug: "london" }),
-        filter,
-      });
-      expect(scene.actor.getSnapshot().value).toEqual({ running: "idle" });
-      expect(scene.map?.getSnapshot().value).toEqual({ ready: "interactive" });
-
-      // Back/Forward to a different city — CITY.CHANGED with no NAV.START.
-      scene.actor.send({
-        type: "CITY.CHANGED",
-        payload: makeMapCityPayload({ slug: "berlin" }),
-        filter,
-      });
-
-      expect(scene.actor.getSnapshot().value).toEqual({
-        running: "navigating",
-      });
-      expect(scene.actor.getSnapshot().context.pendingSlug).toBe("berlin");
-      expect(scene.map?.getSnapshot().value).toEqual({ ready: "suppressed" });
+  // The coordinator translates the lifecycle inputs into the shared suppression
+  // pair: NAV.STARTED → SUSPEND, CITY.READY/FAILED → RESUME, for map + ui alike.
+  describe("suppression fan-out", () => {
+    const suspended = (scene: ReturnType<typeof setupSceneSystem>) => {
+      expect(
+        scene.map?.getSnapshot().matches({ interaction: "suspended" }),
+      ).toBe(true);
       expect(scene.ui?.getSnapshot().value).toBe("navigating");
-      expect(citySlug(scene)).toBe("berlin");
-      expect(map.removeFeatureState).toHaveBeenCalled();
-    });
-
-    it("leaves the first scene entry ungated", () => {
-      scene = setupSceneSystem();
-      mountFakeMap(scene);
-
-      scene.actor.send({
-        type: "CITY.CHANGED",
-        payload: makeMapCityPayload({ slug: "london" }),
-        filter,
-      });
-
-      expect(scene.actor.getSnapshot().value).toEqual({ running: "idle" });
-      expect(scene.map?.getSnapshot().value).toEqual({ ready: "interactive" });
+    };
+    const interactive = (scene: ReturnType<typeof setupSceneSystem>) => {
+      expect(
+        scene.map?.getSnapshot().matches({ interaction: "interactive" }),
+      ).toBe(true);
       expect(scene.ui?.getSnapshot().value).toBe("active");
+    };
+
+    it("suspends map and ui on NAV.STARTED", () => {
+      expect.hasAssertions();
+      scene = setupSceneSystem();
+      mountFakeMap(scene);
+
+      scene.actor.send({ type: "NAV.STARTED", path: "/berlin" });
+
+      suspended(scene);
     });
 
-    it("holds the gate across rapid consecutive route changes (latest-wins)", () => {
+    it("resumes map and ui on CITY.READY", () => {
+      expect.hasAssertions();
+      scene = setupSceneSystem();
+      mountFakeMap(scene);
+      scene.actor.send({ type: "NAV.STARTED", path: "/berlin" });
+
+      scene.actor.send({ type: "CITY.READY" });
+
+      interactive(scene);
+    });
+
+    it("leaves a first entry (no NAV.STARTED) un-suppressed", () => {
+      expect.hasAssertions();
       scene = setupSceneSystem();
       mountFakeMap(scene);
 
@@ -189,123 +164,63 @@ describe("connected scene system", () => {
         payload: makeMapCityPayload({ slug: "london" }),
         filter,
       });
-      scene.actor.send({
-        type: "CITY.CHANGED",
-        payload: makeMapCityPayload({ slug: "berlin" }),
-        filter,
-      });
-      scene.actor.send({
-        type: "CITY.CHANGED",
-        payload: makeMapCityPayload({ slug: "amsterdam" }),
-        filter,
-      });
 
-      expect(scene.actor.getSnapshot().value).toEqual({
-        running: "navigating",
-      });
-      expect(scene.actor.getSnapshot().context.pendingSlug).toBe("amsterdam");
-      expect(scene.map?.getSnapshot().value).toEqual({ ready: "suppressed" });
-      expect(citySlug(scene)).toBe("amsterdam");
-    });
-
-    it("does not double-gate when a switcher click precedes CITY.CHANGED", () => {
-      scene = setupSceneSystem();
-      mountFakeMap(scene);
-
-      scene.actor.send({
-        type: "CITY.CHANGED",
-        payload: makeMapCityPayload({ slug: "london" }),
-        filter,
-      });
-
-      // Switcher path: NAV.START opens the gate, then CITY.CHANGED for the same
-      // target arrives in `navigating`.
-      scene.actor.send({
-        type: "NAV.START",
-        slug: "berlin",
-        snapshotId: "2025-09",
-      });
-      expect(scene.actor.getSnapshot().value).toEqual({
-        running: "navigating",
-      });
-
-      scene.actor.send({
-        type: "CITY.CHANGED",
-        payload: makeMapCityPayload({ slug: "berlin" }),
-        filter,
-      });
-
-      expect(scene.actor.getSnapshot().value).toEqual({
-        running: "navigating",
-      });
-      expect(scene.actor.getSnapshot().context.pendingSlug).toBe("berlin");
-      expect(scene.map?.getSnapshot().value).toEqual({ ready: "suppressed" });
-      expect(citySlug(scene)).toBe("berlin");
+      interactive(scene);
     });
   });
 
-  // A failed in-scene transition must still end the gate — otherwise root stays
-  // navigating, map stays suppressed, and ui keeps dropping input forever.
-  describe("a failed city load lifts the transition gate (recovery)", () => {
-    const filter = { roomTypes: [], priceRange: null, nbhd: null };
-
-    const expectGated = (scene: ReturnType<typeof setupSceneSystem>) => {
-      expect(scene.actor.getSnapshot().value).toEqual({
-        running: "navigating",
-      });
-      expect(scene.map?.getSnapshot().value).toEqual({ ready: "suppressed" });
-      expect(scene.ui?.getSnapshot().value).toBe("navigating");
-    };
-    const expectRecovered = (scene: ReturnType<typeof setupSceneSystem>) => {
-      expect(scene.actor.getSnapshot().value).toEqual({ running: "idle" });
-      expect(scene.actor.getSnapshot().context.pendingSlug).toBeNull();
-      expect(scene.map?.getSnapshot().value).toEqual({ ready: "interactive" });
-      expect(scene.ui?.getSnapshot().value).toBe("active");
-    };
-
-    it("lifts the gate when the incoming Analyse load fails", () => {
-      scene = setupSceneSystem();
-      mountFakeMap(scene);
+  // A failed in-scene transition must still resume map + ui — otherwise they stay
+  // suppressed and keep dropping input forever.
+  describe("a failed city load resumes map and ui (recovery)", () => {
+    const startSwitch = (
+      scene: ReturnType<typeof setupSceneSystem>,
+      incoming: ReturnType<typeof makeMapCityPayload>,
+    ) => {
       scene.actor.send({
         type: "CITY.CHANGED",
         payload: makeMapCityPayload({ slug: "london" }),
         filter,
       });
-      scene.actor.send({
-        type: "CITY.CHANGED",
-        payload: makeMapCityPayload({ slug: "berlin" }),
-        filter,
-      });
-      expectGated(scene);
+      scene.actor.send({ type: "NAV.STARTED", path: `/${incoming.slug}` });
+      scene.actor.send({ type: "CITY.CHANGED", payload: incoming, filter });
+    };
+
+    it("resumes when the incoming Analyse load fails", () => {
+      scene = setupSceneSystem();
+      mountFakeMap(scene);
+      const berlin = makeMapCityPayload({ slug: "berlin" });
+      startSwitch(scene, berlin);
+
+      expect(
+        scene.map?.getSnapshot().matches({ interaction: "suspended" }),
+      ).toBe(true);
 
       (scene.city as CityMachineActor).send({
         type: "WORKER.FETCH_ERROR",
-        slug: "berlin",
-        snapshotId: "2025-09",
+        slug: berlin.slug,
+        snapshotId: berlin.snapshotId,
         error: new Error("boom"),
       });
 
       expect((scene.city as CityMachineActor).getSnapshot().value).toEqual({
         analyse: "error",
       });
-      expectRecovered(scene);
+      expect(
+        scene.map?.getSnapshot().matches({ interaction: "interactive" }),
+      ).toBe(true);
+      expect(scene.ui?.getSnapshot().value).toBe("active");
     });
 
-    it("lifts the gate when the incoming Browse load fails", async () => {
+    it("resumes when the incoming Browse load fails", async () => {
       scene = setupSceneSystem({ failBrowse: true });
       mountFakeMap(scene);
       scene.ui?.send({ type: "UI.SET_LENS", lens: "browse" });
-      scene.actor.send({
-        type: "CITY.CHANGED",
-        payload: makeMapCityPayload({ slug: "london" }),
-        filter,
-      });
-      scene.actor.send({
-        type: "CITY.CHANGED",
-        payload: makeMapCityPayload({ slug: "berlin" }),
-        filter,
-      });
-      expectGated(scene);
+      const berlin = makeMapCityPayload({ slug: "berlin" });
+      startSwitch(scene, berlin);
+
+      expect(
+        scene.map?.getSnapshot().matches({ interaction: "suspended" }),
+      ).toBe(true);
 
       // The browse loader rejects on a microtask; let it settle.
       await new Promise((resolve) => setTimeout(resolve, 0));
@@ -313,30 +228,10 @@ describe("connected scene system", () => {
       expect((scene.city as CityMachineActor).getSnapshot().value).toEqual({
         browse: "error",
       });
-      expectRecovered(scene);
-    });
-
-    it("leaves a first-entry failure ungated (nothing to recover)", () => {
-      scene = setupSceneSystem();
-      mountFakeMap(scene);
-      scene.actor.send({
-        type: "CITY.CHANGED",
-        payload: makeMapCityPayload({ slug: "london" }),
-        filter,
-      });
-
-      (scene.city as CityMachineActor).send({
-        type: "WORKER.FETCH_ERROR",
-        slug: "london",
-        snapshotId: "2025-09",
-        error: new Error("boom"),
-      });
-
-      expect((scene.city as CityMachineActor).getSnapshot().value).toEqual({
-        analyse: "error",
-      });
-      // Never gated, so CITY.FAILED is a harmless no-op everywhere.
-      expectRecovered(scene);
+      expect(
+        scene.map?.getSnapshot().matches({ interaction: "interactive" }),
+      ).toBe(true);
+      expect(scene.ui?.getSnapshot().value).toBe("active");
     });
   });
 });

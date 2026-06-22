@@ -60,7 +60,7 @@ export function renderScene(
         actors: { loadBrowsePoints: makeLoadBrowsePoints(queryClient) },
       }),
     },
-    actions: { syncUrl: () => {}, prefetchCity: () => {} },
+    actions: { syncUrl: () => {} },
   });
 
   const holder: { root: RootActorRef | null } = { root: null };
