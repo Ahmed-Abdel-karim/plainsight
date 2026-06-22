@@ -6,11 +6,14 @@ import {
   setup,
 } from "xstate";
 
+import { createEventAssigner } from "../utils";
 import type { CityMachineActor } from "../city/machine";
 import { SystemId } from "../constants";
 import * as Context from "./context";
 import type * as Events from "./events";
 import type * as Input from "./input";
+
+const assignFromEvent = createEventAssigner<Context.Context, Events.Events>();
 
 /**
  * UI machine — cross-navigation UI state (lens, selection, hover).
@@ -28,6 +31,7 @@ import type * as Input from "./input";
  * Actions are defined inline in setup so they pick up the machine's context +
  * event types — same decision as the map machine.
  */
+
 export const uiMachine = setup({
   types: {
     input: {} as Input.Input,
@@ -35,7 +39,6 @@ export const uiMachine = setup({
     events: {} as Events.Events,
   },
   actions: {
-    // Switching to "analyse" also clears the selected listing.
     assignLens: assign({
       lens: ({ context, event }) =>
         event.type === "UI.SET_LENS" ? event.lens : context.lens,
@@ -44,21 +47,10 @@ export const uiMachine = setup({
           ? null
           : context.selectedId,
     }),
-    assignHover: assign({
-      hoveredListing: ({ context, event }) =>
-        event.type === "UI.SET_HOVER"
-          ? event.id
-            ? { id: event.id, source: event.source }
-            : null
-          : context.hoveredListing,
-    }),
-    // Sets the selected listing id (UI.SELECT).
-    assignSelectedId: assign({
-      selectedId: ({ event }) => {
-        assertEvent(event, "UI.SELECT");
-        return event.id;
-      },
-    }),
+    assignHover: assignFromEvent("UI.SET_HOVER", "hoveredListing", (event) =>
+      event.id ? { id: event.id, source: event.source } : null,
+    ),
+    assignSelectedId: assignFromEvent("UI.SELECT", "selectedId", "id"),
     forwardLensToCity: enqueueActions(({ event, system, enqueue }) => {
       assertEvent(event, "UI.SET_LENS");
       const city = system.get(SystemId.CITY) as CityMachineActor | undefined;

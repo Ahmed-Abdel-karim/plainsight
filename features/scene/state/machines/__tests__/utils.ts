@@ -22,15 +22,15 @@ const EMPTY_BROWSE_COLLECTION: BrowseCollection = {
   features: [],
 };
 
-/** A points loader that resolves to an empty tier — the connected-system tests
+/** A readiness gate that resolves to an empty tier — the connected-system tests
  *  only care that the browse leg converges, not the rows. */
-const fakeLoadBrowsePoints = fromPromise<
+const fakeBrowseReady = fromPromise<
   BrowseCollection,
   { slug: string; snapshotId: string }
 >(async () => EMPTY_BROWSE_COLLECTION);
 
-/** A points loader that rejects — exercises the Browse leg's terminal failure. */
-const failingLoadBrowsePoints = fromPromise<
+/** A readiness gate that rejects — exercises the Browse leg's terminal failure. */
+const failingBrowseReady = fromPromise<
   BrowseCollection,
   { slug: string; snapshotId: string }
 >(async () => {
@@ -45,10 +45,24 @@ const failingLoadBrowsePoints = fromPromise<
  * `docs/testing-strategy.md`.
  */
 
+type DistributiveOmit<T, K extends keyof any> = T extends unknown
+  ? Omit<T, K>
+  : never;
+
+/** A process reply a test replays. `requestId` is optional: omitted, it is stamped
+ *  with the latest matching POST's id (the current request); supply it explicitly
+ *  to replay a stale/cancelled request's reply and assert it is dropped. */
+export type ProcessReplyMessage = DistributiveOmit<
+  ProcessResponseMessage,
+  "requestId"
+> & {
+  requestId?: number;
+};
+
 /** The reply events the real transport sends up to the worker machine. */
 export type TransportReply =
   | { type: "TRANSPORT.LOAD_REPLY"; message: LoadDataResponseMessage }
-  | { type: "TRANSPORT.PROCESS_REPLY"; message: ProcessResponseMessage }
+  | { type: "TRANSPORT.PROCESS_REPLY"; message: ProcessReplyMessage }
   | { type: "TRANSPORT.WORKER_ERROR"; error: Error };
 
 /**
@@ -72,6 +86,15 @@ function createFakeTransport() {
     },
   );
 
+  const latestRequestId = (type: ProcessResponseMessage["payload"]["type"]) => {
+    for (let i = commands.length - 1; i >= 0; i--) {
+      const command = commands[i];
+      if (command.type === "POST" && command.message.type === type)
+        return command.message.requestId;
+    }
+    return undefined;
+  };
+
   return {
     actor,
     /** Commands the worker machine posted to the transport, in order. */
@@ -79,6 +102,16 @@ function createFakeTransport() {
     /** Replay a worker reply (throws if the transport isn't running). */
     reply(event: TransportReply) {
       if (!sendBack) throw new Error("fake transport is not running");
+      if (event.type === "TRANSPORT.PROCESS_REPLY") {
+        const requestId =
+          event.message.requestId ??
+          latestRequestId(event.message.payload.type);
+        sendBack({
+          type: "TRANSPORT.PROCESS_REPLY",
+          message: { ...event.message, requestId: requestId ?? 0 },
+        });
+        return;
+      }
       sendBack(event);
     },
   };
@@ -87,8 +120,8 @@ function createFakeTransport() {
 /**
  * Start the connected scene system for a test. Returns the root actor, the fake
  * transport controller, lazy accessors for the session child actors, and a
- * `stop()` for teardown. The `syncUrl` / `prefetchCity` actions are no-oped so a
- * test never touches the URL or the network.
+ * `stop()` for teardown. The `syncUrl` action is no-oped so a test never touches
+ * the URL; `prefetch` is a no-op by default (only the provider overrides it).
  */
 export function setupSceneSystem({ failBrowse = false } = {}) {
   const transport = createFakeTransport();
@@ -98,9 +131,7 @@ export function setupSceneSystem({ failBrowse = false } = {}) {
       worker: workerMachine.provide({ actors: { transport: transport.actor } }),
       city: cityMachine.provide({
         actors: {
-          loadBrowsePoints: failBrowse
-            ? failingLoadBrowsePoints
-            : fakeLoadBrowsePoints,
+          ensureBrowseReady: failBrowse ? failingBrowseReady : fakeBrowseReady,
         },
       }),
     },

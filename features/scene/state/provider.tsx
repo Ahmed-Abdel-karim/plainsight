@@ -7,6 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { makeLoadBrowsePoints } from "../shared/browse-points-query";
 import { cityMachine } from "./machines/city/machine";
 import { rootMachine } from "./machines/root/machine";
+import { makePrefetch, type SnapshotById } from "./machines/root/prefetch";
 import { RouteListener } from "./machines/navigation/route-listener";
 import { SystemId } from "./machines/constants";
 
@@ -20,21 +21,28 @@ import { SystemId } from "./machines/constants";
  */
 export const SceneActorContext = createActorContext(rootMachine);
 
-export function SceneProvider({ children }: { children: ReactNode }) {
+export function SceneProvider({
+  children,
+  snapshotById,
+}: {
+  children: ReactNode;
+  snapshotById: SnapshotById;
+}) {
   const queryClient = useQueryClient();
 
   const logic = useMemo(
     () =>
       rootMachine.provide({
+        actions: { prefetch: makePrefetch(snapshotById, queryClient) },
         actors: {
           // Inject the points loader closured over the app QueryClient so the
           // city machine itself stays free of a data dependency.
           city: cityMachine.provide({
-            actors: { loadBrowsePoints: makeLoadBrowsePoints(queryClient) },
+            actors: { ensureBrowseReady: makeLoadBrowsePoints(queryClient) },
           }),
         },
       }),
-    [queryClient],
+    [queryClient, snapshotById],
   );
 
   return (

@@ -24,7 +24,22 @@ export type LoadDataResponseMessage = ResponseMessageType<
   }
 >;
 
-export type RequestMessage = LoadDataRequestMessage | ProcessRequestMessage;
+/** Abort an in-flight process by the `requestId` the machine stamped on it. */
+export type CancelRequestMessage = {
+  type: "cancel";
+  payload: { requestId: number };
+};
+
+/** Abort the in-flight city load(s), keeping any already-cached rows. */
+export type CancelLoadRequestMessage = {
+  type: "cancelLoad";
+};
+
+export type RequestMessage =
+  | LoadDataRequestMessage
+  | ProcessRequestMessage
+  | CancelRequestMessage
+  | CancelLoadRequestMessage;
 export type ResponseMessage = LoadDataResponseMessage | ProcessResponseMessage;
 
 /** Spawn the bundled listings worker. Lives here so the bundler-resolved

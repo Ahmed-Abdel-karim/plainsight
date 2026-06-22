@@ -7,6 +7,7 @@ import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryProvider } from "@/components/query/query-provider";
 import { SceneProvider } from "@/features/scene";
+import { getCitiesData } from "@/data";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -26,11 +27,15 @@ export const metadata: Metadata = {
     "Where short-term rentals are, what they cost, and who controls the market. Built on dated public Inside Airbnb snapshots.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cities = await getCitiesData();
+  const snapshotById = Object.fromEntries(
+    cities.map(({ slug, snapshotId }) => [slug, snapshotId]),
+  );
   return (
     <html
       lang="en"
@@ -51,7 +56,9 @@ export default function RootLayout({
         >
           <ThemeToggle />
           <QueryProvider>
-            <SceneProvider>{children}</SceneProvider>
+            <SceneProvider snapshotById={snapshotById}>
+              {children}
+            </SceneProvider>
           </QueryProvider>
           <Toaster />
         </ThemeProvider>

@@ -38,6 +38,10 @@ export const rootMachine = setup({
     navigation: navigationMachine,
   },
   actions: {
+    // Injected at the provider boundary (see root/prefetch.ts), closured over
+    // the slug→snapshot map + app QueryClient. Placeholder so the machine is
+    // self-contained and testable without a data dependency.
+    prefetch: () => {},
     fanSuspend: enqueueActions(({ system, enqueue }) => {
       for (const id of [SystemId.MAP, SystemId.UI] as const) {
         const ref = system.get(id);
@@ -50,8 +54,14 @@ export const rootMachine = setup({
         if (ref) enqueue.sendTo(ref, { type: "RESUME" });
       }
     }),
-    stopOldCity: enqueueActions(({ context, enqueue }) => {
-      if (context.cityRef) enqueue.stopChild(context.cityRef);
+    // Replacing the city: cancel any recompute the shared worker still holds for
+    // the outgoing one (a stopped child's own exit actions don't run), then stop
+    // it. No-op on the first spawn, when there is no outgoing city.
+    stopOldCity: enqueueActions(({ context, system, enqueue }) => {
+      if (!context.cityRef) return;
+      const worker = system.get(SystemId.WORKER);
+      if (worker) enqueue.sendTo(worker, { type: "WORKER.CANCEL" });
+      enqueue.stopChild(context.cityRef);
     }),
     startNewCity: assign({
       cityRef: ({ spawn, event }) => {
@@ -89,7 +99,7 @@ export const rootMachine = setup({
     { src: "navigation", systemId: SystemId.NAVIGATION },
   ],
   on: {
-    "NAV.STARTED": { actions: "fanSuspend" },
+    "NAV.STARTED": { actions: ["fanSuspend", "prefetch"] },
     "CITY.CHANGED": { actions: ["stopOldCity", "startNewCity"] },
     "CITY.READY": { actions: "fanResume" },
     "CITY.FAILED": { actions: "fanResume" },

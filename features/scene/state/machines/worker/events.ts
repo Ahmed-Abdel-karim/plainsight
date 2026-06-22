@@ -43,6 +43,13 @@ export interface WorkerRequestAggregates {
   readonly filters: ListingFilters;
 }
 
+/** Abort every in-flight recompute (e.g. on a lens or city change): each busy
+ *  region cancels its task and returns to idle. Slug-agnostic — it clears whatever
+ *  is running, since the work is no longer wanted regardless of which city it was for. */
+export interface WorkerCancel {
+  readonly type: "WORKER.CANCEL";
+}
+
 // --- raw replies from the transport child (a dumb pipe; machine interprets) ---
 
 export interface TransportLoadReply {
@@ -65,11 +72,12 @@ export type Events =
   | WorkerRequestLoad
   | WorkerRequestHexes
   | WorkerRequestAggregates
+  | WorkerCancel
   | TransportLoadReply
   | TransportProcessReply
   | TransportWorkerError;
 
-/** The process types the machine routes by (the per-type slot key). */
+/** The process types the machine routes by (one parallel region per type). */
 export type ProcessType = ProcessRequestMessage["type"];
 
 /** A recompute result, tagged by type so the city routes it to its slab and by

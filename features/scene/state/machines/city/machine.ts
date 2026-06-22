@@ -23,12 +23,15 @@ import type { ListingQuery } from "@/lib/listings/projection";
 import { queryKey, resolveQuery } from "@/lib/listings/query";
 import { type Lens } from "@/lib/search-params";
 
+import { createEventAssigner } from "../utils";
 import { SystemId } from "../constants";
 import type { UiMachineActor } from "../ui/machine";
 import type { WorkerMachineRef } from "../worker/machine";
 import * as Context from "./context";
 import type * as Events from "./events";
 import type * as Input from "./input";
+
+const assignFromEvent = createEventAssigner<Context.Context, Events.Events>();
 
 /** The session worker, typed so payload-bearing requests type-check (an untyped
  *  `system.get` ref only accepts bare `{ type }` events). It is invoked by the
@@ -54,6 +57,43 @@ const aggregatesRequest = (context: Context.Context) => {
   } as const;
 };
 
+/** The map owns `hexResolution` (single source of truth); read it at send time
+ *  rather than duplicating it in city context. */
+const hexResolutionOf = (system: {
+  get: (id: string) => unknown;
+}): HexResolution => {
+  const map = system.get(SystemId.MAP) as
+    | { getSnapshot: () => { context: { hexResolution?: HexResolution } } }
+    | undefined;
+  return map?.getSnapshot().context.hexResolution ?? 6;
+};
+
+/** The worker hexes request for the city's current filters at a resolution. */
+const hexesRequest = (context: Context.Context, resolution: HexResolution) =>
+  ({
+    type: "WORKER.REQUEST_HEXES",
+    slug: context.framing!.slug,
+    snapshotId: context.framing!.snapshotId,
+    filters: resolveFilters(context.filter, priceBounds(context.framing)),
+    hexResolution: resolution,
+  }) as const;
+
+/** Stable signature of the hex inputs — resolved filters + the bucketed
+ *  `HexResolution` (not raw zoom). The hex request and its staleness check both
+ *  derive from this, so they can never drift apart; a zoom out-and-back within the
+ *  same resolution band yields the same key and skips a redundant recompute. */
+const hexesKey = (
+  context: Context.Context,
+  resolution: HexResolution,
+): string => {
+  const filters = resolveFilters(context.filter, priceBounds(context.framing));
+  return JSON.stringify({
+    roomTypes: [...filters.roomTypes].sort(),
+    priceRange: filters.priceRange,
+    resolution,
+  });
+};
+
 export const cityMachine = setup({
   types: {
     input: {} as Input.Input,
@@ -62,14 +102,17 @@ export const cityMachine = setup({
     emitted: {} as Events.Emitted,
   },
   actors: {
-    // Loads the Browse points tier. A placeholder so the machine has no React /
-    // data dependency; the real one (closured over the app QueryClient) is
-    // injected at the provider boundary — see shared/browse-points-query.
-    loadBrowsePoints: fromPromise<
+    // Readiness gate for the browse lens: awaits the points tier (an instant hit
+    // once the nav prefetch has warmed it) so `loading → ready` can resume the
+    // scene. The resolved collection is discarded — the UI reads points via
+    // useBrowsePoints. Placeholder so the machine has no React / data dependency;
+    // the real loader (closured over the app QueryClient) is injected at the
+    // provider boundary — see shared/browse-points-query.
+    ensureBrowseReady: fromPromise<
       BrowseCollection,
       { slug: string; snapshotId: string }
     >(() => {
-      throw new Error("loadBrowsePoints actor not provided");
+      throw new Error("ensureBrowseReady actor not provided");
     }),
   },
   guards: {
@@ -92,49 +135,47 @@ export const cityMachine = setup({
   },
   actions: {
     // --- filter assigns (inline per Actions convention) ---
-    assignRoomTypes: assign({
-      filter: ({ context, event }) => {
-        assertEvent(event, "FILTER.SET_ROOM_TYPES");
-        // All-selected collapses to the canonical [] (see lib/filters/normalize).
-        return {
-          ...context.filter,
-          roomTypes: normalizeRoomTypes(event.roomTypes),
-        };
-      },
-    }),
-    assignPriceRange: assign({
-      filter: ({ context, event }) => {
-        assertEvent(event, "FILTER.SET_PRICE_RANGE");
-        // Full-bounds selection collapses to null so the URL layer can drop the
-        // `price` param (see lib/filters/normalize).
-        return {
-          ...context.filter,
-          priceRange: normalizePriceRange(
-            event.priceRange,
-            priceBounds(context.framing),
-          ),
-        };
-      },
-    }),
-    assignNbhd: assign({
-      filter: ({ context, event }) => {
-        assertEvent(event, "FILTER.SET_NBHD");
-        return { ...context.filter, nbhd: event.nbhd };
-      },
-    }),
-    assignHexCells: assign({
-      hexCells: ({ event }) => {
-        assertEvent(event, "WORKER.PROCESS_RESULT");
-        // Guard in transitions ensures result.type === "hexes" when this fires.
-        return event.result.payload as HexCell[];
-      },
-    }),
-    assignAggregates: assign({
-      aggregates: ({ event }) => {
-        assertEvent(event, "WORKER.PROCESS_RESULT");
-        return event.result.payload as ScopeAggregates;
-      },
-    }),
+    // All-selected collapses to the canonical [] (see lib/filters/normalize).
+    assignRoomTypes: assignFromEvent(
+      "FILTER.SET_ROOM_TYPES",
+      "filter",
+      (event, context) => ({
+        ...context.filter,
+        roomTypes: normalizeRoomTypes(event.roomTypes),
+      }),
+    ),
+    // Full-bounds selection collapses to null so the URL layer can drop the
+    // `price` param (see lib/filters/normalize).
+    assignPriceRange: assignFromEvent(
+      "FILTER.SET_PRICE_RANGE",
+      "filter",
+      (event, context) => ({
+        ...context.filter,
+        priceRange: normalizePriceRange(
+          event.priceRange,
+          priceBounds(context.framing),
+        ),
+      }),
+    ),
+    assignNbhd: assignFromEvent(
+      "FILTER.SET_NBHD",
+      "filter",
+      (event, context) => ({
+        ...context.filter,
+        nbhd: event.nbhd,
+      }),
+    ),
+    // Guard in transitions ensures result.type === "hexes" when this fires.
+    assignHexCells: assignFromEvent(
+      "WORKER.PROCESS_RESULT",
+      "hexCells",
+      (event) => event.result.payload as HexCell[],
+    ),
+    assignAggregates: assignFromEvent(
+      "WORKER.PROCESS_RESULT",
+      "aggregates",
+      (event) => event.result.payload as ScopeAggregates,
+    ),
 
     // --- worker send actions (to the session worker, slug-stamped) ---
     // Ask the worker to ensure this city's listings are loaded; a previously
@@ -149,18 +190,23 @@ export const cityMachine = setup({
         "analytics",
       ),
     })),
-    // hexResolution lives in map (single source of truth); read from its
-    // snapshot at send time rather than duplicating it in city context.
-    requestHexes: sendTo(toWorker, ({ context, system }) => ({
-      type: "WORKER.REQUEST_HEXES" as const,
-      slug: context.framing!.slug,
-      snapshotId: context.framing!.snapshotId,
-      filters: resolveFilters(context.filter, priceBounds(context.framing)),
-      hexResolution:
-        (system.get(SystemId.MAP)?.getSnapshot()?.context.hexResolution as
-          | HexResolution
-          | undefined) ?? 6,
-    })),
+    // Sends the request AND records the signature it was issued for, so
+    // `requestHexesIfStale` can later tell whether a recompute is needed.
+    requestHexes: enqueueActions(({ context, system, enqueue }) => {
+      const resolution = hexResolutionOf(system);
+      enqueue.sendTo(toWorker({ system }), hexesRequest(context, resolution));
+      enqueue.assign({ hexesFilterKey: hexesKey(context, resolution) });
+    }),
+    // Entry-time variant: recompute only if absent or the inputs (filters or the
+    // resolution band) changed since — e.g. a filter or zoom moved while in the
+    // browse leg, which doesn't recompute.
+    requestHexesIfStale: enqueueActions(({ context, system, enqueue }) => {
+      const resolution = hexResolutionOf(system);
+      const key = hexesKey(context, resolution);
+      if (context.hexCells !== null && context.hexesFilterKey === key) return;
+      enqueue.sendTo(toWorker({ system }), hexesRequest(context, resolution));
+      enqueue.assign({ hexesFilterKey: key });
+    }),
     // Sends the request AND records the signature it was issued for, so
     // `requestAggregatesIfStale` can later tell whether a recompute is needed.
     requestAggregates: enqueueActions(({ context, system, enqueue }) => {
@@ -178,6 +224,11 @@ export const cityMachine = setup({
       enqueue.sendTo(toWorker({ system }), aggregatesRequest(context));
       enqueue.assign({ aggregatesFilterKey: queryKey(cityQuery(context)) });
     }),
+
+    // Abort any in-flight recompute the worker still holds for this city — fired
+    // when the analyse leg is left (→ browse) or the city is replaced, so the
+    // worker doesn't keep computing a result no one will use.
+    cancelWorker: sendTo(toWorker, { type: "WORKER.CANCEL" as const }),
 
     markAnalyticsLoaded: assign({ analyticsLoaded: true }),
 
@@ -245,6 +296,7 @@ export const cityMachine = setup({
   },
   states: {
     deciding: {
+      // check the relevant initial state based on the Lens
       entry: "raiseInitialLens",
     },
     browse: {
@@ -252,8 +304,8 @@ export const cityMachine = setup({
       states: {
         loading: {
           invoke: {
-            id: "loadBrowsePoints",
-            src: "loadBrowsePoints",
+            id: "ensureBrowseReady",
+            src: "ensureBrowseReady",
             input: ({ context }) => ({
               slug: context.framing!.slug,
               snapshotId: context.framing!.snapshotId,
@@ -275,6 +327,8 @@ export const cityMachine = setup({
 
     analyse: {
       initial: "loading",
+      // Leaving analyse (→ browse) — cancel the recomputes browse won't use.
+      exit: "cancelWorker",
       states: {
         loading: {
           entry: "requestLoad",
@@ -291,7 +345,7 @@ export const cityMachine = setup({
           entry: [
             "markAnalyticsLoaded",
             "notifyCityReady",
-            "requestHexes",
+            "requestHexesIfStale",
             "requestAggregatesIfStale",
           ],
           on: {

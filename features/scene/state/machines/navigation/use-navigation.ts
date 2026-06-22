@@ -20,10 +20,7 @@ const createNavSelector = createMachineStateSelector(useNavigationRef);
 export function useStartNav() {
   const nav = useNavigationRef();
   return useCallback(
-    (slug: string, snapshotId: string) => {
-      void snapshotId;
-      nav?.send({ type: "NAV.INTENT", path: `/${slug}` });
-    },
+    (slug: string) => nav?.send({ type: "NAV.INTENT", path: `/${slug}` }),
     [nav],
   );
 }

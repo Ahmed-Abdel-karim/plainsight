@@ -9,12 +9,15 @@ import type { Map as MaplibreMap } from "maplibre-gl";
 
 import { POINTS_SOURCE_ID } from "@/features/scene/map/constants";
 import { toBounds, type BBox } from "@/lib/geo";
+import { createEventAssigner } from "../utils";
 import type { CityMachineActor } from "../city/machine";
 import { SystemId } from "../constants";
 import type { UiMachineActor } from "../ui/machine";
 import * as Context from "./context";
 import type * as Events from "./events";
 import type * as Input from "./input";
+
+const assignFromEvent = createEventAssigner<Context.Context, Events.Events>();
 
 const MAX_BOUNDS_PADDING_RATIO = 0.3;
 
@@ -68,27 +71,21 @@ export const mapMachine = setup({
     events: {} as Events.Events,
   },
   actions: {
-    // --- assign-based (pure context updates) ---
-    captureMapRef: assign({
-      mapRef: ({ event }) =>
-        event.type === "MAP.MOUNTED" ? event.mapRef : null,
-    }),
-    // Canvas torn down (e.g. leaving the scene for the home picker): the actor
-    // outlives the MapLibre instance, so forget the dead ref and the sources it
-    // had loaded — a fresh mount re-reports both.
+    captureMapRef: assignFromEvent("MAP.MOUNTED", "mapRef", "mapRef"),
     clearMapRef: assign({ mapRef: null, loadedSources: {} }),
-    markSourceLoaded: assign({
-      loadedSources: ({ context, event }) =>
-        event.type === "MAP.SOURCE_LOADED"
-          ? { ...context.loadedSources, [event.sourceId]: event.loaded }
-          : context.loadedSources,
-    }),
-    setResolution: assign({
-      hexResolution: ({ context, event }) =>
-        event.type === "MAP.RESOLUTION_CHANGED"
-          ? event.hexResolution
-          : context.hexResolution,
-    }),
+    markSourceLoaded: assignFromEvent(
+      "MAP.SOURCE_LOADED",
+      "loadedSources",
+      (event, context) => ({
+        ...context.loadedSources,
+        [event.sourceId]: event.loaded,
+      }),
+    ),
+    setResolution: assignFromEvent(
+      "MAP.RESOLUTION_CHANGED",
+      "hexResolution",
+      "hexResolution",
+    ),
     forwardResolutionToCity: enqueueActions(({ event, system, enqueue }) => {
       assertEvent(event, "MAP.RESOLUTION_CHANGED");
       const city = system.get(SystemId.CITY) as CityMachineActor | undefined;
@@ -98,16 +95,14 @@ export const mapMachine = setup({
           hexResolution: event.hexResolution,
         });
     }),
-    setHexInspect: assign({
-      hexInspectInfo: ({ context, event }) =>
-        event.type === "MAP.HEX_INSPECT" ? event.info : context.hexInspectInfo,
-    }),
+    setHexInspect: assignFromEvent("MAP.HEX_INSPECT", "hexInspectInfo", "info"),
     resetHexInspect: assign({ hexInspectInfo: null }),
     // Readiness-race buffer: stash the latest bbox while still `loading`.
-    savePendingFitBounds: assign({
-      pendingFitBounds: ({ context, event }) =>
-        event.type === "MAP.FIT_BOUNDS" ? event.bbox : context.pendingFitBounds,
-    }),
+    savePendingFitBounds: assignFromEvent(
+      "MAP.FIT_BOUNDS",
+      "pendingFitBounds",
+      "bbox",
+    ),
     clearPendingFitBounds: assign({ pendingFitBounds: null }),
 
     // --- side-effecting MapLibre calls ---
@@ -216,9 +211,6 @@ export const mapMachine = setup({
           },
         },
         suspended: {
-          // Clear the old city's hover/select highlights + inspect popup; the
-          // view lays a dim scrim + loader over the map (derived from
-          // `interaction: "suspended"`) and disables interaction.
           entry: ["clearInteractionState", "resetHexInspect"],
           on: {
             RESUME: "interactive",

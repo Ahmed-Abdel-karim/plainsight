@@ -14,7 +14,7 @@ const posts = (commands: TransportCommand[]): PostCommand[] =>
 const postTypes = (commands: TransportCommand[]) =>
   posts(commands).map((c) => c.message.type);
 
-/** Flush the microtask + macrotask queue so the `loadBrowsePoints` promise and
+/** Flush the microtask + macrotask queue so the `ensureBrowseReady` promise and
  *  its `onDone` transition settle. */
 const tick = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 
@@ -167,5 +167,42 @@ describe("city machine per-lens legs", () => {
       (t) => t === "aggregates",
     ).length;
     expect(after).toBe(before); // no new aggregates request
+  });
+
+  it("skips a redundant hex recompute when returning to analyse unchanged", async () => {
+    scene = setupSceneSystem();
+    const framing = navigate();
+    const city = scene.city as CityMachineActor;
+    city.send({
+      type: "WORKER.FETCH_OK",
+      slug: framing.slug,
+      snapshotId: framing.snapshotId,
+      count: 3,
+    });
+
+    // Settle the first hex compute so `hexCells` + its key are stored.
+    scene.transport.reply({
+      type: "TRANSPORT.PROCESS_REPLY",
+      message: {
+        status: "success",
+        slug: framing.slug,
+        snapshotId: framing.snapshotId,
+        payload: { type: "hexes", data: [] },
+      },
+    });
+
+    setLens("browse");
+    await tick();
+    const before = postTypes(scene.transport.commands).filter(
+      (t) => t === "hexes",
+    ).length;
+
+    setLens("analyse");
+    expect(city.getSnapshot().value).toEqual({ analyse: "ready" });
+
+    const after = postTypes(scene.transport.commands).filter(
+      (t) => t === "hexes",
+    ).length;
+    expect(after).toBe(before); // resolution band unchanged → no new hex request
   });
 });

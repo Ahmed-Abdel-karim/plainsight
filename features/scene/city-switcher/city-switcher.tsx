@@ -72,13 +72,12 @@ function CitySwitcherDropdown({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="min-w-56">
-        {cities.map(({ slug, snapshotId, name, listings }) => {
+        {cities.map(({ slug, name, listings }) => {
           const isActive = slug === citySlug;
           return (
             <DropdownMenuItem key={slug} asChild>
               <CityLink
                 slug={slug}
-                snapshotId={snapshotId}
                 isActive={isActive}
                 className="justify-between"
               >

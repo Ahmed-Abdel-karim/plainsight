@@ -1,7 +1,10 @@
 import { type ActorRefFrom, assign, sendParent, setup } from "xstate";
 
+import { createEventAssigner } from "../utils";
 import * as Context from "./context";
 import type * as Events from "./events";
+
+const assignFromEvent = createEventAssigner<Context.Context, Events.Events>();
 
 export const navigationMachine = setup({
   types: {
@@ -9,12 +12,8 @@ export const navigationMachine = setup({
     events: {} as Events.Events,
   },
   actions: {
-    setPending: assign({
-      pendingPath: ({ event }) => ("path" in event ? event.path : null),
-    }),
-    setCurrent: assign({
-      currentPath: ({ event }) => ("path" in event ? event.path : null),
-    }),
+    setPending: assignFromEvent("NAV.INTENT", "pendingPath", "path"),
+    setCurrent: assignFromEvent("NAV.COMMIT", "currentPath", "path"),
     clearPending: assign({ pendingPath: null }),
     started: sendParent(({ event }) => ({
       type: "NAV.STARTED" as const,
@@ -30,9 +29,6 @@ export const navigationMachine = setup({
       event.path !== context.currentPath,
     differsFromPending: ({ context, event }) =>
       event.path !== context.pendingPath,
-    // An external nav over an established route (Back/Forward, mid-session URL
-    // change) — suppresses. The very first commit (currentPath === null) is the
-    // initial route, not a transition, so it falls through to a silent setCurrent.
     isReNavigation: ({ context, event }) =>
       context.currentPath !== null && event.path !== context.currentPath,
   },
@@ -53,8 +49,6 @@ export const navigationMachine = setup({
             guard: "isReNavigation",
             actions: ["started", "setCurrent", "ended"],
           },
-          // Initial route (or same-path re-commit) — establish current, no
-          // suppression so deep-link seeding lands on an active ui.
           { actions: "setCurrent" },
         ],
       },

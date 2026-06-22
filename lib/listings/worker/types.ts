@@ -28,6 +28,9 @@ export type ExtractProcessRequestMessage<T extends ProcessConfig<any>> = {
      *  echoes it back so a reply that outlived its city is dropped (Rule 5.3). */
     slug: string;
     snapshotId: string;
+    /** Per-type request id assigned by the worker machine. The worker echoes it on
+     *  the reply so a superseded/cancelled request's reply can be dropped. */
+    requestId: number;
   };
 }[keyof T];
 
@@ -56,8 +59,10 @@ type ExtractProcessSuccessPayload<T extends ProcessConfig<any>> = {
 export type ExtractProcessType<T extends ProcessConfig<any>> = keyof T;
 
 export type ExtractProcessResponseMessage<T extends ProcessConfig<any>> =
-  | SuccessResponseMessage<ExtractProcessSuccessPayload<T>>
-  | ErrorResponseMessage<ExtractProcessType<T>>;
+  | (SuccessResponseMessage<ExtractProcessSuccessPayload<T>> & {
+      requestId: number;
+    })
+  | (ErrorResponseMessage<ExtractProcessType<T>> & { requestId: number });
 
 export type RequestMessageType<T extends string, P> = {
   type: T;

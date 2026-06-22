@@ -17,21 +17,14 @@ import { useQuery } from "@tanstack/react-query";
 
 import type { NeighbourhoodBoundaries } from "@/lib/geo/types";
 
-import { cityAssetUrl } from "./city-asset-url";
+import { boundariesQueryOptions } from "./boundaries-query";
 
 export function useCityBoundaries(
   slug: string | null,
   snapshotId: string | null,
 ): NeighbourhoodBoundaries | null {
   const query = useQuery({
-    queryKey: ["boundaries", slug, snapshotId],
-    queryFn: async ({ signal }) => {
-      const res = await fetch(cityAssetUrl(slug!, snapshotId!, "boundaries"), {
-        signal,
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return (await res.json()) as NeighbourhoodBoundaries;
-    },
+    ...boundariesQueryOptions(slug ?? "", snapshotId ?? ""),
     enabled: !!slug && !!snapshotId,
   });
 
