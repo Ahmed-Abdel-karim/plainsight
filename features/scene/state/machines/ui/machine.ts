@@ -59,11 +59,12 @@ export const uiMachine = setup({
         enqueue.raise({ type: "UI.SELECT", id: null });
     }),
     // The selection lives here; the map owns the MapRef, so mirror every change
-    // to it. No loop — MAP.PAINT_SELECT only paints, it never forwards back.
+    // to it. No loop — MAP.SELECTION_CHANGED only paints, it never forwards back.
     notifyMapSelect: enqueueActions(({ event, system, enqueue }) => {
       assertEvent(event, "UI.SELECT");
       const map = system.get(SystemId.MAP) as MapMachineActor | undefined;
-      if (map) enqueue.sendTo(map, { type: "MAP.PAINT_SELECT", id: event.id });
+      if (map)
+        enqueue.sendTo(map, { type: "MAP.SELECTION_CHANGED", id: event.id });
     }),
     clearSelectionAndHover: assign({
       selectedId: null,

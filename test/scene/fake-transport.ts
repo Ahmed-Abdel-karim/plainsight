@@ -15,7 +15,7 @@ import type {
  * and lets a test replay replies on demand.
  */
 
-type DistributiveOmit<T, K extends keyof any> = T extends unknown
+type DistributiveOmit<T, K extends PropertyKey> = T extends unknown
   ? Omit<T, K>
   : never;
 

@@ -11,7 +11,7 @@ import {
   useHoveredListingId,
   useHoverSource,
   usePriceBounds,
-  useResetFilters,
+  useResetView,
   useResolvedFilters,
   useSetMapHover,
 } from "../state";
@@ -43,13 +43,14 @@ export function BrowsePanel() {
   const snapshotId = city?.snapshotId ?? "";
   const currency = city?.currency ?? "";
   // Filter controls live in the shared `FilterPanel` above; here we only read the
-  // (URL-shared) filter state to derive the list, plus `reset` for the empty CTA.
+  // (URL-shared) filter state to derive the list, plus `resetView` for the empty
+  // CTA (which also clears neighbourhood scope, unlike the panel's reset).
   // Resolved (top open to `Infinity`) drives the list; display (bounded) feeds
   // the empty-state summary so it never formats `Infinity`.
   const filters = useResolvedFilters();
   const displayFilters = useDisplayFilters();
   const bounds = usePriceBounds();
-  const reset = useResetFilters();
+  const resetView = useResetView();
   // A neighbourhood click on the map narrows the Browse list to that scope.
   const { neighbourhoodId } = useScope();
   const { selectedId, selectListing } = useLens();
@@ -143,7 +144,7 @@ export function BrowsePanel() {
           ))}
         </div>
       ) : listings.length === 0 ? (
-        <BrowseEmpty summary={emptySummary} onReset={reset} />
+        <BrowseEmpty summary={emptySummary} onReset={resetView} />
       ) : (
         <ListingList
           listings={listings}

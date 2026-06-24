@@ -19,7 +19,7 @@ import type * as Input from "./input";
 
 const assignFromEvent = createEventAssigner<Context.Context, Events.Events>();
 
-const MAX_BOUNDS_PADDING_RATIO = 0.5;
+export const MAX_BOUNDS_PADDING_RATIO = 0.25;
 
 // --- private helpers (map-specific MapLibre utilities) ---
 
@@ -33,7 +33,7 @@ const getMap = (context: Context.Context) => {
 };
 
 const applyBounds = (map: MaplibreMap, bbox: BBox) => {
-  map.fitBounds(toBounds(bbox), { animate: false, zoom: 2 });
+  map.fitBounds(toBounds(bbox), { animate: true, zoom: 2 });
   map.setMaxBounds(toBounds(bbox, MAX_BOUNDS_PADDING_RATIO));
 };
 
@@ -55,8 +55,9 @@ const safeSetFeatureState = (
  *     and data ingest. Keeps flowing regardless of suppression.
  *   - `interaction` (interactive ⇄ suspended) — the pointer-interaction gate. A
  *     city switch suspends it (`SUSPEND`); the city converging resumes it
- *     (`RESUME`). In `suspended` it does nothing but clear the old highlights on
- *     entry and wait.
+ *     (`RESUME`), which also frames the map to that city (fit + clamp + centre,
+ *     pulled from the city actor). In `suspended` it does nothing but clear the
+ *     old highlights on entry and wait.
  *
  * The regions are independent: `SUSPEND` arriving while `loading` just moves the
  * interaction region, so when `MAP.READY` lands the combined state is correctly
@@ -97,13 +98,22 @@ export const mapMachine = setup({
     }),
     setHexInspect: assignFromEvent("MAP.HEX_INSPECT", "hexInspectInfo", "info"),
     resetHexInspect: assign({ hexInspectInfo: null }),
-    // Readiness-race buffer: stash the latest bbox while still `loading`.
-    savePendingFitBounds: assignFromEvent(
-      "MAP.FIT_BOUNDS",
-      "pendingFitBounds",
-      "bbox",
-    ),
-    clearPendingFitBounds: assign({ pendingFitBounds: null }),
+
+    // Frame the current city: fit + clamp to its bbox and centre on its centre.
+    // The bbox/centre are pulled from the city actor (their single source of
+    // truth) at call time, so a stale value can never be applied. Runs on RESUME
+    // — the one edge that fires both on first load and on a city switch.
+    fitToCity: ({ context, system }) => {
+      const map = getMap(context);
+      if (!map) return;
+      const framing = (
+        system.get(SystemId.CITY) as CityMachineActor | undefined
+      )?.getSnapshot().context.framing;
+      if (!framing) return;
+      applyBounds(map, framing.bbox);
+      map.setCenter(framing.center);
+      map.setZoom(0);
+    },
 
     // Injected at the provider boundary (see provider.tsx); the restyle helper
     // lives in shared/map-theme. Placeholder so the machine stays self-contained.
@@ -112,8 +122,8 @@ export const mapMachine = setup({
     // --- side-effecting MapLibre calls ---
     // Mirror the ui selection onto the points source: unpaint the outgoing
     // feature (read from context), paint the incoming one, and remember it.
-    paintSelect: enqueueActions(({ context, event, enqueue }) => {
-      assertEvent(event, "MAP.PAINT_SELECT");
+    paintCurrentSelection: enqueueActions(({ context, event, enqueue }) => {
+      assertEvent(event, "MAP.SELECTION_CHANGED");
       const { id } = event;
       const map = getMap(context);
       const prev = context.mapSelectedListingId;
@@ -158,12 +168,6 @@ export const mapMachine = setup({
           source: source ?? "map",
         });
     }),
-    flyTo: ({ context, event }) => {
-      assertEvent(event, "MAP.FIT_BOUNDS");
-      const map = getMap(context);
-      if (!map) return;
-      applyBounds(map, event.bbox);
-    },
     // Clears both `selected` and `hover` feature states from the points source.
     clearInteractionState: ({ context }) => {
       const map = getMap(context);
@@ -179,8 +183,6 @@ export const mapMachine = setup({
         system.get(SystemId.UI) as UiMachineActor | undefined
       )?.getSnapshot()?.context;
       enqueue(() => {
-        if (context.pendingFitBounds)
-          applyBounds(map, context.pendingFitBounds);
         if (!uiCtx || !map.getSource(POINTS_SOURCE_ID)) return;
         if (uiCtx.selectedId !== null)
           safeSetFeatureState(map, uiCtx.selectedId, { selected: true });
@@ -205,7 +207,7 @@ export const mapMachine = setup({
     "MAP.UNMOUNTED": { target: ".lifecycle.loading", actions: "clearMapRef" },
     // Selection is gated upstream on `ui` (dropped while navigating), so the
     // paint is a pure side effect here, valid in any lifecycle/interaction state.
-    "MAP.PAINT_SELECT": { actions: "paintSelect" },
+    "MAP.SELECTION_CHANGED": { actions: "paintCurrentSelection" },
     "MAP.STYLE_LOADED": { actions: "applyMapTheme" },
   },
   type: "parallel",
@@ -217,14 +219,11 @@ export const mapMachine = setup({
           on: {
             "MAP.READY": "ready",
             "MAP.ERROR": "error",
-            // Coalesce the latest desired bounds; applied on entry to `ready`.
-            "MAP.FIT_BOUNDS": { actions: "savePendingFitBounds" },
           },
         },
         ready: {
-          entry: ["applyCurrentStateToMap", "clearPendingFitBounds"],
+          entry: ["fitToCity", "applyCurrentStateToMap"],
           on: {
-            "MAP.FIT_BOUNDS": { actions: "flyTo" },
             "MAP.SOURCE_LOADED": {
               actions: ["markSourceLoaded", "reapplySelection"],
             },
@@ -254,7 +253,7 @@ export const mapMachine = setup({
             "resetMapSelect",
           ],
           on: {
-            RESUME: "interactive",
+            RESUME: { target: "interactive", actions: "fitToCity" },
           },
         },
       },

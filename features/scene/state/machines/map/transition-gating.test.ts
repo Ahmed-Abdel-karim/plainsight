@@ -96,10 +96,8 @@ describe("map machine — interaction gating (executable spec)", () => {
       const s = start();
       s.map?.send({ type: "SUSPEND" });
 
-      s.map?.send({ type: "MAP.FIT_BOUNDS", bbox: [-0.5, 51.3, 0.3, 51.7] });
       s.map?.send({ type: "MAP.RESOLUTION_CHANGED", hexResolution: 7 });
 
-      expect(map.fitBounds).toHaveBeenCalled();
       expect(s.map?.getSnapshot().context.hexResolution).toBe(7);
       // Ingesting the new city does not lift the gate.
       expect(s.map?.getSnapshot().matches({ interaction: "suspended" })).toBe(

@@ -95,13 +95,14 @@ describe("map region", () => {
     expect(queryLoadingOverlay("London")).toBeNull();
   });
 
-  it("frames the map to the city bounds through the real component wiring", () => {
+  it("frames the map to the city bounds once the map is ready", () => {
     const scene = setupMap();
     scene.navigateToCity();
 
     const instance = scene.getMapInstance();
     expect(instance?.fitBounds).toHaveBeenCalled();
     expect(instance?.setMaxBounds).toHaveBeenCalled();
+    expect(instance?.setCenter).toHaveBeenCalled();
   });
 
   it.each([

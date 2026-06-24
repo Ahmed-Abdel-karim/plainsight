@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { Layer } from "react-map-gl/maplibre";
-import type { LayerSpecification } from "maplibre-gl";
+import type { FilterSpecification, LayerSpecification } from "maplibre-gl";
 import { useTheme } from "next-themes";
 
 import type { Theme } from "@/components/theme/theme-provider";
@@ -33,8 +33,10 @@ interface MapLayerProps {
   getLayerStyles: GetLayerStyles;
   visible?: boolean;
   listeners?: LayerListener[];
-  // Any extra props (filter expression, beforeId, …) are forwarded to <Layer>.
-  [key: string]: unknown;
+  /** Data-driven filter expression forwarded to `<Layer>`. */
+  filter?: FilterSpecification;
+  /** Insert this layer before the given layer id (z-ordering). */
+  beforeId?: string;
 }
 
 /**

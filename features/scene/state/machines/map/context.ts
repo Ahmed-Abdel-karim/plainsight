@@ -1,6 +1,5 @@
 import type { MapRef } from "react-map-gl/maplibre";
 
-import type { BBox } from "@/lib/geo/types";
 import type { HexResolution } from "@/lib/hex/types";
 import type { SourceId } from "@/features/scene/map/types";
 
@@ -30,8 +29,8 @@ export interface Context {
 
   /** The points-source feature currently painted with `{ selected: true }`. The
    *  selection itself lives on `ui` (`UI.SELECT`, the single action every surface
-   *  dispatches); the map mirrors it via `MAP.PAINT_SELECT` and keeps this id to
-   *  unpaint the outgoing feature and to repaint after a source reload. */
+   *  dispatches); the map mirrors it via `MAP.SELECTION_CHANGED` and keeps this id
+   *  to unpaint the outgoing feature and to repaint after a source reload. */
   readonly mapSelectedListingId: number | null;
 
   /** Which of our sources currently hold parsed data (gates feature-state
@@ -41,12 +40,6 @@ export interface Context {
   /** Clicked-hex popup. OPEN QUESTION: could move to `ui` alongside
    *  `selectedId` (it is a selection). Kept here for now (spatial). */
   readonly hexInspectInfo: HexInspectInfo | null;
-
-  /** Readiness-race buffer (deferral mechanism = "reconcile on ready", option
-   *  D). A `MAP.FIT_BOUNDS` that arrives while still `loading` can't fly yet, so
-   *  the *latest* bbox is stashed here (last-wins, no event log) and applied on
-   *  entry to `ready`. `null` once applied / when nothing is pending. */
-  readonly pendingFitBounds: BBox | null;
 }
 
 /** Clicked-hex inspect popup payload. */
@@ -64,5 +57,4 @@ export const Context: Context = {
   mapSelectedListingId: null,
   loadedSources: {},
   hexInspectInfo: null,
-  pendingFitBounds: null,
 };

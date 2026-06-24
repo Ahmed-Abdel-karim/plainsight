@@ -102,11 +102,11 @@ import type { AxeMatchers } from "vitest-axe/matchers";
 expect.extend(axeMatchers);
 
 declare module "vitest" {
-  /* eslint-disable @typescript-eslint/no-empty-object-type, @typescript-eslint/no-unused-vars */
+  /* eslint-disable @typescript-eslint/no-empty-object-type, @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any */
   // Generic param must match Vitest's `Assertion<T = any>` for declaration merging.
   interface Assertion<T = any> extends AxeMatchers {}
   interface AsymmetricMatchersContaining extends AxeMatchers {}
-  /* eslint-enable @typescript-eslint/no-empty-object-type, @typescript-eslint/no-unused-vars */
+  /* eslint-enable @typescript-eslint/no-empty-object-type, @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any */
 }
 
 beforeAll(() => {

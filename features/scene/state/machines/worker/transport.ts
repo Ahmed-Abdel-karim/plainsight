@@ -73,6 +73,15 @@ export const transportActor = fromCallback<TransportCommand, TransportInput>(
         });
       });
 
+      // Fires when a reply can't be deserialized (structured-clone failure) —
+      // surface it as a worker error rather than dropping the message silently.
+      worker.addEventListener("messageerror", () => {
+        sendBack({
+          type: "TRANSPORT.WORKER_ERROR",
+          error: new Error("worker message error"),
+        });
+      });
+
       return worker;
     };
 

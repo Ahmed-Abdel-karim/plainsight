@@ -19,6 +19,16 @@ const eslintConfig = defineConfig([
   ...nextTs,
   {
     rules: {
+      "@typescript-eslint/no-explicit-any": "error",
+    },
+  },
+  // The worker process registry is type machinery: its generics use `any` for
+  // bivariant matching across heterogeneous process signatures (`unknown` fails
+  // on the contravariant `execute` params). Scoped here rather than disabled
+  // globally so product code stays `any`-free.
+  {
+    files: ["lib/listings/worker/types.ts"],
+    rules: {
       "@typescript-eslint/no-explicit-any": "off",
     },
   },

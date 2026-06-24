@@ -4,7 +4,6 @@ import { useCallback } from "react";
 import type { MapRef } from "react-map-gl/maplibre";
 
 import type { Theme } from "@/components/theme/theme-provider";
-import type { BBox } from "@/lib/geo/types";
 import type { HexResolution } from "@/lib/hex/types";
 
 import type { SourceId } from "@/features/scene/map/types";
@@ -87,14 +86,6 @@ export function useChangeMapResolution() {
   return useCallback(
     (hexResolution: HexResolution) =>
       send({ type: "MAP.RESOLUTION_CHANGED", hexResolution }),
-    [send],
-  );
-}
-
-export function useFitMapBounds() {
-  const send = useMapSend();
-  return useCallback(
-    (bbox: BBox) => send({ type: "MAP.FIT_BOUNDS", bbox }),
     [send],
   );
 }

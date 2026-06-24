@@ -160,6 +160,21 @@ export function useResetFilters() {
   }, [send]);
 }
 
+/**
+ * Clears filters *and* neighbourhood scope — the "show me results again"
+ * affordance for the empty state, which should widen scope back to the whole
+ * city, unlike the filter panel's {@link useResetFilters} (scope is not a
+ * filter, so the panel reset leaves it untouched).
+ */
+export function useResetView() {
+  const send = useCitySend();
+  return useCallback(() => {
+    send?.({ type: "FILTER.SET_ROOM_TYPES", roomTypes: [] });
+    send?.({ type: "FILTER.SET_PRICE_RANGE", priceRange: null });
+    send?.({ type: "FILTER.SET_NBHD", nbhd: null });
+  }, [send]);
+}
+
 export function useFilterControls() {
   const filters = useDisplayFilters();
   const bounds = usePriceBounds();

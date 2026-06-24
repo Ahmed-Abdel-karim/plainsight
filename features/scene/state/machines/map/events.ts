@@ -1,7 +1,6 @@
 import type { MapRef } from "react-map-gl/maplibre";
 
 import type { Theme } from "@/components/theme/theme-provider";
-import type { BBox } from "@/lib/geo/types";
 import type { HexResolution } from "@/lib/hex/types";
 import type { SourceId } from "@/features/scene/map/types";
 import type { HexInspectInfo } from "./context";
@@ -47,18 +46,14 @@ export interface MapSourceLoaded {
 /** Mirror the `ui` selection onto the points source. Sent by `ui` whenever
  *  `UI.SELECT` lands (the single selection action); the map owns the paint
  *  because it owns the `MapRef`. */
-export interface MapPaintSelect {
-  readonly type: "MAP.PAINT_SELECT";
+export interface MapSelectionChanged {
+  readonly type: "MAP.SELECTION_CHANGED";
   readonly id: number | null;
 }
 export interface MapHover {
   readonly type: "MAP.HOVER";
   readonly id: number | null;
   readonly source: "list" | "map" | null;
-}
-export interface MapFitBounds {
-  readonly type: "MAP.FIT_BOUNDS";
-  readonly bbox: BBox;
 }
 export interface MapHexInspect {
   readonly type: "MAP.HEX_INSPECT";
@@ -90,9 +85,8 @@ export type Events =
   | MapReady
   | MapError
   | MapSourceLoaded
-  | MapPaintSelect
+  | MapSelectionChanged
   | MapHover
-  | MapFitBounds
   | MapHexInspect
   | MapResolutionChanged
   | MapStyleLoaded
