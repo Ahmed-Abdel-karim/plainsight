@@ -1,0 +1,35 @@
+{
+  "ci": {
+    "collect": {
+      "startServerCommand": "pnpm start -p 3000",
+      "startServerReadyPattern": "Ready",
+      "url": ["http://localhost:3000/", "http://localhost:3000/london"],
+      "numberOfRuns": 3,
+      "settings": {
+        "chromeFlags": "--no-sandbox --enable-unsafe-swiftshader --disable-gpu --user-data-dir=/tmp/lh-chrome"
+      }
+    },
+    "assert": {
+      "assertions": {
+        "resource-summary:script:size": [
+          "error",
+          { "maxNumericValue": 819200 }
+        ],
+        "cumulative-layout-shift": ["error", { "maxNumericValue": 0.1 }],
+        "largest-contentful-paint": [
+          "warn",
+          { "maxNumericValue": 11000, "aggregationMethod": "optimistic" }
+        ],
+        "total-blocking-time": [
+          "warn",
+          { "maxNumericValue": 3500, "aggregationMethod": "optimistic" }
+        ],
+        "interactive": [
+          "warn",
+          { "maxNumericValue": 14000, "aggregationMethod": "optimistic" }
+        ]
+      }
+    },
+    "upload": { "target": "temporary-public-storage" }
+  }
+}

@@ -1,5 +1,23 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { axe } from "vitest-axe";
+
+vi.mock("next/dynamic", async () => {
+  const { createElement, lazy, Suspense } = await import("react");
+
+  return {
+    default: (loader: () => Promise<React.ComponentType>) => {
+      const Component = lazy(async () => ({ default: await loader() }));
+
+      return function TestDynamicComponent(props: Record<string, unknown>) {
+        return createElement(
+          Suspense,
+          { fallback: null },
+          createElement(Component, props),
+        );
+      };
+    },
+  };
+});
 
 import { screen } from "@/test/render";
 
@@ -38,12 +56,11 @@ describe("analysis region", () => {
     expect(roomMix.getByText("Private")).toBeInTheDocument();
     expect(roomMix.getByText("30%")).toBeInTheDocument();
 
-    const price = within(getChartCard("Price distribution"));
-    expect(price.getByText(/median £150/)).toBeInTheDocument();
-
-    const hosts = within(getChartCard("Who controls this market"));
+    // The price + top-hosts charts load lazily (next/dynamic, ssr:false), so
+    // await their content rather than querying the loading skeleton.
+    expect(await screen.findByText(/median £150/)).toBeInTheDocument();
     expect(
-      hosts.getByText(/42% run by multi-listing hosts/),
+      await screen.findByText(/42% run by multi-listing hosts/),
     ).toBeInTheDocument();
 
     expect(await axe(scene.container)).toHaveNoViolations();

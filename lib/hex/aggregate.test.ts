@@ -18,8 +18,10 @@ describe("aggregateHexes", () => {
   it("groups listings sharing a cell at the active resolution", () => {
     const cells = aggregateHexes(8)([row(A, 100), row(A, 200), row(B, 300)]);
     const byCell = new Map(cells.map((c) => [c.h3, c]));
-    expect(byCell.get(A)).toEqual({ h3: A, count: 2, medianPrice: 150 });
-    expect(byCell.get(B)).toEqual({ h3: B, count: 1, medianPrice: 300 });
+    expect(byCell.get(A)).toMatchObject({ h3: A, count: 2, medianPrice: 150 });
+    expect(byCell.get(B)).toMatchObject({ h3: B, count: 1, medianPrice: 300 });
+    // Geometry is attached in the worker kernel so the map needs no h3-js.
+    expect(byCell.get(A)?.ring.length).toBeGreaterThan(0);
   });
 
   it("merges into the shared parent cell at a coarser resolution", () => {
@@ -28,7 +30,7 @@ describe("aggregateHexes", () => {
     const byCell = new Map(cells.map((c) => [c.h3, c]));
     // A and B collapse into one res-6 cell; FAR stays separate.
     expect(cells).toHaveLength(2);
-    expect(byCell.get(parent6)).toEqual({
+    expect(byCell.get(parent6)).toMatchObject({
       h3: parent6,
       count: 2,
       medianPrice: 200, // median(100, 300)
@@ -49,7 +51,7 @@ describe("aggregateHexes", () => {
       row(null, 999),
       row(undefined, 999),
     ]);
-    expect(cells).toEqual([{ h3: A, count: 1, medianPrice: 100 }]);
+    expect(cells).toMatchObject([{ h3: A, count: 1, medianPrice: 100 }]);
   });
 
   it("omits empty cells — an empty input yields no cells", () => {

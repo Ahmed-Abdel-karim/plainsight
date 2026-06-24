@@ -46,5 +46,14 @@ design/
 .next.*
 playwright-report
 test-results
+
+# lighthouse: CI output, raw reports, and stray headless-chrome profile dirs
+# (chrome-launcher misresolves the temp path under WSL and writes literal
+# `C:\Users\...lighthouse.*` dirs into the cwd).
+.lighthouseci/
+*.report.json
+*.report.html
+C:*
+
 # Local-only archive of removed working docs / SpecKit (untracked reference)
 .archive/

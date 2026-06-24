@@ -11,7 +11,7 @@ Sentry.init({
   // "from country X" signal survives without storing a personal identifier.
   sendDefaultPii: false,
 
-  // Disabled for now — wired but not active. Re-enable with:
-  //   enabled: process.env.NODE_ENV === "production",
-  enabled: false,
+  // Active in production only; local dev and tests never send (and a missing
+  // DSN no-ops the SDK regardless).
+  enabled: process.env.NODE_ENV === "production",
 });

@@ -18,7 +18,10 @@
     "format": "prettier . --write",
     "format:check": "prettier . --check",
     "commitlint": "commitlint --edit",
-    "prepare": "husky || true"
+    "prepare": "husky || true",
+    "analyze": "next experimental-analyze",
+    "lighthouse": "node scripts/lighthouse.mjs",
+    "lhci": "node scripts/lhci.mjs"
   },
   "engines": {
     "node": "24.x"
@@ -61,6 +64,7 @@
     "@axe-core/playwright": "^4.11.3",
     "@commitlint/cli": "^21.0.2",
     "@commitlint/config-conventional": "^21.0.2",
+    "@lhci/cli": "^0.15.1",
     "@mapgrab/playwright": "^0.0.4",
     "@playwright/test": "^1.61.0",
     "@tailwindcss/postcss": "^4",
@@ -81,6 +85,7 @@
     "eslint-plugin-testing-library": "^7.16.2",
     "husky": "^9.1.7",
     "jsdom": "^29.1.1",
+    "lighthouse": "^13.4.0",
     "lint-staged": "^17.0.7",
     "msw": "^2.14.6",
     "prettier": "^3.8.3",

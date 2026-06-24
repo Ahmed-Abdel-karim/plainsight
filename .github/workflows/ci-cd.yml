@@ -66,6 +66,30 @@ jobs:
           path: playwright-report
           if-no-files-found: ignore
 
+  # Perf gate: asserts first-load script budget (+ CLS) on the heavy scene route
+  # and the landing page. A PR check only — deploys are gated on quality+e2e, so a
+  # noisy throttled-mobile metric never blocks a release.
+  lighthouse:
+    needs: guard
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+        with: { version: 11.0.9 }
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm build
+      - run: pnpm run lhci
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report
+          path: .lighthouseci
+          if-no-files-found: ignore
+
   deploy-preview:
     needs: [quality, e2e]
     if: github.event_name == 'pull_request'

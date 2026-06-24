@@ -4,7 +4,7 @@
  * so it is unit-testable on its own and runs unchanged inside the listings
  * worker.
  */
-import { cellToParent } from "h3-js";
+import { cellToBoundary, cellToParent } from "h3-js";
 import {
   entries,
   filter,
@@ -41,5 +41,9 @@ export const aggregateHexes =
         medianPrice: median(map(rows, prop("price"))) as number,
       })),
       entries(),
-      map(([h3, stats]): HexCell => ({ h3, ...stats })),
+      map(([h3, stats]): HexCell => {
+        const ring = cellToBoundary(h3, true) as [number, number][];
+        ring.push(ring[0]);
+        return { h3, ring, ...stats };
+      }),
     );

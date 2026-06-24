@@ -104,7 +104,7 @@ describe("scene cross-region interaction", () => {
     scene.finishCityLoad();
     // Settle the converge-time recomputes so the coalescing slots are free and the
     // filter-driven requests below post (and their replies land) immediately.
-    scene.replyHexes([{ h3: c1, count: 5, medianPrice: 150 }]);
+    scene.replyHexes([{ h3: c1, count: 5, medianPrice: 150, ring: [] }]);
     scene.replyAggregates(richAggregates(150));
 
     // The median KPI headline (the histogram chart can't measure in jsdom, so it
@@ -120,8 +120,8 @@ describe("scene cross-region interaction", () => {
     await scene.user.click(screen.getByRole("button", { name: "Private" }));
     scene.replyAggregates(richAggregates(222));
     scene.replyHexes([
-      { h3: c1, count: 5, medianPrice: 150 },
-      { h3: c2, count: 9, medianPrice: 300 },
+      { h3: c1, count: 5, medianPrice: 150, ring: [] },
+      { h3: c2, count: 9, medianPrice: 300, ring: [] },
     ]);
 
     expect(await screen.findByText("222")).toBeInTheDocument();
