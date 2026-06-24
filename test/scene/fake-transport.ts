@@ -3,7 +3,7 @@ import { fromCallback } from "xstate";
 import type {
   LoadDataResponseMessage,
   ProcessResponseMessage,
-} from "@/lib/listings/worker";
+} from "@/lib/listings";
 import type {
   TransportCommand,
   TransportInput,

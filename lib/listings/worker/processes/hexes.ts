@@ -1,7 +1,7 @@
 import type { ListingFilters } from "@/data/types";
 import type { HexCell, HexResolution } from "@/lib/hex/types";
 
-import { projectHexes } from "../../projection";
+import { hexesFor } from "../../projections";
 import type { ProcessConfig, ProcessContext } from "../types";
 
 type HexesParams = {
@@ -17,7 +17,7 @@ export const hexes: ProcessConfig<
 > = {
   hexes: {
     execute: ({ filters, resolution }, { listings }): HexCell[] =>
-      projectHexes(listings, filters, resolution),
+      hexesFor(listings, filters, resolution),
     cacheResults: true,
   },
 };

@@ -1,5 +1,5 @@
-import { median } from "d3-array";
 import { cellToParent } from "h3-js";
+import { median } from "remeda";
 import { describe, expect, it } from "vitest";
 
 import { aggregateHexes, type HexInput } from "./aggregate";
@@ -16,14 +16,14 @@ function row(h3: string | null | undefined, price: number): HexInput {
 
 describe("aggregateHexes", () => {
   it("groups listings sharing a cell at the active resolution", () => {
-    const cells = aggregateHexes([row(A, 100), row(A, 200), row(B, 300)], 8);
+    const cells = aggregateHexes(8)([row(A, 100), row(A, 200), row(B, 300)]);
     const byCell = new Map(cells.map((c) => [c.h3, c]));
     expect(byCell.get(A)).toEqual({ h3: A, count: 2, medianPrice: 150 });
     expect(byCell.get(B)).toEqual({ h3: B, count: 1, medianPrice: 300 });
   });
 
   it("merges into the shared parent cell at a coarser resolution", () => {
-    const cells = aggregateHexes([row(A, 100), row(B, 300), row(FAR, 50)], 6);
+    const cells = aggregateHexes(6)([row(A, 100), row(B, 300), row(FAR, 50)]);
     const parent6 = cellToParent(A, 6);
     const byCell = new Map(cells.map((c) => [c.h3, c]));
     // A and B collapse into one res-6 cell; FAR stays separate.
@@ -36,26 +36,24 @@ describe("aggregateHexes", () => {
     expect(byCell.get(cellToParent(FAR, 6))?.count).toBe(1);
   });
 
-  it("matches d3.median per cell, including even-count interpolation", () => {
+  it("matches the median per cell, including even-count interpolation", () => {
     const prices = [80, 120, 160, 240];
-    const cells = aggregateHexes(
-      prices.map((p) => row(A, p)),
-      8,
-    );
+    const cells = aggregateHexes(8)(prices.map((p) => row(A, p)));
     expect(cells).toHaveLength(1);
     expect(cells[0].medianPrice).toBe(median(prices));
   });
 
   it("skips rows without an h3 but counts located ones", () => {
-    const cells = aggregateHexes(
-      [row(A, 100), row(null, 999), row(undefined, 999)],
-      8,
-    );
+    const cells = aggregateHexes(8)([
+      row(A, 100),
+      row(null, 999),
+      row(undefined, 999),
+    ]);
     expect(cells).toEqual([{ h3: A, count: 1, medianPrice: 100 }]);
   });
 
   it("omits empty cells — an empty input yields no cells", () => {
-    expect(aggregateHexes([], 8)).toEqual([]);
-    expect(aggregateHexes([row(null, 100)], 8)).toEqual([]);
+    expect(aggregateHexes(8)([])).toEqual([]);
+    expect(aggregateHexes(8)([row(null, 100)])).toEqual([]);
   });
 });

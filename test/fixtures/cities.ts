@@ -3,8 +3,7 @@ import type { CityData } from "@/data/types";
 /**
  * Shaped `CityData` the city picker view renders. Hand-authored (not the
  * production JSON) so the display-layer tests own their expectations and can
- * exercise rendering edges: thousands-grouped `listings` and a `snapshotLabel`
- * with the leading whitespace the real index carries (the view `.trim()`s it).
+ * exercise rendering edges like thousands-grouped `listings`.
  */
 export const cityFixtures: CityData[] = [
   {
@@ -14,7 +13,7 @@ export const cityFixtures: CityData[] = [
     country: "United Kingdom",
     frame: "Largest market despite licensing",
     listings: "61,963 listings",
-    snapshotLabel: " 9/2025",
+    snapshotLabel: "9/2025",
   },
   {
     slug: "berlin",
@@ -23,6 +22,6 @@ export const cityFixtures: CityData[] = [
     country: "Germany",
     frame: "Well-regulated mid-market",
     listings: "9,264 listings",
-    snapshotLabel: " 9/2025",
+    snapshotLabel: "9/2025",
   },
 ];

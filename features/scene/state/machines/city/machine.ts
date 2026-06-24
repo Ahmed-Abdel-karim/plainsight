@@ -19,8 +19,7 @@ import {
   resolveFilters,
 } from "@/lib/filters/normalize";
 import type { HexCell, HexResolution } from "@/lib/hex/types";
-import type { ListingQuery } from "@/lib/listings/projection";
-import { queryKey, resolveQuery } from "@/lib/listings/query";
+import { queryKey, resolveQuery, type ListingQuery } from "@/lib/listings";
 import { type Lens } from "@/lib/search-params";
 
 import { createEventAssigner } from "../utils";
@@ -33,15 +32,19 @@ import type * as Input from "./input";
 
 const assignFromEvent = createEventAssigner<Context.Context, Events.Events>();
 
+/** Quiet window after the last price-slider tick before a recompute is issued, so
+ *  a drag coalesces into one worker request. */
+const PRICE_RECOMPUTE_MS = 250;
+
 /** The session worker, typed so payload-bearing requests type-check (an untyped
  *  `system.get` ref only accepts bare `{ type }` events). It is invoked by the
  *  root for the whole session, so it always exists while a city is running. */
 const toWorker = ({ system }: { system: { get: (id: string) => unknown } }) =>
   system.get(SystemId.WORKER) as WorkerMachineRef;
 
-/** The city's current selection resolved into a `{ scope, filters }` query — the
- *  single input the worker aggregates request and its dedupe key both derive
- *  from, so the request and the staleness check can never drift apart. */
+/** The city's current selection resolved into a `{ neighbourhood, filters }`
+ *  query — the single input the worker aggregates request and its dedupe key both
+ *  derive from, so the request and the staleness check can never drift apart. */
 const cityQuery = (context: Context.Context): ListingQuery =>
   resolveQuery(context.filter, priceBounds(context.framing));
 
@@ -52,8 +55,9 @@ const aggregatesRequest = (context: Context.Context) => {
     type: "WORKER.REQUEST_AGGREGATES",
     slug: context.framing!.slug,
     snapshotId: context.framing!.snapshotId,
-    scope: query.scope,
+    neighbourhood: query.neighbourhood,
     filters: query.filters,
+    priceCap: context.framing!.priceCap,
   } as const;
 };
 
@@ -225,6 +229,21 @@ export const cityMachine = setup({
       enqueue.assign({ aggregatesFilterKey: queryKey(cityQuery(context)) });
     }),
 
+    // Price drags arrive per-tick (the slider is machine-controlled); assign each
+    // immediately for a smooth slider, but defer the recompute — re-arm a single
+    // delayed FILTER.PRICE_SETTLED, cancelling the prior one, so a drag fires one
+    // worker request once it settles.
+    debouncePriceRecompute: enqueueActions(({ enqueue }) => {
+      enqueue.cancel("price-settle");
+      enqueue.raise(
+        { type: "FILTER.PRICE_SETTLED" },
+        { id: "price-settle", delay: PRICE_RECOMPUTE_MS },
+      );
+    }),
+    cancelPriceRecompute: enqueueActions(({ enqueue }) =>
+      enqueue.cancel("price-settle"),
+    ),
+
     // Abort any in-flight recompute the worker still holds for this city — fired
     // when the analyse leg is left (→ browse) or the city is replaced, so the
     // worker doesn't keep computing a result no one will use.
@@ -327,8 +346,9 @@ export const cityMachine = setup({
 
     analyse: {
       initial: "loading",
-      // Leaving analyse (→ browse) — cancel the recomputes browse won't use.
-      exit: "cancelWorker",
+      // Leaving analyse (→ browse) — cancel the recomputes browse won't use, plus
+      // any pending price-settle so a late drag can't recompute after we've left.
+      exit: ["cancelWorker", "cancelPriceRecompute"],
       states: {
         loading: {
           entry: "requestLoad",
@@ -353,11 +373,10 @@ export const cityMachine = setup({
               actions: ["assignRoomTypes", "requestHexes", "requestAggregates"],
             },
             "FILTER.SET_PRICE_RANGE": {
-              actions: [
-                "assignPriceRange",
-                "requestHexes",
-                "requestAggregates",
-              ],
+              actions: ["assignPriceRange", "debouncePriceRecompute"],
+            },
+            "FILTER.PRICE_SETTLED": {
+              actions: ["requestHexes", "requestAggregates"],
             },
             // nbhd changes scope only — no effect on hex filters.
             "FILTER.SET_NBHD": {

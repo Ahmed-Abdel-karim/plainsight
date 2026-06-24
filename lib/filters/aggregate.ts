@@ -6,9 +6,20 @@ import {
   type RoomType,
   type ScopeAggregates,
 } from "@/data/contract";
-import { bin, max, mean, median, min, rollup } from "d3-array";
+import {
+  filter,
+  firstBy,
+  isNonNullish,
+  map,
+  mean,
+  median,
+  pipe,
+  prop,
+  sortBy,
+  take,
+} from "remeda";
 
-const TOP_HOSTS_LIMIT = 5;
+const TOP_HOSTS_LIMIT = 10;
 const PRICE_HISTOGRAM_BINS = 20;
 
 function emptyRoomMix(): Record<RoomType, number> {
@@ -21,32 +32,40 @@ function emptyRoomMix(): Record<RoomType, number> {
   );
 }
 
+/**
+ * Fixed-count, equal-width price bins over `[min, priceCap]`. Short-term-rental
+ * prices are heavily right-skewed, so the upper edge is the city's `priceCap`
+ * (its 99th-percentile ceiling) rather than the raw max: every price `>= priceCap`
+ * folds into the **top bin** ("priceCap+"). That shares one ceiling with the price
+ * filter, which already treats `priceCap` as open-topped (`resolvePriceBand`), so
+ * the histogram and the slider never disagree on "and above".
+ */
 function priceHistogram(
   prices: readonly number[],
+  priceCap: number,
 ): ScopeAggregates["priceHistogram"] {
   if (prices.length === 0) return [];
-  const lo = min(prices) as number;
-  const hi = max(prices) as number;
-  if (lo === hi) return [{ x0: lo, x1: hi, count: prices.length }];
+  const lo = firstBy(prices, (p) => p) as number;
+  const hi = priceCap > lo ? priceCap : lo;
+  if (hi === lo) return [{ x0: lo, x1: hi, count: prices.length }];
 
-  // Fixed-count, equal-width bins. We pass d3 explicit interior thresholds (not
-  // a bin *count*) so it yields exactly PRICE_HISTOGRAM_BINS uniform bins rather
-  // than its "nice" tick thresholds. d3 does the bucket assignment; the edges are
-  // labelled from the same canonical `lo + i*width` the thresholds derive from,
-  // so the output is identical to the prior hand-rolled binning.
   const width = (hi - lo) / PRICE_HISTOGRAM_BINS;
-  const thresholds = Array.from(
-    { length: PRICE_HISTOGRAM_BINS - 1 },
-    (_, i) => lo + (i + 1) * width,
-  );
-  return bin<number, number>()
-    .domain([lo, hi])
-    .thresholds(thresholds)(prices)
-    .map((b, i) => ({
-      x0: lo + i * width,
-      x1: lo + (i + 1) * width,
-      count: b.length,
-    }));
+  const counts = new Array<number>(PRICE_HISTOGRAM_BINS).fill(0);
+  for (const price of prices) {
+    const idx =
+      price >= hi
+        ? PRICE_HISTOGRAM_BINS - 1
+        : Math.min(
+            PRICE_HISTOGRAM_BINS - 1,
+            Math.max(0, Math.floor((price - lo) / width)),
+          );
+    counts[idx] += 1;
+  }
+  return counts.map((count, i) => ({
+    x0: lo + i * width,
+    x1: lo + (i + 1) * width,
+    count,
+  }));
 }
 
 /**
@@ -58,62 +77,72 @@ function priceHistogram(
  *  - `avgReviewsPerMonth` = mean over REVIEWED listings only
  *  - `medianPrice` (not mean); quantile breaks are a city-level concern
  *
- * This is the live-compute twin of the build-time pre-baked aggregate cube. The
- * static adapter calls it for the on-demand filtered path; a SQL adapter does
- * the equivalent `GROUP BY`; the ingest job calls the same shape to materialize
- * `scope_aggregates`.
+ * The single definition of a scope's stats: the live filtered recompute (worker)
+ * and the offline generator (`buildCityAggregates`) both call it, so the
+ * precomputed numbers and a live recompute can never disagree.
  */
-export function computeAggregates(
-  listings: readonly Listing[],
-): ScopeAggregates {
-  const listingCount = listings.length;
-  const meetsFloor = listingCount >= MIN_LISTING_FLOOR;
+export function computeAggregates(priceCap: number) {
+  return function (listings: readonly Listing[]): ScopeAggregates {
+    const listingCount = listings.length;
+    const meetsFloor = listingCount >= MIN_LISTING_FLOOR;
+    const prices = map(listings, prop("price"));
 
-  // d3.median interpolates the two middle values for even counts — the same
-  // result as the prior sort-and-pick — and returns undefined for an empty set.
-  const medianPrice = median(listings, (l) => l.price) ?? null;
+    // median interpolates the two middle values for even counts and is undefined
+    // for an empty set — collapsed to null per the contract.
+    const medianPrice = median(prices) ?? null;
 
-  const roomTypeMix = emptyRoomMix();
-  for (const listing of listings) roomTypeMix[listing.roomType] += 1;
+    const roomTypeMix = emptyRoomMix();
+    for (const listing of listings) roomTypeMix[listing.roomType] += 1;
 
-  // d3.mean ignores null entries, so this is the mean over REVIEWED listings
-  // only; undefined (none reviewed) collapses to null per the contract.
-  const avgReviewsPerMonth = mean(listings, (l) => l.reviewsPerMonth) ?? null;
+    // Mean over REVIEWED listings only: drop the null review rates first, so the
+    // average ignores them; none reviewed collapses to null per the contract.
+    const avgReviewsPerMonth =
+      mean(
+        pipe(listings, map(prop("reviewsPerMonth")), filter(isNonNullish)),
+      ) ?? null;
 
-  // Concentration metrics are suppressed below the floor (contract).
-  let multiListingHostShare: number | null = null;
-  let topHosts: ScopeAggregates["topHosts"] = [];
-  if (meetsFloor) {
-    const multiCount = listings.filter(
-      (l) => l.hostListingsCount >= MULTI_LISTING_THRESHOLD,
-    ).length;
-    multiListingHostShare = multiCount / listingCount;
+    // Concentration metrics are suppressed below the floor (contract).
+    let multiListingHostShare: number | null = null;
+    let topHosts: ScopeAggregates["topHosts"] = [];
+    if (meetsFloor) {
+      const multiCount = listings.filter(
+        (l) => l.hostListingsCount >= MULTI_LISTING_THRESHOLD,
+      ).length;
+      multiListingHostShare = multiCount / listingCount;
 
-    // Group by host; the first listing seen for a host carries its name. Both
-    // the rollup's insertion order and the stable sort below match the prior
-    // hand-rolled Map, so ties resolve identically.
-    const byHost = rollup(
-      listings,
-      (group) => ({
-        hostId: group[0].hostId,
-        hostName: group[0].hostName,
-        count: group.length,
-      }),
-      (l) => l.hostId,
-    );
-    topHosts = [...byHost.values()]
-      .sort((a, b) => b.count - a.count)
-      .slice(0, TOP_HOSTS_LIMIT);
-  }
+      // Group by host; the first listing seen for a host carries its name. A Map
+      // preserves first-seen insertion order — a plain object would reorder the
+      // numeric `hostId` keys — and remeda's stable `sortBy` keeps ties in that
+      // order, so tied hosts resolve exactly as the prior d3.rollup did.
+      const byHost = new Map<number, ScopeAggregates["topHosts"][number]>();
+      for (const l of listings) {
+        const seen = byHost.get(l.hostId);
+        if (seen) {
+          seen.count += 1;
+        } else {
+          byHost.set(l.hostId, {
+            hostId: l.hostId,
+            hostName: l.hostName,
+            count: 1,
+          });
+        }
+      }
+      topHosts = pipe(
+        [...byHost.values()],
+        sortBy([prop("count"), "desc"]),
+        take(TOP_HOSTS_LIMIT),
+      );
+    }
 
-  return {
-    listingCount,
-    medianPrice,
-    multiListingHostShare,
-    avgReviewsPerMonth,
-    meetsFloor,
-    roomTypeMix,
-    topHosts,
-    priceHistogram: priceHistogram(listings.map((l) => l.price)),
+    return {
+      listingCount,
+      medianPrice,
+      multiListingHostShare,
+      avgReviewsPerMonth,
+      meetsFloor,
+      roomTypeMix,
+      topHosts,
+      priceHistogram: priceHistogram(prices, priceCap),
+    };
   };
 }

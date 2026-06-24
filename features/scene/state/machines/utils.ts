@@ -60,6 +60,39 @@ export const createMachineStateSelector = <TActor extends SupportedActor>(
 };
 
 /**
+ * Structural value-equality for the small JSON-like values map selectors emit
+ * (a `toBounds` corner pair, a MapLibre filter expression). A `useSelector`
+ * selector re-runs on every snapshot and allocates a fresh array, so comparing
+ * by value — not reference — keeps consumers stable across unrelated context
+ * changes (e.g. a filter edit must not hand the map a new `maxBounds`).
+ */
+export function deepEqual(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (
+    typeof a !== "object" ||
+    typeof b !== "object" ||
+    a === null ||
+    b === null
+  ) {
+    return false;
+  }
+  if (Array.isArray(a) !== Array.isArray(b)) return false;
+  if (Array.isArray(a) && Array.isArray(b)) {
+    if (a.length !== b.length) return false;
+    return a.every((item, i) => deepEqual(item, b[i]));
+  }
+  const aKeys = Object.keys(a);
+  const bKeys = Object.keys(b);
+  if (aKeys.length !== bKeys.length) return false;
+  return aKeys.every((key) =>
+    deepEqual(
+      (a as Record<string, unknown>)[key],
+      (b as Record<string, unknown>)[key],
+    ),
+  );
+}
+
+/**
  * Binds a machine's `Context` + `Events`, returning an `assign` factory that
  * writes a single context field from the triggering event — either by copying an
  * event payload key or via a `(event, context) => value` function. The event is

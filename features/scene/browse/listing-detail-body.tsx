@@ -51,7 +51,7 @@ export function ListingDetailBody({
       </dl>
 
       <p className="type-caption-mono text-muted-foreground">
-        Listing #{listing.id} · Inside Airbnb · {snapshotLabel.trim()} snapshot
+        Listing #{listing.id} · Inside Airbnb · {snapshotLabel} snapshot
       </p>
     </div>
   );

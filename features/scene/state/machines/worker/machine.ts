@@ -1,6 +1,6 @@
 import { type ActorRefFrom, assertEvent, enqueueActions, setup } from "xstate";
 
-import type { ProcessRequestMessage } from "@/lib/listings/worker";
+import type { ProcessRequestMessage } from "@/lib/listings";
 
 import type { CityMachineActor } from "../city/machine";
 import { SystemId } from "../constants";
@@ -51,7 +51,11 @@ function buildAggregates(
 ): ProcessRequestMessage {
   return {
     type: "aggregates",
-    params: { scope: event.scope, filters: event.filters },
+    params: {
+      neighbourhood: event.neighbourhood,
+      filters: event.filters,
+      priceCap: event.priceCap,
+    },
     slug: event.slug,
     snapshotId: event.snapshotId,
     requestId,

@@ -41,7 +41,7 @@ export const datasetFixture: CityDataset = {
   name: "London",
   country: "United Kingdom",
   frame: "Largest market despite licensing",
-  snapshotLabel: " 9/2025",
+  snapshotLabel: "9/2025",
   currency: "GBP",
   bbox: [-0.51, 51.28, 0.33, 51.69],
   center: [-0.12, 51.5],

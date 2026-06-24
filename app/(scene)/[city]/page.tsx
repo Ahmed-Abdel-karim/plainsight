@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 
 import { SceneView } from "@/features/scene";
 import { getCitiesData, getCityMeta } from "@/data";
-import type { Scope } from "@/data/types";
 
 export async function generateStaticParams() {
   const cities = await getCitiesData();
@@ -46,10 +45,9 @@ export async function generateMetadata({
 
 export default async function CityPage({ params }: PageProps<"/[city]">) {
   const { city } = await params;
-  const scope: Scope = { type: "city" };
   const meta = await getCityMeta(city);
   if (!meta) {
     notFound();
   }
-  return <SceneView cityMeta={meta} scope={scope} />;
+  return <SceneView cityMeta={meta} />;
 }

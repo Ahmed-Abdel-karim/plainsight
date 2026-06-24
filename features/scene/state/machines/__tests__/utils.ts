@@ -5,7 +5,7 @@ import type { BrowseCollection } from "@/data/contract";
 import type {
   LoadDataResponseMessage,
   ProcessResponseMessage,
-} from "@/lib/listings/worker";
+} from "@/lib/listings";
 import {
   createFakeMaplibreMap,
   type FakeMaplibreMap,

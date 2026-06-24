@@ -1,8 +1,8 @@
 import { Suspense } from "react";
+import { version } from "@/package.json";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import type { CityMeta } from "@/data/contract";
-import type { Scope } from "@/data/types";
 import {
   AnalysisCardsSkeleton,
   AnalysisPanel,
@@ -17,7 +17,6 @@ import { Logo } from "@/components/logo";
 
 type MarketPanelContentProps = {
   cityMeta: CityMeta;
-  scope: Scope;
 };
 
 /**
@@ -34,18 +33,17 @@ type MarketPanelContentProps = {
  * aggregates) each still stream behind their own Suspense boundary.
  */
 export function MarketPanelContent({
-  scope,
   cityMeta: { slug: citySlug, country, frame, snapshotLabel },
   cityMeta,
 }: MarketPanelContentProps) {
-  const snapshot = snapshotLabel.trim();
+  const snapshot = snapshotLabel;
 
   return (
     <>
       <div className="flex items-center gap-inline border-b border-border pb-gutter group-data-[vaul-drawer-direction=bottom]/drawer-content:hidden">
         <Logo />
         <span className="ml-auto type-caption-mono text-muted-foreground">
-          v1 · explorer
+          v{version} · explorer
         </span>
       </div>
       <header className="flex flex-col gap-inline">
@@ -86,7 +84,6 @@ export function MarketPanelContent({
                 <AnalysisPanel
                   citySlug={citySlug}
                   currency={cityMeta.currency}
-                  scope={scope}
                 />
               </div>
             }

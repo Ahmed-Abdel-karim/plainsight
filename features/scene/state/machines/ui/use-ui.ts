@@ -41,6 +41,8 @@ export function useSelectListing() {
 
 export const useLens = createUiSelector((s) => s.context.lens);
 
+export const useIsBrowse = createUiSelector((s) => s.context.lens === "browse");
+
 export const useSelectedId = createUiSelector((s) => s.context.selectedId);
 
 export const useHoveredListingId = createUiSelector(

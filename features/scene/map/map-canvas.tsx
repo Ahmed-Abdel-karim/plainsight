@@ -10,7 +10,7 @@ import {
   NavigationControl,
   type ViewStateChangeEvent,
 } from "react-map-gl/maplibre";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import { ReloadIcon } from "@radix-ui/react-icons";
 
@@ -26,6 +26,8 @@ import {
 import { OPENFREEMAP_STYLE } from "./map-styles";
 import { isKnownSourceId } from "./types";
 import {
+  createCitySelector,
+  deepEqual,
   useChangeMapResolution,
   useCityFraming,
   useFitMapBounds,
@@ -43,6 +45,20 @@ import MapSkeleton from "./map-skeleton";
 
 const MAX_BOUNDS_PADDING_RATIO = 0.3; // Pad maxBounds by 25% to allow some room for UI and avoid edge-clipping
 
+/** The city's fit bounds and padded pan limit, derived on the city actor so a
+ *  filter/worker snapshot never hands the map a fresh `bounds`/`maxBounds`. */
+const useCityBounds = createCitySelector(
+  (s) => (s?.context.framing ? toBounds(s.context.framing.bbox) : null),
+  deepEqual,
+);
+const useCityMaxBounds = createCitySelector(
+  (s) =>
+    s?.context.framing
+      ? toBounds(s.context.framing.bbox, MAX_BOUNDS_PADDING_RATIO)
+      : undefined,
+  deepEqual,
+);
+
 export function MapCanvas() {
   const mapRef = useRef<MapRef | null>(null);
   const reportStyleLoaded = useReportStyleLoaded();
@@ -57,11 +73,8 @@ export function MapCanvas() {
   const theme = useResolvedTheme();
 
   const { isBrowse } = useLens();
-  const bounds = useMemo(() => (city ? toBounds(city.bbox) : null), [city]);
-  const maxBounds = useMemo(
-    () => (city ? toBounds(city.bbox, MAX_BOUNDS_PADDING_RATIO) : undefined),
-    [city],
-  );
+  const bounds = useCityBounds();
+  const maxBounds = useCityMaxBounds();
   const mapStyle = OPENFREEMAP_STYLE[theme];
 
   const suppressed = useMapIsSuppressed();
@@ -123,7 +136,7 @@ export function MapCanvas() {
         initialViewState={{
           longitude: city.center[0],
           latitude: city.center[1],
-          zoom: 11,
+          zoom: 5,
           bounds,
           bearing: 0,
           fitBoundsOptions: { padding: 35 },

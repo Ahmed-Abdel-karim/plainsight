@@ -12,9 +12,9 @@ import type {
   CityMeta,
   Neighbourhood,
   ScopeAggregates,
+  StatsSnapshot,
 } from "@/data/contract";
 import { selectScopeAggregates } from "@/data/selectors";
-import type { Scope } from "@/data/types";
 
 import type { CityRepository } from "./port";
 
@@ -58,7 +58,7 @@ async function loadMeta(
   return readJson<CityMeta>(`${slug}/${snapshotId}/meta.json`);
 }
 
-/** Materialised cube: city + per-neighbourhood aggregates + neighbourhood list. */
+/** Materialised aggregates: city + per-neighbourhood stats + neighbourhood list. */
 async function loadAggregates(
   slug: string,
   snapshotId: string,
@@ -86,17 +86,30 @@ async function getNeighbourhoods(
   slug: string,
   snapshotId: string,
 ): Promise<Neighbourhood[]> {
-  const cube = await loadAggregates(slug, snapshotId);
-  return cube?.neighbourhoods ?? [];
+  const aggregates = await loadAggregates(slug, snapshotId);
+  return aggregates?.neighbourhoods ?? [];
 }
 
 async function getScopeAggregates(
   slug: string,
   snapshotId: string,
-  scope: Scope,
+  neighbourhood: string | null,
 ): Promise<ScopeAggregates | null> {
-  const cube = await loadAggregates(slug, snapshotId);
-  return cube ? selectScopeAggregates(cube, scope) : null;
+  const aggregates = await loadAggregates(slug, snapshotId);
+  return aggregates ? selectScopeAggregates(aggregates, neighbourhood) : null;
+}
+
+async function getStatsSnapshot(
+  slug: string,
+  snapshotId: string,
+): Promise<StatsSnapshot | null> {
+  const aggregates = await loadAggregates(slug, snapshotId);
+  return aggregates
+    ? {
+        city: aggregates.cityAggregates,
+        neighbourhoods: aggregates.neighbourhoodAggregates,
+      }
+    : null;
 }
 
 /**
@@ -111,4 +124,5 @@ export const staticJsonRepository: CityRepository = {
   getCityMeta,
   getNeighbourhoods,
   getScopeAggregates,
+  getStatsSnapshot,
 };

@@ -1,11 +1,11 @@
 import type { ScopeAggregates } from "@/data/contract";
-import type { ListingFilters, Scope } from "@/data/types";
+import type { ListingFilters } from "@/data/types";
 import type { HexCell, HexResolution } from "@/lib/hex/types";
 import type {
   LoadDataResponseMessage,
   ProcessRequestMessage,
   ProcessResponseMessage,
-} from "@/lib/listings/worker";
+} from "@/lib/listings";
 
 /**
  * Events the worker machine handles: requests *in* from the current city machine
@@ -39,8 +39,10 @@ export interface WorkerRequestAggregates {
   readonly type: "WORKER.REQUEST_AGGREGATES";
   readonly slug: string;
   readonly snapshotId: string;
-  readonly scope: Scope;
+  readonly neighbourhood: string | null;
   readonly filters: ListingFilters;
+  /** The city's price ceiling — caps the histogram (see `computeAggregates`). */
+  readonly priceCap: number;
 }
 
 /** Abort every in-flight recompute (e.g. on a lens or city change): each busy

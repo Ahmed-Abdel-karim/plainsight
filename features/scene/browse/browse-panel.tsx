@@ -4,12 +4,13 @@ import { useEffect, useMemo, useState } from "react";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import type { SortKey } from "@/data/types";
-import { formatCurrency } from "../shared/format";
-import { ROOM_DISPLAY } from "../shared/room-display";
+import { filterSummary } from "../shared/filter-summary";
 import {
   useCityFraming,
+  useDisplayFilters,
   useHoveredListingId,
   useHoverSource,
+  usePriceBounds,
   useResetFilters,
   useResolvedFilters,
   useSetMapHover,
@@ -21,7 +22,11 @@ import { BrowseEmpty } from "./browse-empty";
 import { BrowseSummary } from "./browse-summary";
 import { ListingList } from "./listing-list";
 import { SortControl } from "./sort-control";
-import { useBrowseListings, useBrowsePoints } from "./use-browse-points";
+import {
+  useBrowseListings,
+  useBrowsePoints,
+  useListingsByIndex,
+} from "./use-browse-points";
 
 /**
  * The Browse list surface — the live count + sort + virtualized list / empty /
@@ -38,10 +43,14 @@ export function BrowsePanel() {
   const currency = city?.currency ?? "";
   // Filter controls live in the shared `FilterPanel` above; here we only read the
   // (URL-shared) filter state to derive the list, plus `reset` for the empty CTA.
+  // Resolved (top open to `Infinity`) drives the list; display (bounded) feeds
+  // the empty-state summary so it never formats `Infinity`.
   const filters = useResolvedFilters();
+  const displayFilters = useDisplayFilters();
+  const bounds = usePriceBounds();
   const reset = useResetFilters();
   // A neighbourhood click on the map narrows the Browse list to that scope.
-  const { scope } = useScope();
+  const { neighbourhoodId } = useScope();
   const { selectedId, selectListing } = useLens();
   const setHover = useSetMapHover();
   const hoveredId = useHoveredListingId();
@@ -56,25 +65,31 @@ export function BrowsePanel() {
   // order). Defaults to price ascending; reset on city switch by the `key={slug}`
   // remount where `BrowsePanel` is rendered in `MarketPanelContent`.
   const [sort, setSort] = useState<SortKey>("price_asc");
-  const listings = useBrowseListings(collection, scope, filters, sort);
+  const listings = useBrowseListings(
+    collection,
+    neighbourhoodId,
+    filters,
+    sort,
+  );
+  const listingsByIndex = useListingsByIndex(listings);
 
   // If the selected listing leaves the filtered/scoped set, close its drawer.
   // The filtered list is the authority on what is still reachable.
   useEffect(() => {
     if (selectedId === null || status !== "ready") return;
-    if (!listings.some((listing) => listing.id === selectedId)) {
+    if (!listingsByIndex.has(selectedId)) {
       selectListing(null);
     }
-  }, [selectedId, status, listings, selectListing]);
+  }, [selectedId, status, listingsByIndex, selectListing]);
 
   // The scoped total (scope only, before the price/room filter) for "N of total".
   const total = useMemo(() => {
     if (!collection) return 0;
-    if (scope.type !== "neighbourhood") return collection.features.length;
+    if (neighbourhoodId === null) return collection.features.length;
     return collection.features.filter(
-      (feature) => feature.properties.neighbourhoodId === scope.id,
+      (feature) => feature.properties.neighbourhoodId === neighbourhoodId,
     ).length;
-  }, [collection, scope]);
+  }, [collection, neighbourhoodId]);
 
   // Resolve neighbourhood id → display name from the shared boundaries tier (one
   // cached fetch across the map + Browse); fall back to the raw id before it
@@ -92,13 +107,8 @@ export function BrowsePanel() {
     // First paint is city-less (the panel mounts before the CITY.CHANGED effect),
     // so currency can be empty — guard the Intl format (it throws on "").
     if (!currency) return "";
-    const rooms =
-      filters.roomTypes.length === 0
-        ? "All room types"
-        : filters.roomTypes.map((type) => ROOM_DISPLAY[type].short).join(", ");
-    const [min, max] = filters.priceRange;
-    return `${rooms} · ${formatCurrency(min, currency)}–${formatCurrency(max, currency)}`;
-  }, [filters, currency]);
+    return filterSummary(displayFilters, bounds, currency);
+  }, [displayFilters, bounds, currency]);
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-stack">
@@ -128,6 +138,7 @@ export function BrowsePanel() {
       ) : (
         <ListingList
           listings={listings}
+          listingsByIndex={listingsByIndex}
           neighbourhoodNames={neighbourhoodNames}
           currency={currency}
           hoveredId={hoveredId}

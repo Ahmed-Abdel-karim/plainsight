@@ -128,7 +128,10 @@ export function setupScene(
       <FilterWhenFramed cityMeta={cityMetaFor(framing.slug)} />
       <LensActivity
         analysis={
-          <AnalysisCards currency="GBP" defaultAggregates={defaultAggregates} />
+          <AnalysisCards
+            currency="GBP"
+            snapshot={{ city: defaultAggregates, neighbourhoods: {} }}
+          />
         }
         browse={<BrowsePanel />}
       />

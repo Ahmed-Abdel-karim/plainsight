@@ -1,33 +1,30 @@
-import { getScopeAggregates } from "@/data";
-import type { Scope } from "@/data/types";
+import { getStatsSnapshot, unavailableAggregates } from "@/data";
 
 import { AnalysisCards } from "./analysis-cards";
 import { AnalysisCardsSkeleton } from "./analysis-cards-skeleton";
 import { AsyncBoundary } from "@/components/utils/async-boundary";
 
 /**
- * Server loader for the Analyse cards. The only thing it fetches is the
- * *scope-dependent* piece — the active scope's pre-baked aggregates (the data
- * layer returns zeroed aggregates when missing, so there's nothing to massage).
- * Static per-city scalars are threaded in from server-read city meta. Hands the
- * scope aggregates to the client `AnalysisCards`, which owns the filter ↔ URL
- * state + the off-thread recompute.
+ * Server loader for the Analyse cards. Reads the city's unfiltered stats snapshot
+ * (city + every neighbourhood) from the pre-baked cube and hands it to the client
+ * `AnalysisCards`, which seeds it into React Query — so the default view renders
+ * in the static shell — and follows the city actor for a real filter.
  */
 export function AnalysisPanel({
   citySlug,
   currency,
-  scope,
 }: {
   citySlug: string;
   currency: string;
-  scope: Scope;
 }) {
-  const scopeId = scope.type === "neighbourhood" ? scope.id : undefined;
   return (
     <AsyncBoundary
-      data={() => getScopeAggregates(citySlug, scope.type, scopeId)}
+      data={() => getStatsSnapshot(citySlug)}
       Component={({ data }) => (
-        <AnalysisCards currency={currency} defaultAggregates={data} />
+        <AnalysisCards
+          currency={currency}
+          snapshot={data ?? { city: unavailableAggregates, neighbourhoods: {} }}
+        />
       )}
       fallback={<AnalysisCardsSkeleton />}
     />

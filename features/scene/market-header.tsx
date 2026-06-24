@@ -15,7 +15,7 @@ export function MarketHeader({
           {listingCount.toLocaleString("en")} listings
         </span>
         <span aria-hidden="true">·</span>
-        <span>Data: {snapshotLabel.trim()} snapshot</span>
+        <span>Data: {snapshotLabel} snapshot</span>
       </div>
     </header>
   );

@@ -45,9 +45,7 @@ export function CityCard({ city }: { city: CityData }) {
               {city.listings}
             </span>
             <span aria-hidden="true">·</span>
-            <span className="tabular-nums">
-              {city.snapshotLabel.trim()} snapshot
-            </span>
+            <span className="tabular-nums">{city.snapshotLabel} snapshot</span>
           </CardFooter>
         </Card>
       </CardLink>

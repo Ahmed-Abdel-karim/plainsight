@@ -19,7 +19,7 @@ import type * as Input from "./input";
 
 const assignFromEvent = createEventAssigner<Context.Context, Events.Events>();
 
-const MAX_BOUNDS_PADDING_RATIO = 0.3;
+const MAX_BOUNDS_PADDING_RATIO = 0.5;
 
 // --- private helpers (map-specific MapLibre utilities) ---
 
@@ -170,13 +170,8 @@ export const mapMachine = setup({
       if (!map?.getSource(POINTS_SOURCE_ID)) return;
       map.removeFeatureState({ source: POINTS_SOURCE_ID });
     },
-    // Whole-source clear above wiped the painted hover/selected; forget the ids
-    // so the next paint doesn't try to unpaint an already-cleared feature.
     resetMapHover: assign({ mapHoveredListingId: null }),
     resetMapSelect: assign({ mapSelectedListingId: null }),
-    // Entry to `lifecycle.ready` — sync the imperative layer to durable truth
-    // once. clearPendingFitBounds runs AFTER this in the entry array, so
-    // context.pendingFitBounds is still readable here.
     applyCurrentStateToMap: enqueueActions(({ context, system, enqueue }) => {
       const map = getMap(context);
       if (!map) return;

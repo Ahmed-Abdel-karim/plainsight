@@ -63,7 +63,7 @@ describe("landing view", () => {
     ).toBeInTheDocument();
 
     for (const city of cityFixtures) {
-      const snapshot = `${city.snapshotLabel.trim()} snapshot`;
+      const snapshot = `${city.snapshotLabel} snapshot`;
       const cardLink = screen.getByRole("link", {
         name: `${city.name}, ${city.country}. ${city.frame}. ${city.listings}. ${snapshot}.`,
       });

@@ -1,32 +1,25 @@
 import type {
   CityAggregates,
-  CityMeta,
   Neighbourhood,
   ScopeAggregates,
 } from "./contract";
-import type { ListingFilters, Scope } from "./types";
 
-/** Selects the pre-baked aggregates for the current market scope. */
+/** Selects the precomputed aggregates for a neighbourhood (`null` = whole city). */
 export function selectScopeAggregates(
-  cube: CityAggregates,
-  scope: Scope,
+  aggregates: CityAggregates,
+  neighbourhood: string | null,
 ): ScopeAggregates {
-  if (scope.type === "city") return cube.cityAggregates;
-  return cube.neighbourhoodAggregates[scope.id] ?? cube.cityAggregates;
+  if (neighbourhood === null) return aggregates.cityAggregates;
+  return (
+    aggregates.neighbourhoodAggregates[neighbourhood] ??
+    aggregates.cityAggregates
+  );
 }
 
 /** Looks up a static neighbourhood by id. */
 export function selectNeighbourhood(
-  cube: CityAggregates,
+  aggregates: CityAggregates,
   id: string,
 ): Neighbourhood | undefined {
-  return cube.neighbourhoods.find((nb) => nb.id === id);
-}
-
-/** Initial listing filters derived from the city's full price range. */
-export function defaultFilters(meta: CityMeta): ListingFilters {
-  return {
-    roomTypes: [],
-    priceRange: [meta.priceScale.min, meta.priceCap],
-  };
+  return aggregates.neighbourhoods.find((nb) => nb.id === id);
 }

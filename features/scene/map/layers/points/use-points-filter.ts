@@ -1,31 +1,32 @@
 "use client";
 
 /**
- * The GPU `filter` expression for the Browse dot layer, read at the point of
- * use rather than threaded through the canvas. Composes the shared filter state
- * (`useResolvedFilters`) and neighbourhood scope (`useScope`) into the memoized
- * MapLibre expression the circle layer consumes.
+ * The GPU `filter` expression for the Browse dot layer, derived on the city
+ * actor rather than threaded through the canvas. Composes the resolved filter
+ * state and neighbourhood scope into the MapLibre expression the circle layer
+ * consumes.
  *
- * Keeping this beside the layer (the way `useListingsHexCells` feeds the hex
- * layer) keeps `MapCanvas` from re-rendering on every filter/scope change and
- * leaves the points layer the sole owner of its derived render input. The memo
- * is load-bearing: `pointsFilterExpression` allocates a fresh array each call,
- * so an un-memoized read would hand MapLibre a new `setFilter` every render.
+ * Keeping this beside the layer (the way `useHexCells` feeds the hex layer)
+ * keeps `MapCanvas` from re-rendering on every filter/scope change and leaves
+ * the points layer the sole owner of its derived render input.
+ * `pointsFilterExpression` allocates a fresh array each call, so the selector
+ * compares by value (`deepEqual`) — MapLibre only gets a new `setFilter` when
+ * the expression actually changes.
  */
-import { useMemo } from "react";
-
 import type { FilterSpecification } from "maplibre-gl";
 
-import { useResolvedFilters } from "@/features/scene/state";
-import { useScope } from "@/features/scene/shared/use-scope";
+import { priceBounds, resolveFilters } from "@/lib/filters/normalize";
+import { createCitySelector, deepEqual } from "@/features/scene/state";
 import { pointsFilterExpression } from "./points-filter";
 
-export function usePointsFilter(): FilterSpecification {
-  const filters = useResolvedFilters();
-  const { scope } = useScope();
-
-  return useMemo(
-    () => pointsFilterExpression(filters, scope),
-    [filters, scope],
-  );
-}
+export const usePointsFilter = createCitySelector(
+  (s): FilterSpecification =>
+    pointsFilterExpression(
+      resolveFilters(
+        s?.context.filter ?? { roomTypes: [], priceRange: null },
+        priceBounds(s?.context.framing ?? null),
+      ),
+      s?.context.filter.nbhd ?? null,
+    ),
+  deepEqual,
+);

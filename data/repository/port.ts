@@ -16,8 +16,8 @@ import type {
   CityMeta,
   Neighbourhood,
   ScopeAggregates,
+  StatsSnapshot,
 } from "@/data/contract";
-import type { Scope } from "@/data/types";
 
 export interface CityRepository {
   /** City index for the picker. */
@@ -27,10 +27,16 @@ export interface CityRepository {
   getCityMeta(slug: string, snapshotId: string): Promise<CityMeta | null>;
   /** Neighbourhood list (id, name, median, count) from the materialised cube. */
   getNeighbourhoods(slug: string, snapshotId: string): Promise<Neighbourhood[]>;
-  /** Pre-baked aggregate cube for a scope (city-wide or one neighbourhood). */
+  /** Pre-baked aggregates for a neighbourhood (`null` = whole city). */
   getScopeAggregates(
     slug: string,
     snapshotId: string,
-    scope: Scope,
+    neighbourhood: string | null,
   ): Promise<ScopeAggregates | null>;
+  /** The unfiltered aggregates for every scope, reshaped from the cube — the
+   *  payload the client seeds as `initialData`. */
+  getStatsSnapshot(
+    slug: string,
+    snapshotId: string,
+  ): Promise<StatsSnapshot | null>;
 }

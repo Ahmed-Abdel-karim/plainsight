@@ -71,7 +71,7 @@ export function HexLayers() {
         type="geojson"
         data={data}
         attribution={
-          city ? `Inside Airbnb Date: ${city.snapshotLabel.trim()}` : undefined
+          city ? `Inside Airbnb Date: ${city.snapshotLabel}` : undefined
         }
       >
         <MapLayer

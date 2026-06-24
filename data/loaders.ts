@@ -1,8 +1,8 @@
 import "server-only";
 
-import type { CityMeta, ScopeAggregates } from "./contract";
+import type { CityMeta, ScopeAggregates, StatsSnapshot } from "./contract";
 import { getRepository } from "./repository";
-import type { CityData, Scope } from "./types";
+import type { CityData } from "./types";
 
 function formatListingCount(n: number): string {
   return `${n.toLocaleString("en")} listings`;
@@ -65,7 +65,7 @@ export async function getCityScopeCounts(slug: string): Promise<{
   const repo = getRepository();
   const [neighbourhoods, cityAggregates] = await Promise.all([
     repo.getNeighbourhoods(slug, city.snapshotId),
-    repo.getScopeAggregates(slug, city.snapshotId, { type: "city" }),
+    repo.getScopeAggregates(slug, city.snapshotId, null),
   ]);
 
   const neighbourhoodListingCounts: Record<string, number> = {};
@@ -79,8 +79,6 @@ export async function getCityScopeCounts(slug: string): Promise<{
     neighbourhoodListingCounts,
   };
 }
-
-export type ScopeType = Scope["type"];
 
 const emptyRoomTypeMix: ScopeAggregates["roomTypeMix"] = {
   "Entire home/apt": 0,
@@ -101,45 +99,14 @@ export const unavailableAggregates: ScopeAggregates = {
   priceHistogram: [],
 };
 
-function toScope(scopeType: ScopeType, scopeId?: string): Scope | null {
-  if (scopeType === "neighbourhood") {
-    return scopeId ? { type: "neighbourhood", id: scopeId } : null;
-  }
-
-  return { type: "city" };
-}
-
 /**
- * Active-scope aggregates for the analysis panel. Facade over the port: durable
- * caching lives in the adapter's `"use cache"`, so no memo wrapper is needed
- * here; this only maps the panel's primitive scope into the port shape.
+ * The city's unfiltered aggregates for every scope, for the client to seed as
+ * React Query `initialData`. Facade over the port; caching lives in the adapter.
  */
-export async function getScopeAggregates(
+export async function getStatsSnapshot(
   citySlug: string,
-  scopeType: ScopeType,
-  scopeId?: string,
-): Promise<ScopeAggregates> {
-  const scope = toScope(scopeType, scopeId);
-  if (!scope) return unavailableAggregates;
-
+): Promise<StatsSnapshot | null> {
   const city = await getActiveCity(citySlug);
-  if (!city) return unavailableAggregates;
-
-  return (
-    (await getRepository().getScopeAggregates(
-      citySlug,
-      city.snapshotId,
-      scope,
-    )) ?? unavailableAggregates
-  );
-}
-
-export async function getScopeListingCount(
-  citySlug: string,
-  scopeType: ScopeType,
-  scopeId?: string,
-): Promise<number> {
-  const aggregates = await getScopeAggregates(citySlug, scopeType, scopeId);
-
-  return aggregates.listingCount;
+  if (!city) return null;
+  return getRepository().getStatsSnapshot(citySlug, city.snapshotId);
 }

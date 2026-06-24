@@ -156,6 +156,13 @@ export interface CityAggregates {
   neighbourhoodAggregates: Record<string, ScopeAggregates>;
 }
 
+/** The unfiltered aggregates for every scope — the serialisable payload the
+ *  server seeds and the client reads as `initialData`. A reshape of the cube. */
+export interface StatsSnapshot {
+  readonly city: ScopeAggregates;
+  readonly neighbourhoods: Record<string, ScopeAggregates>;
+}
+
 /**
  * The whole city snapshot, pre-split. This composite is the producer/build input
  * and the shape of the legacy monolithic `{slug}.json`; the running app never

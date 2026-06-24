@@ -49,7 +49,7 @@ export function PointsLayers({ visible }: { visible: boolean }) {
       data={data}
       promoteId="id"
       attribution={
-        city ? `Inside Airbnb Date: ${city.snapshotLabel.trim()}` : undefined
+        city ? `Inside Airbnb Date: ${city.snapshotLabel}` : undefined
       }
     >
       <MapLayer

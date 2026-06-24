@@ -7,7 +7,7 @@ import {
   type ProcessResponseMessage,
   type RequestMessage,
   type ResponseMessage,
-} from "@/lib/listings/worker";
+} from "@/lib/listings";
 
 /**
  * What the transport accepts from the machine — four commands:

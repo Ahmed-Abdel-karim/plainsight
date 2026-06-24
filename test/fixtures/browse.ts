@@ -28,7 +28,7 @@ export function makeMapCityPayload(
     priceScale: { breaks: [50, 100, 150, 200], min: 10, max: 500 },
     priceCap: 450,
     currency: "GBP",
-    snapshotLabel: " 9/2025",
+    snapshotLabel: "9/2025",
     ...overrides,
   };
 }

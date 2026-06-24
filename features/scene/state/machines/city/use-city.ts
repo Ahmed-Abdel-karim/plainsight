@@ -11,7 +11,7 @@ import {
   resolveFilters,
   resolvePriceRange,
 } from "@/lib/filters/normalize";
-import { isDefaultView } from "@/lib/listings/query";
+import { isDefaultView } from "@/lib/listings";
 
 import { SceneActorContext } from "../../provider";
 import type { CityMachineActor } from "./machine";
@@ -27,7 +27,7 @@ export function useCityRef(): CityMachineActor | undefined {
   return SceneActorContext.useSelector((s) => s.context.cityRef ?? undefined);
 }
 
-const createCitySelector = createMachineStateSelector(useCityRef);
+export const createCitySelector = createMachineStateSelector(useCityRef);
 
 /**
  * Send function for the current city actor. Subscribes to root so it updates

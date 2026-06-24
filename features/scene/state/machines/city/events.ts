@@ -25,6 +25,11 @@ export interface FilterSetNbhd {
   readonly type: "FILTER.SET_NBHD";
   readonly nbhd: string | null;
 }
+/** Internal: raised (debounced) once a price-slider drag settles, to coalesce the
+ *  per-tick filter updates into a single worker recompute. */
+export interface FilterPriceSettled {
+  readonly type: "FILTER.PRICE_SETTLED";
+}
 
 // --- map event forwarded from map machine (triggers hex recompute) ---
 
@@ -71,6 +76,7 @@ export type Events =
   | FilterSetRoomTypes
   | FilterSetPriceRange
   | FilterSetNbhd
+  | FilterPriceSettled
   | MapResolutionChanged
   | WorkerFetchOk
   | WorkerFetchError

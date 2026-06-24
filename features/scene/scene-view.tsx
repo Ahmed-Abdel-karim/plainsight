@@ -1,7 +1,6 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { getCityScopeCounts } from "@/data";
 import type { CityMeta } from "@/data/contract";
-import type { Scope } from "@/data/types";
 import { ListingCount } from "./listing-count";
 import { ListingDetail } from "./browse";
 import { SceneDrawer } from "./scene-drawer";
@@ -29,13 +28,7 @@ import { UrlWriteSync } from "./url-write-sync";
  * client-only (XState, reflected from the URL by `SceneUrlLoader`), so nothing
  * here reads `searchParams` — the route stays fully static.
  */
-export function SceneView({
-  scope,
-  cityMeta,
-}: {
-  scope: Scope;
-  cityMeta: CityMeta;
-}) {
+export function SceneView({ cityMeta }: { cityMeta: CityMeta }) {
   // Cheap framing promise: everything but the scope counts comes straight off
   // the already-read meta; the counts are one extra (cached) cube read. Built
   // here (server) and passed unresolved so the client provider can `use()` it.
@@ -57,7 +50,7 @@ export function SceneView({
             aria-label="Market analysis"
             className="@container hidden w-full flex-col gap-section overflow-y-auto border-r border-border bg-card px-section pt-section pb-gutter lg:flex lg:h-screen lg:min-h-0"
           >
-            <MarketPanelContent cityMeta={cityMeta} scope={scope} />
+            <MarketPanelContent cityMeta={cityMeta} />
           </aside>
         }
         drawer={
@@ -67,7 +60,7 @@ export function SceneView({
               <ListingCount fallback={<Skeleton className="h-3 w-16" />} />
             }
           >
-            <MarketPanelContent cityMeta={cityMeta} scope={scope} />
+            <MarketPanelContent cityMeta={cityMeta} />
           </SceneDrawer>
         }
       />

@@ -18,7 +18,7 @@ function activateOnSpace(event: KeyboardEvent<HTMLAnchorElement>) {
 }
 
 function cityAriaLabel(city: CityData) {
-  return `${city.name}, ${city.country}. ${city.frame}. ${city.listings}. ${city.snapshotLabel.trim()} snapshot.`;
+  return `${city.name}, ${city.country}. ${city.frame}. ${city.listings}. ${city.snapshotLabel} snapshot.`;
 }
 
 export function CardLink({ href, children, city }: CardLinkProps) {
