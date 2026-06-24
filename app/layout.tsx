@@ -16,15 +16,33 @@ const jetbrainsMono = JetBrains_Mono({
   variable: "--font-mono",
 });
 
+const TITLE = "Plainsight — Explore short-term rental markets";
+const DESCRIPTION =
+  "Where short-term rentals are, what they cost, and who controls the market. Built on dated public Inside Airbnb snapshots.";
+
 export const metadata: Metadata = {
   // Resolves relative `alternates.canonical` paths (set per-city) to absolute
   // URLs. Override via NEXT_PUBLIC_SITE_URL in deployed environments.
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000",
   ),
-  title: "Plainsight — Explore short-term rental markets",
-  description:
-    "Where short-term rentals are, what they cost, and who controls the market. Built on dated public Inside Airbnb snapshots.",
+  title: TITLE,
+  description: DESCRIPTION,
+  // Open Graph image comes from app/opengraph-image.tsx (auto-injected by Next
+  // into both openGraph and twitter); city pages inherit it.
+  openGraph: {
+    type: "website",
+    siteName: "Plainsight",
+    title: TITLE,
+    description: DESCRIPTION,
+    url: "/",
+    locale: "en_GB",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: TITLE,
+    description: DESCRIPTION,
+  },
 };
 
 export default async function RootLayout({
