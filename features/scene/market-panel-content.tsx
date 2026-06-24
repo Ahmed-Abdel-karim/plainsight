@@ -10,6 +10,8 @@ import {
 } from "./analysis";
 import { FilterPanel } from "./analysis/filter-panel";
 import { BrowsePanel } from "./browse";
+import { BrowseError } from "./browse/browse-error";
+import { FeatureBoundary } from "@/components/utils/error-boundary";
 import { CitySwitcher } from "./city-switcher";
 import { LensActivity } from "./lens-activity";
 import { ListingCount } from "./listing-count";
@@ -76,18 +78,30 @@ export function MarketPanelContent({
         </div>
       </header>
       <div className="flex min-h-0 flex-1 flex-col gap-stack">
-        <FilterPanel cityMeta={cityMeta} />
+        <FeatureBoundary id="scene.filters" resetKey={citySlug}>
+          <FilterPanel cityMeta={cityMeta} />
+        </FeatureBoundary>
         <Suspense fallback={<AnalysisCardsSkeleton />}>
           <LensActivity
             analysis={
-              <div className="flex min-h-0 flex-1 flex-col gap-stack overflow-y-auto">
-                <AnalysisPanel
-                  citySlug={citySlug}
-                  currency={cityMeta.currency}
-                />
-              </div>
+              <FeatureBoundary id="scene.analysis" resetKey={citySlug}>
+                <div className="flex min-h-0 flex-1 flex-col gap-stack overflow-y-auto">
+                  <AnalysisPanel
+                    citySlug={citySlug}
+                    currency={cityMeta.currency}
+                  />
+                </div>
+              </FeatureBoundary>
             }
-            browse={<BrowsePanel key={citySlug} />}
+            browse={
+              <FeatureBoundary
+                id="scene.browse"
+                resetKey={citySlug}
+                fallback={<BrowseError />}
+              >
+                <BrowsePanel key={citySlug} />
+              </FeatureBoundary>
+            }
           />
         </Suspense>
         <DataProvenance />

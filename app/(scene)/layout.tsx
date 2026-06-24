@@ -1,3 +1,4 @@
+import { FeatureBoundary } from "@/components/utils/error-boundary";
 import { MapView, SceneNotifications } from "@/features/scene";
 
 /**
@@ -29,7 +30,9 @@ export default function SceneLayout({
             aria-label="Map"
             className="bg-map-bg relative min-h-96 flex-1 overflow-hidden lg:min-h-0"
           >
-            <MapView />
+            <FeatureBoundary id="scene.map">
+              <MapView />
+            </FeatureBoundary>
           </section>
         </div>
       </main>

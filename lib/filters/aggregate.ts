@@ -6,6 +6,7 @@ import {
   type RoomType,
   type ScopeAggregates,
 } from "@/data/contract";
+import { rollup } from "d3-array";
 import {
   filter,
   firstBy,
@@ -15,8 +16,6 @@ import {
   median,
   pipe,
   prop,
-  sortBy,
-  take,
 } from "remeda";
 
 const TOP_HOSTS_LIMIT = 10;
@@ -110,28 +109,21 @@ export function computeAggregates(priceCap: number) {
       ).length;
       multiListingHostShare = multiCount / listingCount;
 
-      // Group by host; the first listing seen for a host carries its name. A Map
-      // preserves first-seen insertion order — a plain object would reorder the
-      // numeric `hostId` keys — and remeda's stable `sortBy` keeps ties in that
-      // order, so tied hosts resolve exactly as the prior d3.rollup did.
-      const byHost = new Map<number, ScopeAggregates["topHosts"][number]>();
-      for (const l of listings) {
-        const seen = byHost.get(l.hostId);
-        if (seen) {
-          seen.count += 1;
-        } else {
-          byHost.set(l.hostId, {
-            hostId: l.hostId,
-            hostName: l.hostName,
-            count: 1,
-          });
-        }
-      }
-      topHosts = pipe(
-        [...byHost.values()],
-        sortBy([prop("count"), "desc"]),
-        take(TOP_HOSTS_LIMIT),
+      // Group by host; the first listing seen for a host carries its name. Both
+      // the rollup's insertion order and the stable sort below match the prior
+      // hand-rolled Map, so ties resolve identically.
+      const byHost = rollup(
+        listings,
+        (group) => ({
+          hostId: group[0].hostId,
+          hostName: group[0].hostName,
+          count: group.length,
+        }),
+        (l) => l.hostId,
       );
+      topHosts = [...byHost.values()]
+        .sort((a, b) => b.count - a.count)
+        .slice(0, TOP_HOSTS_LIMIT);
     }
 
     return {

@@ -19,6 +19,7 @@ import { useCityBoundaries } from "../shared/use-city-boundaries";
 import { useLens } from "../shared/use-lens";
 import { useScope } from "../shared/use-scope";
 import { BrowseEmpty } from "./browse-empty";
+import { BrowseError } from "./browse-error";
 import { BrowseSummary } from "./browse-summary";
 import { ListingList } from "./listing-list";
 import { SortControl } from "./sort-control";
@@ -109,6 +110,14 @@ export function BrowsePanel() {
     if (!currency) return "";
     return filterSummary(displayFilters, bounds, currency);
   }, [displayFilters, bounds, currency]);
+
+  if (status === "error") {
+    return (
+      <div className="flex min-h-0 flex-1 flex-col gap-stack">
+        <BrowseError />
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-stack">

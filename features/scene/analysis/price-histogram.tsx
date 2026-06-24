@@ -1,7 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Bar, BarChart, Cell, ReferenceLine, XAxis, YAxis } from "recharts";
+import {
+  Bar,
+  BarChart,
+  Rectangle,
+  ReferenceLine,
+  XAxis,
+  YAxis,
+  type BarShapeProps,
+} from "recharts";
 import type { ScopeAggregates } from "@/data/contract";
 import {
   ChartContainer,
@@ -90,18 +98,21 @@ export function PriceHistogram({
               strokeWidth={1}
             />
           ) : null}
-          <Bar dataKey="count" radius={2} isAnimationActive={false}>
-            {data.map((_, i) => (
-              <Cell
-                key={i}
+          <Bar
+            dataKey="count"
+            radius={2}
+            isAnimationActive={false}
+            shape={(props: BarShapeProps) => (
+              <Rectangle
+                {...props}
                 fill={
-                  i === active
+                  props.index === active
                     ? "var(--color-brand-emphasis)"
                     : "var(--color-count)"
                 }
               />
-            ))}
-          </Bar>
+            )}
+          />
         </BarChart>
       </ChartContainer>
 

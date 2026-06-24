@@ -1,4 +1,5 @@
 import { Skeleton } from "@/components/ui/skeleton";
+import { FeatureBoundary } from "@/components/utils/error-boundary";
 import { getCityScopeCounts } from "@/data";
 import type { CityMeta } from "@/data/contract";
 import { ListingCount } from "./listing-count";
@@ -74,7 +75,9 @@ export function SceneView({ cityMeta }: { cityMeta: CityMeta }) {
           <MapLegend />
         </div>
       </div>
-      <ListingDetail />
+      <FeatureBoundary id="scene.listing-detail" resetKey={cityMeta.slug}>
+        <ListingDetail />
+      </FeatureBoundary>
     </>
   );
 }
