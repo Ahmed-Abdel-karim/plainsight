@@ -23,8 +23,11 @@ import type * as Events from "./events";
  * session machines, then translates the two lifecycle inputs into the shared
  * map/ui suppression pair: `NAV.STARTED` (from `navigation`) → `SUSPEND`;
  * `CITY.READY`/`CITY.FAILED` (from `city`) → `RESUME`. It owns the `city` actor's
- * spawn/stop and mirrors settled selection to the URL. No gate, no pending
- * state — that lives in `navigation`.
+ * spawn/stop and mirrors settled selection to the URL. Its two states gate that
+ * mirror: `URL.SYNC` writes only in `settled`; while `switching` (a city switch
+ * is in flight, until `CITY.READY`/`CITY.FAILED`) the signal is dropped so a
+ * switch's intermediate selection/filter clears never clobber the URL. Pending
+ * *path* state lives in `navigation`.
  */
 export const rootMachine = setup({
   types: {
@@ -104,12 +107,29 @@ export const rootMachine = setup({
     { src: "worker", systemId: SystemId.WORKER, input: {} },
     { src: "navigation", systemId: SystemId.NAVIGATION },
   ],
+  initial: "settled",
+  states: {
+    settled: {
+      on: {
+        "NAV.STARTED": {
+          target: "switching",
+          actions: ["fanSuspend", "prefetch"],
+        },
+        "URL.SYNC": { actions: "syncUrl" },
+      },
+    },
+    switching: {
+      on: {
+        // Re-navigation while a switch is still in flight: re-suspend, stay.
+        "NAV.STARTED": { actions: ["fanSuspend", "prefetch"] },
+        "CITY.READY": { target: "settled", actions: "fanResume" },
+        "CITY.FAILED": { target: "settled", actions: "fanResume" },
+        // URL.SYNC intentionally unhandled — dropped until the switch settles.
+      },
+    },
+  },
   on: {
-    "NAV.STARTED": { actions: ["fanSuspend", "prefetch"] },
     "CITY.CHANGED": { actions: ["stopOldCity", "startNewCity"] },
-    "CITY.READY": { actions: "fanResume" },
-    "CITY.FAILED": { actions: "fanResume" },
-    "URL.SYNC": { actions: "syncUrl" },
   },
 });
 

@@ -169,6 +169,24 @@ describe("connected scene system", () => {
     });
   });
 
+  describe("URL sync gating", () => {
+    it("drops URL.SYNC during a city switch until the incoming city is ready", () => {
+      let syncs = 0;
+      scene = setupSceneSystem({ onSyncUrl: () => syncs++ });
+
+      scene.actor.send({ type: "URL.SYNC" });
+      expect(syncs).toBe(1);
+
+      scene.actor.send({ type: "NAV.STARTED", path: "/berlin" });
+      scene.actor.send({ type: "URL.SYNC" });
+      expect(syncs).toBe(1);
+
+      scene.actor.send({ type: "CITY.READY" });
+      scene.actor.send({ type: "URL.SYNC" });
+      expect(syncs).toBe(2);
+    });
+  });
+
   // A failed in-scene transition must still resume map + ui — otherwise they stay
   // suppressed and keep dropping input forever.
   describe("a failed city load resumes map and ui (recovery)", () => {

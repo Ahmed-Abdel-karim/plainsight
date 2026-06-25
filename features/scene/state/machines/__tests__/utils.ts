@@ -123,7 +123,10 @@ function createFakeTransport() {
  * `stop()` for teardown. The `syncUrl` action is no-oped so a test never touches
  * the URL; `prefetch` is a no-op by default (only the provider overrides it).
  */
-export function setupSceneSystem({ failBrowse = false } = {}) {
+export function setupSceneSystem({
+  failBrowse = false,
+  onSyncUrl = () => {},
+} = {}) {
   const transport = createFakeTransport();
 
   const testRootMachine = rootMachine.provide({
@@ -136,7 +139,7 @@ export function setupSceneSystem({ failBrowse = false } = {}) {
       }),
     },
     actions: {
-      syncUrl: () => {},
+      syncUrl: onSyncUrl,
     },
   });
 
