@@ -1,0 +1,51 @@
+name: Bug report
+description: Something is broken or behaves incorrectly
+title: "bug: "
+labels: ["type: bug", "needs-triage"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: The actual behavior you observed.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: What you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to /amsterdam
+        2. Toggle the price filter
+        3. ...
+    validations:
+      required: false
+  - type: input
+    id: affected
+    attributes:
+      label: Affected files / area
+      description: Paths or `file:line` refs if known.
+      placeholder: features/scene/browse/browse-panel.tsx:42
+    validations:
+      required: false
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - scene
+        - map
+        - browse
+        - analysis
+        - state
+        - data
+        - infra
+    validations:
+      required: true

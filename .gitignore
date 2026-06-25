@@ -57,3 +57,7 @@ C:*
 
 # Local-only archive of removed working docs / SpecKit (untracked reference)
 .archive/
+
+# Local-only working docs / scratch (internal reference, not shipped)
+PLAINSIGHT_AUDIT.md
+.codex/

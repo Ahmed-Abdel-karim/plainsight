@@ -1,0 +1,34 @@
+name: Chore
+description: Maintenance, deps, tooling — no product change
+title: "chore: "
+labels: ["type: chore"]
+body:
+  - type: textarea
+    id: task
+    attributes:
+      label: Task
+      description: What needs doing.
+    validations:
+      required: true
+  - type: textarea
+    id: done
+    attributes:
+      label: Definition of done
+      placeholder: |
+        - [ ] ...
+    validations:
+      required: false
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - scene
+        - map
+        - browse
+        - analysis
+        - state
+        - data
+        - infra
+    validations:
+      required: true

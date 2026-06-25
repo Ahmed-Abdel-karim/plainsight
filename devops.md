@@ -66,10 +66,10 @@ Unsplash images), **HSTS**, `X-Content-Type-Options`, `Referrer-Policy`,
 ⚠️ CSP `connect-src`/`img-src` are hand-maintained — adding a new external origin
 (analytics, font host, API) requires editing the CSP or it'll be blocked.
 
-## SEO ✅ (some files uncommitted — see below)
+## SEO ✅
 
 `app/robots.ts`, `app/sitemap.ts`, `app/not-found.tsx`, `opengraph-image`, social
-metadata. ⚠️ robots/sitemap/not-found are currently **untracked** — commit them.
+metadata — all committed.
 
 ## Performance tooling
 
@@ -114,16 +114,32 @@ Secrets live in Vercel / GitHub, never in the repo.
 ## TODO — integrations to finish
 
 1. 🟡 **Activate Sentry**: add `NEXT_PUBLIC_SENTRY_DSN` + `SENTRY_AUTH_TOKEN` in Vercel.
-2. ⬜ **Fix 3 pre-existing test failures** from commit `2d51df6` (2 toast-dedup + 1
-   browse "Reset filters") — until then the CI `quality` job is **red** and blocks
-   deploys. (Unrelated to perf work; needs investigation.)
-3. ⬜ **Commit the in-flight work**: SEO files (robots/sitemap/not-found), the recharts
-   `next/dynamic` deferral, the Lighthouse local script + CI gate.
+2. ✅ **Test fixes + scene refactor committed** (`f7dbf64`): the 3 failures from
+   `2d51df6` are fixed (2 toast-dedup assertions scoped to the notifications region +
+   the browse empty-state button renamed "Reset filters" → "Show all listings"), and
+   the scene state-machine migration + provider-scope move to the scene layout landed
+   with `price-histogram.tsx` formatted. The full quality gate passes locally:
+   `format:check`, `lint:strict`, `tsc --noEmit`, `test` (147/147), `build`.
+3. 🟡 **Merge `chore/issue-tracking` → `master`** to ship the above plus the
+   issue-tracking infra (`.github/ISSUE_TEMPLATE/`, `.github/labels.sh`,
+   `.claude/skills/issue/`) and doc updates (`CLAUDE.md`, `devops.md`). The push to
+   `master` is what triggers `deploy-production` (gated on `quality` + `e2e`).
 4. ⬜ **`LHCI_GITHUB_APP_TOKEN`** for inline Lighthouse status checks on PRs (optional).
 5. ⬜ **Tighten the perf gate** later: per-route byte budgets (currently one global
    ceiling), promote LCP/TBT warn→error once CI variance is known, add a desktop run.
 6. ⬜ **Asset CDN**: point `NEXT_PUBLIC_CITY_ASSET_BASE_URL` at object storage / CDN
    if data delivery needs to scale (origin must allow browser GET from the app origin).
+7. ⬜ **Worker rows in IndexedDB** (future, only if needed): today the worker keeps
+   every visited city's parsed listing rows in memory for the session (~21 MB JSON
+   for all 4 cities; London alone ~16 MB). If that heap ever becomes a problem, use
+   IndexedDB as a disk cache: keep only the **active** city's rows in memory, store
+   the rest on disk, and read them back on revisit instead of re-downloading. Wins:
+   smaller heap, no refetch on reload or after leaving to the home picker. Costs:
+   IndexedDB is async and copies the data on every read/write (London's 16 MB isn't
+   free to (de)serialize), and it's a second cache to keep in sync. Cleanup is easy:
+   key each entry by `[slug, snapshotId]` and drop any whose `snapshotId` no longer
+   matches the manifest (or clear the store); browsers also evict it on their own.
+   For 4 cities this is overkill — note it as a scaling option, don't build it yet.
 
 ## Caveats
 
