@@ -18,7 +18,7 @@ import * as Context from "./context";
 import type * as Events from "./events";
 
 /**
- * Scene root — a flat coordinator. It spawns the persistent `map`/`ui` actors in
+ * It spawns the persistent `map`/`ui` actors in
  * context (the refs the React tree reads) and invokes the `worker`/`navigation`
  * session machines, then translates the two lifecycle inputs into the shared
  * map/ui suppression pair: `NAV.STARTED` (from `navigation`) → `SUSPEND`;
