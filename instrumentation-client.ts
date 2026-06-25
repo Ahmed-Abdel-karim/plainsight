@@ -1,14 +1,22 @@
 import * as Sentry from "@sentry/nextjs";
+import {
+  deniedSentryUrls,
+  ignoredSentryErrors,
+  scrubSentryEvent,
+} from "./sentry.filters";
 
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
 
-  // Errors-only. No performance tracing, no session replay.
+  // Errors-only: keep free-tier quota for real app failures.
   tracesSampleRate: 0,
   sendDefaultPii: false,
 
-  // Active in production only — see sentry.server.config.ts.
   enabled: process.env.NODE_ENV === "production",
+
+  ignoreErrors: ignoredSentryErrors,
+  denyUrls: deniedSentryUrls,
+  beforeSend: scrubSentryEvent,
 });
 
 // Instruments client-side router navigations. A no-op while tracing is off

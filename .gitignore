@@ -34,6 +34,7 @@ yarn-error.log*
 .env*
 # ...but track .env for non-secret build-time defaults (NEXT_PUBLIC_*).
 !.env
+.env.sentry-build-plugin
 
 # vercel
 .vercel

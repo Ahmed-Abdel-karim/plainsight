@@ -278,8 +278,6 @@ These are implementation gaps, not accepted product limitations:
   drawer trigger.
 - Physical Android, Safari, Firefox, Edge, and iOS Safari verification and the
   production performance baseline are still pending.
-- Sentry remains disabled; errors-only enablement and explicit request-data
-  scrubbing are deployment work.
 - Production must override `NEXT_PUBLIC_CITY_ASSET_BASE_URL` when external
   object storage is used and configure that origin's CORS and immutable cache
   metadata. The committed `/city-assets` path is the same-origin fallback.

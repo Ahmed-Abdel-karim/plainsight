@@ -1,4 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
+import { ignoredSentryErrors, scrubSentryEvent } from "./sentry.filters";
 
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
@@ -11,7 +12,8 @@ Sentry.init({
   // "from country X" signal survives without storing a personal identifier.
   sendDefaultPii: false,
 
-  // Active in production only; local dev and tests never send (and a missing
-  // DSN no-ops the SDK regardless).
   enabled: process.env.NODE_ENV === "production",
+
+  ignoreErrors: ignoredSentryErrors,
+  beforeSend: scrubSentryEvent,
 });
