@@ -9,6 +9,7 @@ import type { Map as MaplibreMap } from "maplibre-gl";
 
 import { POINTS_SOURCE_ID } from "@/features/scene/map/constants";
 import { toBounds, type BBox } from "@/lib/geo";
+import { createEventAssigner } from "../utils";
 import type { CityMachineActor } from "../city/machine";
 import { SystemId } from "../constants";
 import type { UiMachineActor } from "../ui/machine";
@@ -16,7 +17,9 @@ import * as Context from "./context";
 import type * as Events from "./events";
 import type * as Input from "./input";
 
-const MAX_BOUNDS_PADDING_RATIO = 0.3;
+const assignFromEvent = createEventAssigner<Context.Context, Events.Events>();
+
+export const MAX_BOUNDS_PADDING_RATIO = 0.25;
 
 // --- private helpers (map-specific MapLibre utilities) ---
 
@@ -30,7 +33,7 @@ const getMap = (context: Context.Context) => {
 };
 
 const applyBounds = (map: MaplibreMap, bbox: BBox) => {
-  map.fitBounds(toBounds(bbox), { animate: false, zoom: 2 });
+  map.fitBounds(toBounds(bbox), { animate: true, zoom: 2 });
   map.setMaxBounds(toBounds(bbox, MAX_BOUNDS_PADDING_RATIO));
 };
 
@@ -46,42 +49,21 @@ const safeSetFeatureState = (
 };
 
 /**
- * Map machine — DRAFT (see `docs/map-machine-transition-gating.md`).
+ * Map machine — two parallel regions:
  *
- * One hierarchical region, the MapLibre instance lifecycle:
+ *   - `lifecycle` (loading → ready → error) — the MapLibre instance, its camera,
+ *     and data ingest. Keeps flowing regardless of suppression.
+ *   - `interaction` (interactive ⇄ suspended) — the pointer-interaction gate. A
+ *     city switch suspends it (`SUSPEND`); the city converging resumes it
+ *     (`RESUME`), which also frames the map to that city (fit + clamp + centre,
+ *     pulled from the city actor). In `suspended` it does nothing but clear the
+ *     old highlights on entry and wait.
  *
- *   loading → ready → error
- *
- * `ready` is refined into two children that make the machine itself the
- * gatekeeper for interaction (rather than relying on the view to gate):
- *
- *   - `interactive` — accepts pointer interactions (SELECT / HOVER / HEX_INSPECT).
- *   - `suppressed`  — a city change is in flight: pointer interactions are
- *     structurally ignored (they aren't wired here) and the old city's
- *     selections are cleared on entry. The view derives the whole transition
- *     treatment from `ready.suppressed` (not from actions): it blanks the data
- *     layers (stale data would misrepresent the already-selected new city), dims
- *     the basemap behind a scrim, shows a loader, and disables map interaction.
- *
- * Why nested, not a parallel `freshness` region: suppression only means anything
- * while `ready` (a `loading`/`error` map paints nothing to suppress), so it is a
- * refinement of `ready`, not an orthogonal lifecycle.
- *
- * Note the event split: events that bring the *new* city in (FIT_BOUNDS fly,
- * SOURCE_LOADED, RESOLUTION_CHANGED) sit on the `ready` parent so they flow in
- * BOTH children; only pointer interactions live on `interactive`. That is what
- * lets `suppressed` reject interaction yet still ingest the incoming city.
- *
- * Readiness-race deferral (option D — reconcile on ready, NOT an event queue):
- * a `MAP.FIT_BOUNDS` arriving while `loading` is coalesced into
- * `context.pendingFitBounds` (last-wins). On entry to `ready`, `applyCurrentStateToMap`
- * flies to any pending bounds and re-applies the current selection/hover from
- * the `ui` actor — so the imperative layer is synced to durable truth once,
- * structurally. This replaces the `useRef` replay gate in
- * `points/use-points-layer.ts` and the `reactions` fly-guard. SELECT/HOVER need
- * no buffer (their truth lives in `ui`); HEX_INSPECT can't occur pre-render.
- *
- * Nothing here is mounted or tested yet — machine is ready for bridge wiring.
+ * The regions are independent: `SUSPEND` arriving while `loading` just moves the
+ * interaction region, so when `MAP.READY` lands the combined state is correctly
+ * `ready + suspended` — no buffer, no guard. `MAP.UNMOUNTED` resets the lifecycle
+ * region only; interaction keeps its place. The view derives the dim/scrim from
+ * `interaction: "suspended"`.
  */
 export const mapMachine = setup({
   types: {
@@ -90,27 +72,21 @@ export const mapMachine = setup({
     events: {} as Events.Events,
   },
   actions: {
-    // --- assign-based (pure context updates) ---
-    captureMapRef: assign({
-      mapRef: ({ event }) =>
-        event.type === "MAP.MOUNTED" ? event.mapRef : null,
-    }),
-    // Canvas torn down (e.g. leaving the scene for the home picker): the actor
-    // outlives the MapLibre instance, so forget the dead ref and the sources it
-    // had loaded — a fresh mount re-reports both.
+    captureMapRef: assignFromEvent("MAP.MOUNTED", "mapRef", "mapRef"),
     clearMapRef: assign({ mapRef: null, loadedSources: {} }),
-    markSourceLoaded: assign({
-      loadedSources: ({ context, event }) =>
-        event.type === "MAP.SOURCE_LOADED"
-          ? { ...context.loadedSources, [event.sourceId]: event.loaded }
-          : context.loadedSources,
-    }),
-    setResolution: assign({
-      hexResolution: ({ context, event }) =>
-        event.type === "MAP.RESOLUTION_CHANGED"
-          ? event.hexResolution
-          : context.hexResolution,
-    }),
+    markSourceLoaded: assignFromEvent(
+      "MAP.SOURCE_LOADED",
+      "loadedSources",
+      (event, context) => ({
+        ...context.loadedSources,
+        [event.sourceId]: event.loaded,
+      }),
+    ),
+    setResolution: assignFromEvent(
+      "MAP.RESOLUTION_CHANGED",
+      "hexResolution",
+      "hexResolution",
+    ),
     forwardResolutionToCity: enqueueActions(({ event, system, enqueue }) => {
       assertEvent(event, "MAP.RESOLUTION_CHANGED");
       const city = system.get(SystemId.CITY) as CityMachineActor | undefined;
@@ -120,42 +96,70 @@ export const mapMachine = setup({
           hexResolution: event.hexResolution,
         });
     }),
-    setHexInspect: assign({
-      hexInspectInfo: ({ context, event }) =>
-        event.type === "MAP.HEX_INSPECT" ? event.info : context.hexInspectInfo,
-    }),
+    setHexInspect: assignFromEvent("MAP.HEX_INSPECT", "hexInspectInfo", "info"),
     resetHexInspect: assign({ hexInspectInfo: null }),
-    // Readiness-race buffer: stash the latest bbox while still `loading`.
-    savePendingFitBounds: assign({
-      pendingFitBounds: ({ context, event }) =>
-        event.type === "MAP.FIT_BOUNDS" ? event.bbox : context.pendingFitBounds,
-    }),
-    clearPendingFitBounds: assign({ pendingFitBounds: null }),
+
+    // Frame the current city: fit + clamp to its bbox and centre on its centre.
+    // The bbox/centre are pulled from the city actor (their single source of
+    // truth) at call time, so a stale value can never be applied. Runs on RESUME
+    // — the one edge that fires both on first load and on a city switch.
+    fitToCity: ({ context, system }) => {
+      const map = getMap(context);
+      if (!map) return;
+      const framing = (
+        system.get(SystemId.CITY) as CityMachineActor | undefined
+      )?.getSnapshot().context.framing;
+      if (!framing) return;
+      applyBounds(map, framing.bbox);
+      map.setCenter(framing.center);
+      map.setZoom(0);
+    },
+
+    // Injected at the provider boundary (see provider.tsx); the restyle helper
+    // lives in shared/map-theme. Placeholder so the machine stays self-contained.
+    applyMapTheme: enqueueActions(() => {}),
 
     // --- side-effecting MapLibre calls ---
-    applySelect: enqueueActions(({ context, event, system, enqueue }) => {
-      assertEvent(event, "MAP.SELECT");
+    // Mirror the ui selection onto the points source: unpaint the outgoing
+    // feature (read from context), paint the incoming one, and remember it.
+    paintCurrentSelection: enqueueActions(({ context, event, enqueue }) => {
+      assertEvent(event, "MAP.SELECTION_CHANGED");
       const { id } = event;
       const map = getMap(context);
+      const prev = context.mapSelectedListingId;
       enqueue(() => {
         if (map?.getSource(POINTS_SOURCE_ID)) {
-          map.removeFeatureState({ source: POINTS_SOURCE_ID }, "selected");
+          if (prev !== null)
+            safeSetFeatureState(map, prev, { selected: false });
           if (id !== null) safeSetFeatureState(map, id, { selected: true });
         }
       });
-      const ui = system.get(SystemId.UI) as UiMachineActor | undefined;
-      if (ui) enqueue.sendTo(ui, { type: "UI.SELECT", id });
+      enqueue.assign({ mapSelectedListingId: id });
     }),
+    // The points source's feature-state is wiped whenever its data (re)loads;
+    // repaint the current selection once the new data is parsed.
+    reapplySelection: ({ context, event }) => {
+      assertEvent(event, "MAP.SOURCE_LOADED");
+      if (event.sourceId !== POINTS_SOURCE_ID || !event.loaded) return;
+      const map = getMap(context);
+      if (!map?.getSource(POINTS_SOURCE_ID)) return;
+      if (context.mapSelectedListingId !== null)
+        safeSetFeatureState(map, context.mapSelectedListingId, {
+          selected: true,
+        });
+    },
     applyHover: enqueueActions(({ context, event, system, enqueue }) => {
       assertEvent(event, "MAP.HOVER");
       const { id, source } = event;
       const map = getMap(context);
+      const prev = context.mapHoveredListingId;
       enqueue(() => {
         if (map?.getSource(POINTS_SOURCE_ID)) {
-          map.removeFeatureState({ source: POINTS_SOURCE_ID }, "hover");
+          if (prev !== null) safeSetFeatureState(map, prev, { hover: false });
           if (id !== null) safeSetFeatureState(map, id, { hover: true });
         }
       });
+      enqueue.assign({ mapHoveredListingId: id });
       const ui = system.get(SystemId.UI) as UiMachineActor | undefined;
       if (ui)
         enqueue.sendTo(ui, {
@@ -164,107 +168,96 @@ export const mapMachine = setup({
           source: source ?? "map",
         });
     }),
-    flyTo: ({ context, event }) => {
-      assertEvent(event, "MAP.FIT_BOUNDS");
-      const map = getMap(context);
-      if (!map) return;
-      applyBounds(map, event.bbox);
-    },
-    // Clears both `selected` and `hover` feature states from the points
-    // source. NAV.START already fans out to ui (clearing selectedId/hover
-    // there) — this only resets the MapLibre visual layer.
+    // Clears both `selected` and `hover` feature states from the points source.
     clearInteractionState: ({ context }) => {
       const map = getMap(context);
       if (!map?.getSource(POINTS_SOURCE_ID)) return;
       map.removeFeatureState({ source: POINTS_SOURCE_ID });
     },
-    // Entry to `ready` — sync the imperative layer to durable truth once.
-    // clearPendingFitBounds runs AFTER this in the entry array, so
-    // context.pendingFitBounds is still readable here.
-    applyCurrentStateToMap: ({ context, system }) => {
+    resetMapHover: assign({ mapHoveredListingId: null }),
+    resetMapSelect: assign({ mapSelectedListingId: null }),
+    applyCurrentStateToMap: enqueueActions(({ context, system, enqueue }) => {
       const map = getMap(context);
       if (!map) return;
-      if (context.pendingFitBounds) applyBounds(map, context.pendingFitBounds);
-      const uiCtx = system.get(SystemId.UI)?.getSnapshot()?.context;
-      if (!uiCtx || !map.getSource(POINTS_SOURCE_ID)) return;
-      if (uiCtx.selectedId !== null)
-        safeSetFeatureState(map, uiCtx.selectedId, { selected: true });
-      if (uiCtx.hoveredListingId !== null)
-        safeSetFeatureState(map, uiCtx.hoveredListingId, { hover: true });
-    },
+      const uiCtx = (
+        system.get(SystemId.UI) as UiMachineActor | undefined
+      )?.getSnapshot()?.context;
+      enqueue(() => {
+        if (!uiCtx || !map.getSource(POINTS_SOURCE_ID)) return;
+        if (uiCtx.selectedId !== null)
+          safeSetFeatureState(map, uiCtx.selectedId, { selected: true });
+        if (uiCtx.hoveredListing)
+          safeSetFeatureState(map, uiCtx.hoveredListing.id, { hover: true });
+      });
+      // Keep the painted-truth ids in sync so a later paint unpaints the right
+      // feature and a source reload repaints the right selection.
+      enqueue.assign({
+        mapSelectedListingId: uiCtx?.selectedId ?? null,
+        mapHoveredListingId: uiCtx?.hoveredListing?.id ?? null,
+      });
+    }),
   },
 }).createMachine({
   id: "map",
   context: Context.Context,
-  initial: "loading",
   on: {
-    // Mount can arrive in any state; capture the ref then proceed.
     "MAP.MOUNTED": { actions: "captureMapRef" },
-    // Unmount can also arrive in any state. Drop the dead ref and restart the
-    // lifecycle so the next mount re-runs MAP.MOUNTED → MAP.READY and
-    // `applyCurrentStateToMap` re-syncs selection/hover onto the new instance.
-    "MAP.UNMOUNTED": { target: ".loading", actions: "clearMapRef" },
+    // Drop the dead ref and restart the lifecycle region only — interaction
+    // keeps its place, so unmounting mid-nav and returning is still suspended.
+    "MAP.UNMOUNTED": { target: ".lifecycle.loading", actions: "clearMapRef" },
+    // Selection is gated upstream on `ui` (dropped while navigating), so the
+    // paint is a pure side effect here, valid in any lifecycle/interaction state.
+    "MAP.SELECTION_CHANGED": { actions: "paintCurrentSelection" },
+    "MAP.STYLE_LOADED": { actions: "applyMapTheme" },
   },
+  type: "parallel",
   states: {
-    loading: {
-      on: {
-        "MAP.READY": "ready",
-        "MAP.ERROR": "error",
-        // Readiness-race deferral (option D): coalesce the latest desired bounds
-        // — applied by `applyCurrentStateToMap` on entry to `ready`. SELECT/HOVER are
-        // intentionally NOT buffered (their truth lives in `ui`, reconciled on
-        // ready); HEX_INSPECT can't occur before the map paints.
-        "MAP.FIT_BOUNDS": { actions: "savePendingFitBounds" },
+    lifecycle: {
+      initial: "loading",
+      states: {
+        loading: {
+          on: {
+            "MAP.READY": "ready",
+            "MAP.ERROR": "error",
+          },
+        },
+        ready: {
+          entry: ["fitToCity", "applyCurrentStateToMap"],
+          on: {
+            "MAP.SOURCE_LOADED": {
+              actions: ["markSourceLoaded", "reapplySelection"],
+            },
+            "MAP.RESOLUTION_CHANGED": {
+              actions: ["setResolution", "forwardResolutionToCity"],
+            },
+          },
+        },
+        error: {},
       },
     },
-
-    ready: {
+    interaction: {
       initial: "interactive",
-      // Sync the imperative layer to durable truth once, then drop the buffer.
-      entry: ["applyCurrentStateToMap", "clearPendingFitBounds"],
-      on: {
-        // Always handled while `ready` (both children) — these bring the new
-        // city in, so they must keep flowing even during `suppressed`.
-        "MAP.FIT_BOUNDS": { actions: "flyTo" },
-        "MAP.SOURCE_LOADED": { actions: "markSourceLoaded" },
-        "MAP.RESOLUTION_CHANGED": {
-          actions: ["setResolution", "forwardResolutionToCity"],
-        },
-        // Nav only means anything once `ready` (first load has no old city to
-        // dim, and real navigations always happen while the map is already
-        // ready). Covers interactive→suppressed AND a re-click while already
-        // suppressed (reenter re-runs the cleanup).
-        "NAV.START": { target: ".suppressed", reenter: true },
-      },
       states: {
         interactive: {
           on: {
-            "MAP.SELECT": { actions: "applySelect" },
             "MAP.HOVER": { actions: "applyHover" },
             "MAP.HEX_INSPECT": { actions: "setHexInspect" },
+            SUSPEND: "suspended",
           },
         },
-        suppressed: {
-          // Clear the old city's hover/select highlights + inspect popup. The
-          // view blanks the data layers and lays a dim scrim + loader over the
-          // map (derived from `ready.suppressed`); interaction is disabled there.
-          entry: ["clearInteractionState", "resetHexInspect"],
+        suspended: {
+          entry: [
+            "clearInteractionState",
+            "resetHexInspect",
+            "resetMapHover",
+            "resetMapSelect",
+          ],
           on: {
-            // City converged (its data loaded; bbox already known from framing).
-            "CITY.READY": "interactive",
-            // Terminal load failure: lift the gate so the map is operable again
-            // (a failed switch must not strand it dimmed). The new city's data
-            // never arrived — recovery is the user switching cities; the toast
-            // explains the failure.
-            "CITY.FAILED": "interactive",
-            // Pointer interactions are absent here on purpose → structurally
-            // ignored; the machine, not the view, enforces the gate.
+            RESUME: { target: "interactive", actions: "fitToCity" },
           },
         },
       },
     },
-
-    error: {},
   },
 });
 

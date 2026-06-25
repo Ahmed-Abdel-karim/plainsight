@@ -3,7 +3,7 @@
 import type { MapLayerMouseEvent } from "react-map-gl/maplibre";
 import { useEffect } from "react";
 
-import { useSetMapHover, useSelectMapFeature } from "@/features/scene/state";
+import { useSetMapHover, useSelectListing } from "@/features/scene/state";
 import type { LayerListener } from "../layer";
 
 function pointIdFrom(event: MapLayerMouseEvent): number | null {
@@ -13,7 +13,7 @@ function pointIdFrom(event: MapLayerMouseEvent): number | null {
 
 export function usePointsListeners(visible: boolean): LayerListener[] {
   const setMapHover = useSetMapHover();
-  const selectMapFeature = useSelectMapFeature();
+  const selectListing = useSelectListing();
 
   useEffect(() => {
     if (!visible) setMapHover(null, null);
@@ -30,7 +30,7 @@ export function usePointsListeners(visible: boolean): LayerListener[] {
       type: "click",
       listener: (e) => {
         const id = pointIdFrom(e);
-        if (id !== null) selectMapFeature(id);
+        if (id !== null) selectListing(id);
       },
     },
   ];

@@ -104,7 +104,7 @@ describe("scene cross-region interaction", () => {
     scene.finishCityLoad();
     // Settle the converge-time recomputes so the coalescing slots are free and the
     // filter-driven requests below post (and their replies land) immediately.
-    scene.replyHexes([{ h3: c1, count: 5, medianPrice: 150 }]);
+    scene.replyHexes([{ h3: c1, count: 5, medianPrice: 150, ring: [] }]);
     scene.replyAggregates(richAggregates(150));
 
     // The median KPI headline (the histogram chart can't measure in jsdom, so it
@@ -120,8 +120,8 @@ describe("scene cross-region interaction", () => {
     await scene.user.click(screen.getByRole("button", { name: "Private" }));
     scene.replyAggregates(richAggregates(222));
     scene.replyHexes([
-      { h3: c1, count: 5, medianPrice: 150 },
-      { h3: c2, count: 9, medianPrice: 300 },
+      { h3: c1, count: 5, medianPrice: 150, ring: [] },
+      { h3: c2, count: 9, medianPrice: 300, ring: [] },
     ]);
 
     expect(await screen.findByText("222")).toBeInTheDocument();
@@ -141,17 +141,20 @@ describe("scene error notifications", () => {
     scene.navigateToCity();
     scene.setLens("browse"); // browse lens triggers the /points fetch
 
-    // The active Browse load belongs to the city lifecycle (C-0011): one toast,
-    // not a second, competing query-layer "Couldn't load listings".
+    // The active Browse load belongs to the city lifecycle: one toast, not a
+    // second, competing query-layer one. The in-panel `BrowseError` ("Couldn't
+    // load listings") is the distinct, expected surface, so scope the negative
+    // to the notifications region — the toaster must not also carry it.
     expect(
       await screen.findByText("Couldn't load this city"),
     ).toBeInTheDocument();
+    const notifications = screen.getByRole("region", {
+      name: /notifications/i,
+    });
     expect(
-      screen.queryByText("Couldn't load listings"),
+      within(notifications).queryByText("Couldn't load listings"),
     ).not.toBeInTheDocument();
-    expect(
-      await axe(screen.getByRole("region", { name: /notifications/i })),
-    ).toHaveNoViolations();
+    expect(await axe(notifications)).toHaveNoViolations();
   });
 
   it("toasts when the boundaries fetch fails", async () => {
@@ -206,15 +209,19 @@ describe("scene error notifications", () => {
     scene.setLens("browse");
 
     // Browse load → city lifecycle; boundaries → query layer. Distinct owners,
-    // distinct toasts, and no duplicate browse notification.
+    // distinct toasts, and no duplicate browse notification in the toaster (the
+    // in-panel `BrowseError` is the separate, expected surface).
     expect(
       await screen.findByText("Couldn't load this city"),
     ).toBeInTheDocument();
     expect(
       await screen.findByText("Couldn't load map areas"),
     ).toBeInTheDocument();
+    const notifications = screen.getByRole("region", {
+      name: /notifications/i,
+    });
     expect(
-      screen.queryByText("Couldn't load listings"),
+      within(notifications).queryByText("Couldn't load listings"),
     ).not.toBeInTheDocument();
   });
 });

@@ -4,4 +4,5 @@ export enum SystemId {
   MAP = "map",
   UI = "ui",
   WORKER = "worker",
+  NAVIGATION = "navigation",
 }

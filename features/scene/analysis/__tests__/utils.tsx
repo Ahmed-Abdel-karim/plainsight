@@ -52,7 +52,10 @@ export function setupAnalysis(
   };
 
   const result = renderScene(
-    <AnalysisCards currency="GBP" defaultAggregates={defaultAggregates} />,
+    <AnalysisCards
+      currency="GBP"
+      snapshot={{ city: defaultAggregates, neighbourhoods: {} }}
+    />,
   );
 
   const getCity = () =>

@@ -1,7 +1,6 @@
 "use client";
 
 import type { Feature, FeatureCollection, Polygon } from "geojson";
-import { cellToBoundary } from "h3-js";
 import { useCallback, useMemo } from "react";
 import { Source } from "react-map-gl/maplibre";
 
@@ -31,11 +30,9 @@ export interface HexFeatureProps {
 }
 
 function cellToFeature(cell: HexCell): Feature<Polygon, HexFeatureProps> {
-  const ring = cellToBoundary(cell.h3, true);
-  ring.push(ring[0]);
   return {
     type: "Feature",
-    geometry: { type: "Polygon", coordinates: [ring] },
+    geometry: { type: "Polygon", coordinates: [cell.ring] },
     properties: { medianPrice: cell.medianPrice, count: cell.count },
   };
 }
@@ -66,7 +63,14 @@ export function HexLayers() {
   return (
     <>
       <HexInspect />
-      <Source id={HEX_SOURCE_ID} type="geojson" data={data}>
+      <Source
+        id={HEX_SOURCE_ID}
+        type="geojson"
+        data={data}
+        attribution={
+          city ? `Inside Airbnb Date: ${city.snapshotLabel}` : undefined
+        }
+      >
         <MapLayer
           getLayerStyles={getHexLayerStyles}
           visible={visible}

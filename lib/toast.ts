@@ -5,7 +5,11 @@ import { toast } from "sonner";
  * existing toast slot instead of stacking a duplicate, so a repeatedly failing
  * source shows a single, updating notification.
  */
-export type ErrorToastId = "city-load" | "city-compute" | "boundaries";
+export type ErrorToastId =
+  | "city-load"
+  | "city-compute"
+  | "city-worker"
+  | "boundaries";
 
 /** Show a deduplicated error toast for a known source. */
 export function notifyError(

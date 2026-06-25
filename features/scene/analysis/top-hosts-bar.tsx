@@ -77,6 +77,15 @@ export function TopHostsBar({ aggregates }: { aggregates: ScopeAggregates }) {
           </Bar>
         </BarChart>
       </ChartContainer>
+
+      {/* Screen-reader equivalent of the bars — the SVG chart carries no numbers. */}
+      <ol className="sr-only">
+        {data.map((host) => (
+          <li key={host.name}>
+            {host.name}: {host.count.toLocaleString("en")} listings
+          </li>
+        ))}
+      </ol>
     </ChartCard>
   );
 }

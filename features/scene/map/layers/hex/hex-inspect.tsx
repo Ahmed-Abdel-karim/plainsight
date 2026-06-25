@@ -3,15 +3,8 @@
 import { Popup } from "react-map-gl/maplibre";
 
 import { useCityFraming, useHexInspectInfo } from "@/features/scene/state";
-
-/** Compact currency label (e.g. "£149", "€198") — symbol, no fraction. */
-function formatPrice(value: number, currency: string): string {
-  return new Intl.NumberFormat("en", {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 0,
-  }).format(value);
-}
+import { formatCurrency } from "@/features/scene/shared/format";
+import { InspectStats } from "@/features/scene/shared/inspect-stats";
 
 export function HexInspect() {
   const hexInspectInfo = useHexInspectInfo();
@@ -30,25 +23,16 @@ export function HexInspect() {
       maxWidth="none"
       className="hex-inspect-popup"
     >
-      <div
-        aria-hidden="true"
-        className="map-chrome text-map-label pointer-events-none px-3 py-2 shadow-sm"
-      >
-        <dl className="flex flex-col gap-0.5">
-          <div className="flex items-baseline justify-between gap-4">
-            <dt className="type-label">Median</dt>
-            <dd className="text-sm font-medium tabular-nums">
-              {formatPrice(medianPrice, city.currency)}
-            </dd>
-          </div>
-          <div className="flex items-baseline justify-between gap-4">
-            <dt className="type-label">Listings</dt>
-            <dd className="text-sm tabular-nums">
-              {count.toLocaleString("en")}
-            </dd>
-          </div>
-        </dl>
-      </div>
+      <InspectStats
+        stats={[
+          {
+            label: "Median",
+            value: formatCurrency(medianPrice, city.currency),
+            emphasis: true,
+          },
+          { label: "Listings", value: count.toLocaleString("en") },
+        ]}
+      />
     </Popup>
   );
 }

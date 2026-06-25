@@ -19,16 +19,17 @@ export type FilterableListing = Pick<Listing, "roomType" | "price">;
  *   `priceCap` ceiling — see `resolvePriceBand`).
  */
 export function filterListings<T extends FilterableListing>(
-  listings: readonly T[],
   filters: ListingFilters,
-): T[] {
-  const [min, max] = filters.priceRange;
-  const roomTypes = filters.roomTypes;
-  const allRoomTypes = isAllRoomTypes(roomTypes);
+) {
+  return function (listings: readonly T[]): T[] {
+    const [min, max] = filters.priceRange;
+    const roomTypes = filters.roomTypes;
+    const allRoomTypes = isAllRoomTypes(roomTypes);
 
-  return listings.filter((listing) => {
-    if (!allRoomTypes && !roomTypes.includes(listing.roomType)) return false;
-    if (listing.price < min || listing.price > max) return false;
-    return true;
-  });
+    return listings.filter((listing) => {
+      if (!allRoomTypes && !roomTypes.includes(listing.roomType)) return false;
+      if (listing.price < min || listing.price > max) return false;
+      return true;
+    });
+  };
 }

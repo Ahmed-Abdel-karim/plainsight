@@ -11,7 +11,7 @@ import {
   resolveFilters,
   resolvePriceRange,
 } from "@/lib/filters/normalize";
-import { isDefaultView } from "@/lib/listings/query";
+import { isDefaultView } from "@/lib/listings";
 
 import { SceneActorContext } from "../../provider";
 import type { CityMachineActor } from "./machine";
@@ -27,7 +27,7 @@ export function useCityRef(): CityMachineActor | undefined {
   return SceneActorContext.useSelector((s) => s.context.cityRef ?? undefined);
 }
 
-const createCitySelector = createMachineStateSelector(useCityRef);
+export const createCitySelector = createMachineStateSelector(useCityRef);
 
 /**
  * Send function for the current city actor. Subscribes to root so it updates
@@ -157,6 +157,21 @@ export function useResetFilters() {
   return useCallback(() => {
     send?.({ type: "FILTER.SET_ROOM_TYPES", roomTypes: [] });
     send?.({ type: "FILTER.SET_PRICE_RANGE", priceRange: null });
+  }, [send]);
+}
+
+/**
+ * Clears filters *and* neighbourhood scope — the "show me results again"
+ * affordance for the empty state, which should widen scope back to the whole
+ * city, unlike the filter panel's {@link useResetFilters} (scope is not a
+ * filter, so the panel reset leaves it untouched).
+ */
+export function useResetView() {
+  const send = useCitySend();
+  return useCallback(() => {
+    send?.({ type: "FILTER.SET_ROOM_TYPES", roomTypes: [] });
+    send?.({ type: "FILTER.SET_PRICE_RANGE", priceRange: null });
+    send?.({ type: "FILTER.SET_NBHD", nbhd: null });
   }, [send]);
 }
 

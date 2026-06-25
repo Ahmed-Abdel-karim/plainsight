@@ -2,7 +2,8 @@ import { Button } from "@/components/ui/button";
 
 /**
  * Empty state shown when the active scope + filters match no listings: a
- * summary of what is filtering the set to zero, and a reset affordance.
+ * summary of what is filtering the set to zero, and a reset affordance that
+ * clears the filters *and* widens the neighbourhood scope back to city-wide.
  */
 export function BrowseEmpty({
   summary,
@@ -20,7 +21,7 @@ export function BrowseEmpty({
         <p className="type-caption text-muted-foreground">{summary}</p>
       </div>
       <Button variant="outline" size="sm" onClick={onReset}>
-        Reset filters
+        Show all listings
       </Button>
     </div>
   );

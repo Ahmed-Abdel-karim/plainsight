@@ -1,8 +1,10 @@
 {
   "compilerOptions": {
-    "target": "ES2017",
+    "target": "ES2022",
     "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
+    "allowJs": false,
+    // skipLibCheck stays on: third-party .d.ts files carry type clashes we don't
+    // own; checking them adds build cost without catching bugs in our own code.
     "skipLibCheck": true,
     "strict": true,
     "noEmit": true,

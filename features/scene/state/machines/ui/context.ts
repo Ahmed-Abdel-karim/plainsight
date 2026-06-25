@@ -9,13 +9,11 @@ import type { Lens } from "@/lib/search-params";
 export interface Context {
   readonly lens: Lens;
   readonly selectedId: number | null;
-  readonly hoveredListingId: number | null;
-  readonly hoverSource: "list" | "map" | null;
+  readonly hoveredListing: { id: number; source: "list" | "map" | null } | null;
 }
 
 export const Context: Context = {
   lens: "analyse",
   selectedId: null,
-  hoveredListingId: null,
-  hoverSource: null,
+  hoveredListing: null,
 };

@@ -1,8 +1,25 @@
 ## Active work: scene → XState v5 migration
 
-The deep design reference is `docs/map-machine-transition-gating.md`. We work
+The deep design reference is `docs/scene-navigation-architecture.md`
+(`docs/map-machine-transition-gating.md` is superseded background). We work
 **one step at a time, confirm between steps; draft to review, don't wire/test
 unless asked.**
+
+**Actor exposure — `invoke` vs context spawn.** An actor whose ref is read from
+the React tree during render/SSR (a hook or selector) is **spawned in the root
+machine's initial `context` factory** and read from `context` — the context ref
+is materialized at actor creation (before `start()`, and on the server), so the
+read never sees a missing ref. An `entry`/`assign` spawn does **not** qualify: it
+runs at `start()`, same as `invoke`. An actor used **only actor-to-actor** stays
+`invoke` and is reached over `system.get(systemId)`. `systemId` is the internal
+actor-to-actor channel; the context ref is the React channel — **never call
+`system.get` from a React render hook.** (`city` is the dynamic case: context
+ref, but nullable since it is absent before the first navigation.)
+
+## Issue tracking
+
+To file a GitHub issue from a finding, use the `/issue` skill (or follow
+`_docs/issue-tracking.md` directly). Labels come from `.github/labels.sh`.
 
 ## Folder structure
 

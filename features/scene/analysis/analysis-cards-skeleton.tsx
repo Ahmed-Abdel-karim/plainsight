@@ -2,6 +2,30 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 import { ChartCard } from "./chart-card";
 
+/** Loading fallback for the lazily-loaded price histogram. */
+export function PriceHistogramSkeleton() {
+  return (
+    <ChartCard title="Price distribution" subtitle="Listings per nightly band">
+      <Skeleton className="h-32 w-full" />
+      <Skeleton className="h-3 w-full" />
+    </ChartCard>
+  );
+}
+
+/** Loading fallback for the lazily-loaded top-hosts bar. */
+export function TopHostsBarSkeleton() {
+  return (
+    <ChartCard
+      title="Who controls this market"
+      subtitle="Top hosts by listing count"
+    >
+      {/* Matches the real chart's height for the common 6-host case
+          (hosts.length * 26 + 8) to minimise shift on resolve. */}
+      <Skeleton className="w-full" style={{ height: 6 * 26 + 8 }} />
+    </ChartCard>
+  );
+}
+
 /**
  * Loading placeholder for the four analysis cards, shown only on the cold
  * filtered path: a deep-linked/refreshed URL carries non-default filters, so the
@@ -34,13 +58,7 @@ export function AnalysisCardsSkeleton() {
         )}
       </div>
 
-      <ChartCard
-        title="Price distribution"
-        subtitle="Listings per nightly band"
-      >
-        <Skeleton className="h-32 w-full" />
-        <Skeleton className="h-3 w-full" />
-      </ChartCard>
+      <PriceHistogramSkeleton />
 
       <ChartCard title="Room-type mix" subtitle="Share of listings by type">
         <Skeleton className="h-7 w-full rounded-sm" />
@@ -53,14 +71,7 @@ export function AnalysisCardsSkeleton() {
         </ul>
       </ChartCard>
 
-      <ChartCard
-        title="Who controls this market"
-        subtitle="Top hosts by listing count"
-      >
-        {/* Matches the real chart's height for the common 6-host case
-            (hosts.length * 26 + 8) to minimise shift on resolve. */}
-        <Skeleton className="w-full" style={{ height: 6 * 26 + 8 }} />
-      </ChartCard>
+      <TopHostsBarSkeleton />
     </div>
   );
 }

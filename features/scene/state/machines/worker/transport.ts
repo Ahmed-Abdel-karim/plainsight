@@ -7,18 +7,22 @@ import {
   type ProcessResponseMessage,
   type RequestMessage,
   type ResponseMessage,
-} from "@/lib/listings/worker";
+} from "@/lib/listings";
 
 /**
- * What the transport accepts from the machine — two commands:
- *   - `LOAD`  — fetch+cache a city's listings (a cache hit replies near-instantly);
- *   - `POST`  — post a stamped process request.
+ * What the transport accepts from the machine — four commands:
+ *   - `LOAD`        — fetch+cache a city's listings (a cache hit replies near-instantly);
+ *   - `POST`        — post a stamped process request;
+ *   - `CANCEL`      — abort the in-flight process with the given `requestId`;
+ *   - `CANCEL_LOAD` — abort the in-flight city load(s), keeping cached rows.
  * The worker is session-lifetime and serves many cities, so the slug rides on
  * every command, together with the snapshot id, rather than being bound once at construction.
  */
 export type TransportCommand =
   | { type: "LOAD"; slug: string; snapshotId: string; assetUrl: string }
-  | { type: "POST"; message: ProcessRequestMessage };
+  | { type: "POST"; message: ProcessRequestMessage }
+  | { type: "CANCEL"; requestId: number }
+  | { type: "CANCEL_LOAD" };
 
 export interface TransportInput {
   /** Test seam — omit in app code to use the bundled worker. */
@@ -69,10 +73,32 @@ export const transportActor = fromCallback<TransportCommand, TransportInput>(
         });
       });
 
+      // Fires when a reply can't be deserialized (structured-clone failure) —
+      // surface it as a worker error rather than dropping the message silently.
+      worker.addEventListener("messageerror", () => {
+        sendBack({
+          type: "TRANSPORT.WORKER_ERROR",
+          error: new Error("worker message error"),
+        });
+      });
+
       return worker;
     };
 
     receive((event) => {
+      // A cancel for a worker that was never spawned is a no-op — never let it
+      // be the command that pays for `new Worker()`.
+      if (event.type === "CANCEL") {
+        worker?.postMessage({
+          type: "cancel",
+          payload: { requestId: event.requestId },
+        } satisfies RequestMessage);
+        return;
+      }
+      if (event.type === "CANCEL_LOAD") {
+        worker?.postMessage({ type: "cancelLoad" } satisfies RequestMessage);
+        return;
+      }
       const w = getWorker();
       if (event.type === "LOAD") {
         w.postMessage({

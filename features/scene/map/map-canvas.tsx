@@ -10,11 +10,10 @@ import {
   NavigationControl,
   type ViewStateChangeEvent,
 } from "react-map-gl/maplibre";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useDebouncedCallback } from "use-debounce";
-import { Loader2 } from "lucide-react";
+import { ReloadIcon } from "@radix-ui/react-icons";
 
-import { toBounds } from "@/lib/geo";
 import { zoomToResolution } from "@/lib/hex/resolution";
 import { HEX_FILL_LAYER_ID } from "./constants";
 import {
@@ -25,43 +24,34 @@ import {
 } from "./layers";
 import { OPENFREEMAP_STYLE } from "./map-styles";
 import { isKnownSourceId } from "./types";
-import { useUpdateMapTheme } from "./hooks/use-update-map-theme";
 import {
   useChangeMapResolution,
   useCityFraming,
-  useFitMapBounds,
   useMapIsError,
   useMapIsSuppressed,
   useReportMapError,
   useReportMapLoaded,
   useReportMapUnmounted,
   useReportSourceLoaded,
+  useReportStyleLoaded,
 } from "../state";
 import { useLens } from "../shared/use-lens";
 import { useResolvedTheme } from "@/components/theme/theme-provider";
 import MapSkeleton from "./map-skeleton";
 
-const MAX_BOUNDS_PADDING_RATIO = 0.3; // Pad maxBounds by 25% to allow some room for UI and avoid edge-clipping
-
 export function MapCanvas() {
   const mapRef = useRef<MapRef | null>(null);
-  const updateMapTheme = useUpdateMapTheme();
+  const reportStyleLoaded = useReportStyleLoaded();
   const reportMapLoaded = useReportMapLoaded();
   const changeMapResolution = useChangeMapResolution();
   const reportSourceLoaded = useReportSourceLoaded();
   const reportMapUnmounted = useReportMapUnmounted();
-  const fitMapBounds = useFitMapBounds();
   const reportMapError = useReportMapError();
   const isError = useMapIsError();
   const city = useCityFraming();
   const theme = useResolvedTheme();
 
   const { isBrowse } = useLens();
-  const bounds = useMemo(() => (city ? toBounds(city.bbox) : null), [city]);
-  const maxBounds = useMemo(
-    () => (city ? toBounds(city.bbox, MAX_BOUNDS_PADDING_RATIO) : undefined),
-    [city],
-  );
   const mapStyle = OPENFREEMAP_STYLE[theme];
 
   const suppressed = useMapIsSuppressed();
@@ -78,27 +68,27 @@ export function MapCanvas() {
     [reportSourceLoaded],
   );
 
+  const handleStyleData = useCallback(
+    () => reportStyleLoaded(theme),
+    [reportStyleLoaded, theme],
+  );
+
   const handleLoad = useCallback(() => {
     reportMapLoaded(
       mapRef.current!,
       zoomToResolution(mapRef.current!.getZoom()),
     );
-    updateMapTheme();
+    reportStyleLoaded(theme);
     if (process.env.NEXT_PUBLIC_E2E === "true") {
       void import("@mapgrab/map-interface").then(({ installMapGrab }) => {
         if (mapRef.current) installMapGrab(mapRef.current.getMap(), "mainMap");
       });
     }
-  }, [reportMapLoaded, updateMapTheme]);
-
-  useEffect(() => {
-    if (!city) return;
-    fitMapBounds(city.bbox);
-  }, [city, fitMapBounds]);
+  }, [reportMapLoaded, reportStyleLoaded, theme]);
 
   useEffect(() => reportMapUnmounted, [reportMapUnmounted]);
 
-  if (!city || !bounds) return <MapSkeleton />;
+  if (!city) return <MapSkeleton />;
 
   if (isError)
     return (
@@ -115,16 +105,7 @@ export function MapCanvas() {
     >
       <Map
         ref={mapRef}
-        initialViewState={{
-          longitude: city.center[0],
-          latitude: city.center[1],
-          zoom: 11,
-          bounds,
-          bearing: 0,
-          fitBoundsOptions: { padding: 35 },
-        }}
         mapStyle={mapStyle}
-        maxBounds={maxBounds}
         keyboard={!suppressed}
         attributionControl={false}
         style={{ height: "100%", width: "100%" }}
@@ -134,7 +115,7 @@ export function MapCanvas() {
         onLoad={handleLoad}
         onMoveEnd={handleMoveEnd}
         onSourceData={handleSourceData}
-        onStyleData={updateMapTheme}
+        onStyleData={handleStyleData}
         onError={reportMapError}
         onZoomEnd={handleMoveEnd}
       >
@@ -153,9 +134,9 @@ export function MapCanvas() {
         <div
           role="status"
           aria-label={`Loading ${city.cityName}`}
-          className="absolute inset-0 z-20 flex items-center justify-center bg-black opacity-50 backdrop-blur-sm dark:bg-white"
+          className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 backdrop-blur-sm dark:bg-white/40"
         >
-          <Loader2
+          <ReloadIcon
             aria-hidden
             className="size-6 animate-spin text-muted-foreground"
           />

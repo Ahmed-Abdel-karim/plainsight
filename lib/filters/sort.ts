@@ -35,23 +35,22 @@ function byKeyThenId<T extends SortableListing>(
  *
  * Ties break by listing id for a stable, deterministic order across renders.
  */
-export function sortListings<T extends SortableListing>(
-  listings: readonly T[],
-  sort: SortKey,
-): T[] {
-  const copy = [...listings];
-  switch (sort) {
-    case "price_asc":
-      return copy.sort(byKeyThenId((l) => l.price));
-    case "price_desc":
-      return copy.sort(byKeyThenId((l) => -l.price));
-    case "reviews_desc":
-      return copy.sort(
-        (a, b) =>
-          compareNullableDesc(a.reviewsPerMonth, b.reviewsPerMonth) ||
-          a.id - b.id,
-      );
-    case "review_count_desc":
-      return copy.sort(byKeyThenId((l) => -l.numberOfReviews));
-  }
+export function sortListings<T extends SortableListing>(sort: SortKey) {
+  return function (listings: readonly T[]): T[] {
+    const copy = [...listings];
+    switch (sort) {
+      case "price_asc":
+        return copy.sort(byKeyThenId((l) => l.price));
+      case "price_desc":
+        return copy.sort(byKeyThenId((l) => -l.price));
+      case "reviews_desc":
+        return copy.sort(
+          (a, b) =>
+            compareNullableDesc(a.reviewsPerMonth, b.reviewsPerMonth) ||
+            a.id - b.id,
+        );
+      case "review_count_desc":
+        return copy.sort(byKeyThenId((l) => -l.numberOfReviews));
+    }
+  };
 }

@@ -17,15 +17,9 @@ export {
   getCitiesData,
   getCityMeta,
   getCityScopeCounts,
-  getScopeAggregates,
-  getScopeListingCount,
+  getStatsSnapshot,
   unavailableAggregates,
 } from "./loaders";
-export type { ScopeType } from "./loaders";
 
 // Server-side selectors (run once per request, produce props).
-export {
-  selectScopeAggregates,
-  selectNeighbourhood,
-  defaultFilters,
-} from "./selectors";
+export { selectScopeAggregates, selectNeighbourhood } from "./selectors";

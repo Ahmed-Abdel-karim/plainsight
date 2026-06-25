@@ -24,27 +24,13 @@ export interface SetHover {
   readonly source: "list" | "map";
 }
 
-/** City-switcher nav start. Transitions to navigating; clears selection + hover. */
-export interface NavStart {
-  readonly type: "NAV.START";
+/** Suppression pair (shared with map). `SUSPEND` → navigating (clears
+ *  selection + hover); `RESUME` → active. */
+export interface Suspend {
+  readonly type: "SUSPEND";
+}
+export interface Resume {
+  readonly type: "RESUME";
 }
 
-/** City actor converged. Transitions navigating → active. */
-export interface CityReady {
-  readonly type: "CITY.READY";
-}
-
-/** City load terminally failed. Transitions navigating → active so controls
- *  are usable again (recovery path). */
-export interface CityFailed {
-  readonly type: "CITY.FAILED";
-}
-
-export type Events =
-  | Init
-  | SetLens
-  | Select
-  | SetHover
-  | NavStart
-  | CityReady
-  | CityFailed;
+export type Events = Init | SetLens | Select | SetHover | Suspend | Resume;

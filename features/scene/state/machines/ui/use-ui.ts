@@ -5,11 +5,11 @@ import { useCallback } from "react";
 import type { Lens } from "@/lib/search-params";
 
 import type { UiMachineActor } from "./machine";
-import { useRootRef } from "../root/use-root";
+import { SceneActorContext } from "../../provider";
 import { createMachineStateSelector } from "../utils";
 
 function useUiActorRef(): UiMachineActor {
-  return useRootRef().system.get("ui");
+  return SceneActorContext.useSelector((s) => s.context.uiRef);
 }
 
 const createUiSelector = createMachineStateSelector(useUiActorRef);
@@ -37,23 +37,18 @@ export function useSelectListing() {
   );
 }
 
-export function useSetHover() {
-  const send = useUiSend();
-  return useCallback(
-    (id: number | null, source: "list" | "map") =>
-      send({ type: "UI.SET_HOVER", id, source }),
-    [send],
-  );
-}
-
 // --- state selectors ---
 
 export const useLens = createUiSelector((s) => s.context.lens);
 
+export const useIsBrowse = createUiSelector((s) => s.context.lens === "browse");
+
 export const useSelectedId = createUiSelector((s) => s.context.selectedId);
 
 export const useHoveredListingId = createUiSelector(
-  (s) => s.context.hoveredListingId,
+  (s) => s.context.hoveredListing?.id ?? null,
 );
 
-export const useHoverSource = createUiSelector((s) => s.context.hoverSource);
+export const useHoverSource = createUiSelector(
+  (s) => s.context.hoveredListing?.source ?? null,
+);

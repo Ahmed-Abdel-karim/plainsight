@@ -17,4 +17,5 @@ export interface HexCell {
   count: number;
   /** Median nightly price of those listings. */
   medianPrice: number;
+  ring: [number, number][];
 }

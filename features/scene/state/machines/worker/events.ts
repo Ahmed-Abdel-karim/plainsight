@@ -1,11 +1,11 @@
 import type { ScopeAggregates } from "@/data/contract";
-import type { ListingFilters, Scope } from "@/data/types";
+import type { ListingFilters } from "@/data/types";
 import type { HexCell, HexResolution } from "@/lib/hex/types";
 import type {
   LoadDataResponseMessage,
   ProcessRequestMessage,
   ProcessResponseMessage,
-} from "@/lib/listings/worker";
+} from "@/lib/listings";
 
 /**
  * Events the worker machine handles: requests *in* from the current city machine
@@ -39,8 +39,17 @@ export interface WorkerRequestAggregates {
   readonly type: "WORKER.REQUEST_AGGREGATES";
   readonly slug: string;
   readonly snapshotId: string;
-  readonly scope: Scope;
+  readonly neighbourhood: string | null;
   readonly filters: ListingFilters;
+  /** The city's price ceiling — caps the histogram (see `computeAggregates`). */
+  readonly priceCap: number;
+}
+
+/** Abort every in-flight recompute (e.g. on a lens or city change): each busy
+ *  region cancels its task and returns to idle. Slug-agnostic — it clears whatever
+ *  is running, since the work is no longer wanted regardless of which city it was for. */
+export interface WorkerCancel {
+  readonly type: "WORKER.CANCEL";
 }
 
 // --- raw replies from the transport child (a dumb pipe; machine interprets) ---
@@ -65,11 +74,12 @@ export type Events =
   | WorkerRequestLoad
   | WorkerRequestHexes
   | WorkerRequestAggregates
+  | WorkerCancel
   | TransportLoadReply
   | TransportProcessReply
   | TransportWorkerError;
 
-/** The process types the machine routes by (the per-type slot key). */
+/** The process types the machine routes by (one parallel region per type). */
 export type ProcessType = ProcessRequestMessage["type"];
 
 /** A recompute result, tagged by type so the city routes it to its slab and by

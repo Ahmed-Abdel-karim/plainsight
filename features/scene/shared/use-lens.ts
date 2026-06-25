@@ -16,6 +16,7 @@ import type { Lens } from "@/lib/search-params";
 
 import {
   useLens as useLensValue,
+  useIsBrowse,
   useSelectedId,
   useSetLens,
   useSelectListing,
@@ -34,6 +35,7 @@ export interface UseLensResult {
 
 export function useLens(): UseLensResult {
   const lens = useLensValue();
+  const isBrowse = useIsBrowse();
   const selectedId = useSelectedId();
   const setLens = useSetLens();
   const selectListing = useSelectListing();
@@ -42,10 +44,10 @@ export function useLens(): UseLensResult {
     () => ({
       lens,
       selectedId,
-      isBrowse: lens === "browse",
+      isBrowse,
       setLens,
       selectListing,
     }),
-    [lens, selectedId, setLens, selectListing],
+    [lens, isBrowse, selectedId, setLens, selectListing],
   );
 }

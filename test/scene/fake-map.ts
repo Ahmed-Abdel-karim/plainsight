@@ -19,6 +19,8 @@ export interface FakeMaplibreMap {
   removeFeatureState: ReturnType<typeof vi.fn>;
   fitBounds: ReturnType<typeof vi.fn>;
   setMaxBounds: ReturnType<typeof vi.fn>;
+  setCenter: ReturnType<typeof vi.fn>;
+  setZoom: ReturnType<typeof vi.fn>;
   // Touched by the theme-label sync on load; absent layers are skipped, so the
   // getters return nothing and the setter is an inert spy.
   getLayer: ReturnType<typeof vi.fn>;
@@ -33,6 +35,8 @@ export function createFakeMaplibreMap(): FakeMaplibreMap {
     removeFeatureState: vi.fn(),
     fitBounds: vi.fn(),
     setMaxBounds: vi.fn(),
+    setCenter: vi.fn(),
+    setZoom: vi.fn(),
     getLayer: vi.fn(() => undefined),
     getLayoutProperty: vi.fn(() => undefined),
     setLayoutProperty: vi.fn(),

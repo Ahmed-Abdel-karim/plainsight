@@ -8,6 +8,7 @@ import {
   fromPromise,
   sendTo,
   setup,
+  stateIn,
 } from "xstate";
 
 import type { BrowseCollection, ScopeAggregates } from "@/data/contract";
@@ -19,10 +20,10 @@ import {
   resolveFilters,
 } from "@/lib/filters/normalize";
 import type { HexCell, HexResolution } from "@/lib/hex/types";
-import type { ListingQuery } from "@/lib/listings/projection";
-import { queryKey, resolveQuery } from "@/lib/listings/query";
+import { queryKey, resolveQuery, type ListingQuery } from "@/lib/listings";
 import { type Lens } from "@/lib/search-params";
 
+import { createEventAssigner } from "../utils";
 import { SystemId } from "../constants";
 import type { UiMachineActor } from "../ui/machine";
 import type { WorkerMachineRef } from "../worker/machine";
@@ -30,15 +31,21 @@ import * as Context from "./context";
 import type * as Events from "./events";
 import type * as Input from "./input";
 
+const assignFromEvent = createEventAssigner<Context.Context, Events.Events>();
+
+/** Quiet window after the last price-slider tick before a recompute is issued, so
+ *  a drag coalesces into one worker request. */
+const PRICE_RECOMPUTE_MS = 250;
+
 /** The session worker, typed so payload-bearing requests type-check (an untyped
  *  `system.get` ref only accepts bare `{ type }` events). It is invoked by the
  *  root for the whole session, so it always exists while a city is running. */
 const toWorker = ({ system }: { system: { get: (id: string) => unknown } }) =>
   system.get(SystemId.WORKER) as WorkerMachineRef;
 
-/** The city's current selection resolved into a `{ scope, filters }` query — the
- *  single input the worker aggregates request and its dedupe key both derive
- *  from, so the request and the staleness check can never drift apart. */
+/** The city's current selection resolved into a `{ neighbourhood, filters }`
+ *  query — the single input the worker aggregates request and its dedupe key both
+ *  derive from, so the request and the staleness check can never drift apart. */
 const cityQuery = (context: Context.Context): ListingQuery =>
   resolveQuery(context.filter, priceBounds(context.framing));
 
@@ -49,9 +56,47 @@ const aggregatesRequest = (context: Context.Context) => {
     type: "WORKER.REQUEST_AGGREGATES",
     slug: context.framing!.slug,
     snapshotId: context.framing!.snapshotId,
-    scope: query.scope,
+    neighbourhood: query.neighbourhood,
     filters: query.filters,
+    priceCap: context.framing!.priceCap,
   } as const;
+};
+
+/** The map owns `hexResolution` (single source of truth); read it at send time
+ *  rather than duplicating it in city context. */
+const hexResolutionOf = (system: {
+  get: (id: string) => unknown;
+}): HexResolution => {
+  const map = system.get(SystemId.MAP) as
+    | { getSnapshot: () => { context: { hexResolution?: HexResolution } } }
+    | undefined;
+  return map?.getSnapshot().context.hexResolution ?? 6;
+};
+
+/** The worker hexes request for the city's current filters at a resolution. */
+const hexesRequest = (context: Context.Context, resolution: HexResolution) =>
+  ({
+    type: "WORKER.REQUEST_HEXES",
+    slug: context.framing!.slug,
+    snapshotId: context.framing!.snapshotId,
+    filters: resolveFilters(context.filter, priceBounds(context.framing)),
+    hexResolution: resolution,
+  }) as const;
+
+/** Stable signature of the hex inputs — resolved filters + the bucketed
+ *  `HexResolution` (not raw zoom). The hex request and its staleness check both
+ *  derive from this, so they can never drift apart; a zoom out-and-back within the
+ *  same resolution band yields the same key and skips a redundant recompute. */
+const hexesKey = (
+  context: Context.Context,
+  resolution: HexResolution,
+): string => {
+  const filters = resolveFilters(context.filter, priceBounds(context.framing));
+  return JSON.stringify({
+    roomTypes: [...filters.roomTypes].sort(),
+    priceRange: filters.priceRange,
+    resolution,
+  });
 };
 
 export const cityMachine = setup({
@@ -62,14 +107,17 @@ export const cityMachine = setup({
     emitted: {} as Events.Emitted,
   },
   actors: {
-    // Loads the Browse points tier. A placeholder so the machine has no React /
-    // data dependency; the real one (closured over the app QueryClient) is
-    // injected at the provider boundary — see shared/browse-points-query.
-    loadBrowsePoints: fromPromise<
+    // Readiness gate for the browse lens: awaits the points tier (an instant hit
+    // once the nav prefetch has warmed it) so `loading → ready` can resume the
+    // scene. The resolved collection is discarded — the UI reads points via
+    // useBrowsePoints. Placeholder so the machine has no React / data dependency;
+    // the real loader (closured over the app QueryClient) is injected at the
+    // provider boundary — see shared/browse-points-query.
+    ensureBrowseReady: fromPromise<
       BrowseCollection,
       { slug: string; snapshotId: string }
     >(() => {
-      throw new Error("loadBrowsePoints actor not provided");
+      throw new Error("ensureBrowseReady actor not provided");
     }),
   },
   guards: {
@@ -92,49 +140,47 @@ export const cityMachine = setup({
   },
   actions: {
     // --- filter assigns (inline per Actions convention) ---
-    assignRoomTypes: assign({
-      filter: ({ context, event }) => {
-        assertEvent(event, "FILTER.SET_ROOM_TYPES");
-        // All-selected collapses to the canonical [] (see lib/filters/normalize).
-        return {
-          ...context.filter,
-          roomTypes: normalizeRoomTypes(event.roomTypes),
-        };
-      },
-    }),
-    assignPriceRange: assign({
-      filter: ({ context, event }) => {
-        assertEvent(event, "FILTER.SET_PRICE_RANGE");
-        // Full-bounds selection collapses to null so the URL layer can drop the
-        // `price` param (see lib/filters/normalize).
-        return {
-          ...context.filter,
-          priceRange: normalizePriceRange(
-            event.priceRange,
-            priceBounds(context.framing),
-          ),
-        };
-      },
-    }),
-    assignNbhd: assign({
-      filter: ({ context, event }) => {
-        assertEvent(event, "FILTER.SET_NBHD");
-        return { ...context.filter, nbhd: event.nbhd };
-      },
-    }),
-    assignHexCells: assign({
-      hexCells: ({ event }) => {
-        assertEvent(event, "WORKER.PROCESS_RESULT");
-        // Guard in transitions ensures result.type === "hexes" when this fires.
-        return event.result.payload as HexCell[];
-      },
-    }),
-    assignAggregates: assign({
-      aggregates: ({ event }) => {
-        assertEvent(event, "WORKER.PROCESS_RESULT");
-        return event.result.payload as ScopeAggregates;
-      },
-    }),
+    // All-selected collapses to the canonical [] (see lib/filters/normalize).
+    assignRoomTypes: assignFromEvent(
+      "FILTER.SET_ROOM_TYPES",
+      "filter",
+      (event, context) => ({
+        ...context.filter,
+        roomTypes: normalizeRoomTypes(event.roomTypes),
+      }),
+    ),
+    // Full-bounds selection collapses to null so the URL layer can drop the
+    // `price` param (see lib/filters/normalize).
+    assignPriceRange: assignFromEvent(
+      "FILTER.SET_PRICE_RANGE",
+      "filter",
+      (event, context) => ({
+        ...context.filter,
+        priceRange: normalizePriceRange(
+          event.priceRange,
+          priceBounds(context.framing),
+        ),
+      }),
+    ),
+    assignNbhd: assignFromEvent(
+      "FILTER.SET_NBHD",
+      "filter",
+      (event, context) => ({
+        ...context.filter,
+        nbhd: event.nbhd,
+      }),
+    ),
+    // Guard in transitions ensures result.type === "hexes" when this fires.
+    assignHexCells: assignFromEvent(
+      "WORKER.PROCESS_RESULT",
+      "hexCells",
+      (event) => event.result.payload as HexCell[],
+    ),
+    assignAggregates: assignFromEvent(
+      "WORKER.PROCESS_RESULT",
+      "aggregates",
+      (event) => event.result.payload as ScopeAggregates,
+    ),
 
     // --- worker send actions (to the session worker, slug-stamped) ---
     // Ask the worker to ensure this city's listings are loaded; a previously
@@ -149,18 +195,23 @@ export const cityMachine = setup({
         "analytics",
       ),
     })),
-    // hexResolution lives in map (single source of truth); read from its
-    // snapshot at send time rather than duplicating it in city context.
-    requestHexes: sendTo(toWorker, ({ context, system }) => ({
-      type: "WORKER.REQUEST_HEXES" as const,
-      slug: context.framing!.slug,
-      snapshotId: context.framing!.snapshotId,
-      filters: resolveFilters(context.filter, priceBounds(context.framing)),
-      hexResolution:
-        (system.get(SystemId.MAP)?.getSnapshot()?.context.hexResolution as
-          | HexResolution
-          | undefined) ?? 6,
-    })),
+    // Sends the request AND records the signature it was issued for, so
+    // `requestHexesIfStale` can later tell whether a recompute is needed.
+    requestHexes: enqueueActions(({ context, system, enqueue }) => {
+      const resolution = hexResolutionOf(system);
+      enqueue.sendTo(toWorker({ system }), hexesRequest(context, resolution));
+      enqueue.assign({ hexesFilterKey: hexesKey(context, resolution) });
+    }),
+    // Entry-time variant: recompute only if absent or the inputs (filters or the
+    // resolution band) changed since — e.g. a filter or zoom moved while in the
+    // browse leg, which doesn't recompute.
+    requestHexesIfStale: enqueueActions(({ context, system, enqueue }) => {
+      const resolution = hexResolutionOf(system);
+      const key = hexesKey(context, resolution);
+      if (context.hexCells !== null && context.hexesFilterKey === key) return;
+      enqueue.sendTo(toWorker({ system }), hexesRequest(context, resolution));
+      enqueue.assign({ hexesFilterKey: key });
+    }),
     // Sends the request AND records the signature it was issued for, so
     // `requestAggregatesIfStale` can later tell whether a recompute is needed.
     requestAggregates: enqueueActions(({ context, system, enqueue }) => {
@@ -179,6 +230,26 @@ export const cityMachine = setup({
       enqueue.assign({ aggregatesFilterKey: queryKey(cityQuery(context)) });
     }),
 
+    // Price drags arrive per-tick (the slider is machine-controlled); assign each
+    // immediately for a smooth slider, but defer the recompute — re-arm a single
+    // delayed FILTER.PRICE_SETTLED, cancelling the prior one, so a drag fires one
+    // worker request once it settles.
+    debouncePriceRecompute: enqueueActions(({ enqueue }) => {
+      enqueue.cancel("price-settle");
+      enqueue.raise(
+        { type: "FILTER.PRICE_SETTLED" },
+        { id: "price-settle", delay: PRICE_RECOMPUTE_MS },
+      );
+    }),
+    cancelPriceRecompute: enqueueActions(({ enqueue }) =>
+      enqueue.cancel("price-settle"),
+    ),
+
+    // Abort any in-flight recompute the worker still holds for this city — fired
+    // when the analyse leg is left (→ browse) or the city is replaced, so the
+    // worker doesn't keep computing a result no one will use.
+    cancelWorker: sendTo(toWorker, { type: "WORKER.CANCEL" as const }),
+
     markAnalyticsLoaded: assign({ analyticsLoaded: true }),
 
     // Emit semantic failure signals; the scene's notification layer turns these
@@ -192,23 +263,21 @@ export const cityMachine = setup({
         processType: event.processType,
       } as const;
     }),
+    emitWorkerFatal: emit({ type: "city.error", kind: "worker" } as const),
 
+    // Notify the coordinator only; root translates CITY.READY → RESUME for
+    // map + ui. City stays decoupled from the other machines.
     notifyCityReady: enqueueActions(({ system, enqueue }) => {
-      for (const id of [SystemId.ROOT, SystemId.MAP, SystemId.UI] as const) {
-        const ref = system.get(id);
-        if (ref) enqueue.sendTo(ref, { type: "CITY.READY" });
-      }
+      const root = system.get(SystemId.ROOT);
+      if (root) enqueue.sendTo(root, { type: "CITY.READY" });
     }),
 
-    // Terminal failure counterpart of notifyCityReady. A load that never
-    // converges must still end the navigation gate, or root/map/ui stay stuck in
-    // their suppressed states. The toast (emitLoadError) tells the user what
-    // failed; this leaves them an operable recovery path.
+    // Terminal failure counterpart. A load that never converges must still end
+    // the navigation window, or map/ui stay suppressed — root resumes them on
+    // CITY.FAILED. The toast (emitLoadError) tells the user what failed.
     notifyCityFailed: enqueueActions(({ system, enqueue }) => {
-      for (const id of [SystemId.ROOT, SystemId.MAP, SystemId.UI] as const) {
-        const ref = system.get(id);
-        if (ref) enqueue.sendTo(ref, { type: "CITY.FAILED" });
-      }
+      const root = system.get(SystemId.ROOT);
+      if (root) enqueue.sendTo(root, { type: "CITY.FAILED" });
     }),
 
     raiseInitialLens: enqueueActions(({ system, enqueue }) => {
@@ -245,9 +314,24 @@ export const cityMachine = setup({
       guard: "fetchIsCurrent",
       actions: "emitProcessError",
     },
+    // A worker-thread crash is terminal regardless of lens or substate (loading
+    // or ready) — route to whichever leg's error state so the scene un-suppresses
+    // and the user is told analysis is unavailable.
+    "WORKER.FATAL_ERROR": [
+      {
+        guard: stateIn(".browse"),
+        target: ".browse.error",
+        actions: "emitWorkerFatal",
+      },
+      {
+        target: ".analyse.error",
+        actions: "emitWorkerFatal",
+      },
+    ],
   },
   states: {
     deciding: {
+      // check the relevant initial state based on the Lens
       entry: "raiseInitialLens",
     },
     browse: {
@@ -255,8 +339,8 @@ export const cityMachine = setup({
       states: {
         loading: {
           invoke: {
-            id: "loadBrowsePoints",
-            src: "loadBrowsePoints",
+            id: "ensureBrowseReady",
+            src: "ensureBrowseReady",
             input: ({ context }) => ({
               slug: context.framing!.slug,
               snapshotId: context.framing!.snapshotId,
@@ -278,6 +362,9 @@ export const cityMachine = setup({
 
     analyse: {
       initial: "loading",
+      // Leaving analyse (→ browse) — cancel the recomputes browse won't use, plus
+      // any pending price-settle so a late drag can't recompute after we've left.
+      exit: ["cancelWorker", "cancelPriceRecompute"],
       states: {
         loading: {
           entry: "requestLoad",
@@ -294,7 +381,7 @@ export const cityMachine = setup({
           entry: [
             "markAnalyticsLoaded",
             "notifyCityReady",
-            "requestHexes",
+            "requestHexesIfStale",
             "requestAggregatesIfStale",
           ],
           on: {
@@ -302,11 +389,10 @@ export const cityMachine = setup({
               actions: ["assignRoomTypes", "requestHexes", "requestAggregates"],
             },
             "FILTER.SET_PRICE_RANGE": {
-              actions: [
-                "assignPriceRange",
-                "requestHexes",
-                "requestAggregates",
-              ],
+              actions: ["assignPriceRange", "debouncePriceRecompute"],
+            },
+            "FILTER.PRICE_SETTLED": {
+              actions: ["requestHexes", "requestAggregates"],
             },
             // nbhd changes scope only — no effect on hex filters.
             "FILTER.SET_NBHD": {

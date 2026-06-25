@@ -3,19 +3,19 @@
 import { useCallback } from "react";
 import type { MapRef } from "react-map-gl/maplibre";
 
-import type { BBox } from "@/lib/geo/types";
+import type { Theme } from "@/components/theme/theme-provider";
 import type { HexResolution } from "@/lib/hex/types";
 
 import type { SourceId } from "@/features/scene/map/types";
 import type { HexInspectInfo } from "./context";
 import type { MapMachineActor } from "./machine";
-import { useRootRef } from "../root/use-root";
+import { SceneActorContext } from "../../provider";
 import { createMachineStateSelector } from "../utils";
 
 export type { HexInspectInfo };
 
 function useMapActorRef(): MapMachineActor {
-  return useRootRef().system.get("map");
+  return SceneActorContext.useSelector((s) => s.context.mapRef);
 }
 
 /** Stable send function for the map actor. Does not subscribe to snapshots. */
@@ -72,19 +72,20 @@ export function useReportSourceLoaded() {
   );
 }
 
+/** Reports a MapLibre style (re)load so the machine re-applies label theming. */
+export function useReportStyleLoaded() {
+  const send = useMapSend();
+  return useCallback(
+    (theme: Theme) => send({ type: "MAP.STYLE_LOADED", theme }),
+    [send],
+  );
+}
+
 export function useChangeMapResolution() {
   const send = useMapSend();
   return useCallback(
     (hexResolution: HexResolution) =>
       send({ type: "MAP.RESOLUTION_CHANGED", hexResolution }),
-    [send],
-  );
-}
-
-export function useFitMapBounds() {
-  const send = useMapSend();
-  return useCallback(
-    (bbox: BBox) => send({ type: "MAP.FIT_BOUNDS", bbox }),
     [send],
   );
 }
@@ -106,25 +107,21 @@ export function useSetMapHover() {
   );
 }
 
-export function useSelectMapFeature() {
-  const send = useMapSend();
-  return useCallback(
-    (id: number | null) => send({ type: "MAP.SELECT", id }),
-    [send],
-  );
-}
-
 // --- state selectors ---
 
 const createMapSelector = createMachineStateSelector(useMapActorRef);
 
-export const useMapIsReady = createMapSelector((s) => s.matches("ready"));
-
-export const useMapIsSuppressed = createMapSelector((s) =>
-  s.matches({ ready: "suppressed" }),
+export const useMapIsReady = createMapSelector((s) =>
+  s.matches({ lifecycle: "ready" }),
 );
 
-export const useMapIsError = createMapSelector((s) => s.matches("error"));
+export const useMapIsSuppressed = createMapSelector((s) =>
+  s.matches({ interaction: "suspended" }),
+);
+
+export const useMapIsError = createMapSelector((s) =>
+  s.matches({ lifecycle: "error" }),
+);
 
 export const useMapRef = createMapSelector((s) => s.context.mapRef);
 

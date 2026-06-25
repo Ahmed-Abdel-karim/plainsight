@@ -31,9 +31,6 @@ export type SortKey =
   | "reviews_desc"
   | "review_count_desc";
 
-/** Market scope: city-wide or drilled into one neighbourhood. */
-export type Scope = { type: "city" } | { type: "neighbourhood"; id: string };
-
 /** City framing streamed from the server to seed the city machine on each nav. */
 export interface MapCityPayload {
   slug: string;

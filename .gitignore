@@ -34,6 +34,7 @@ yarn-error.log*
 .env*
 # ...but track .env for non-secret build-time defaults (NEXT_PUBLIC_*).
 !.env
+.env.sentry-build-plugin
 
 # vercel
 .vercel
@@ -46,5 +47,18 @@ design/
 .next.*
 playwright-report
 test-results
+
+# lighthouse: CI output, raw reports, and stray headless-chrome profile dirs
+# (chrome-launcher misresolves the temp path under WSL and writes literal
+# `C:\Users\...lighthouse.*` dirs into the cwd).
+.lighthouseci/
+*.report.json
+*.report.html
+C:*
+
 # Local-only archive of removed working docs / SpecKit (untracked reference)
 .archive/
+
+# Local-only working docs / scratch (internal reference, not shipped)
+PLAINSIGHT_AUDIT.md
+.codex/

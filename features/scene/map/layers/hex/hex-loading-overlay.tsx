@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { ReloadIcon } from "@radix-ui/react-icons";
 
 import { useHexCellsPending, useMapIsSuppressed } from "@/features/scene/state";
 import { useLens } from "@/features/scene/shared/use-lens";
@@ -19,7 +19,7 @@ export function HexLoadingOverlay() {
       className="pointer-events-none absolute inset-x-0 top-4 z-10 flex justify-center"
     >
       <span className="bg-map-bg/90 text-map-label flex items-center gap-2 rounded-full px-3 py-1.5 shadow-sm backdrop-blur-sm type-label">
-        <Loader2 aria-hidden className="size-3.5 animate-spin" />
+        <ReloadIcon aria-hidden className="size-3.5 animate-spin" />
         Loading prices…
       </span>
     </div>

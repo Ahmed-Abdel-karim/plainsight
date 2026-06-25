@@ -6,11 +6,15 @@ import {
   setup,
 } from "xstate";
 
+import { createEventAssigner } from "../utils";
 import type { CityMachineActor } from "../city/machine";
+import type { MapMachineActor } from "../map/machine";
 import { SystemId } from "../constants";
 import * as Context from "./context";
 import type * as Events from "./events";
 import type * as Input from "./input";
+
+const assignFromEvent = createEventAssigner<Context.Context, Events.Events>();
 
 /**
  * UI machine — cross-navigation UI state (lens, selection, hover).
@@ -20,15 +24,15 @@ import type * as Input from "./input";
  *   active     — normal interaction: all UI.* events accepted.
  *   navigating — city change in flight: UI.* events are structurally dropped so
  *                stale selection/hover from the old city can't leak into the new
- *                city's first render. Mirrors map's ready.suppressed window.
+ *                city's first render. Mirrors map's interaction.suspended window.
  *
- * NAV.START enters `navigating` and clears stale selection/hover (lens persists).
- * CITY.READY exits back to `active`. A second NAV.START while already navigating
- * re-clears and stays put (latest-wins).
+ * SUSPEND enters `navigating` and clears stale selection/hover (lens persists).
+ * RESUME exits back to `active`.
  *
  * Actions are defined inline in setup so they pick up the machine's context +
  * event types — same decision as the map machine.
  */
+
 export const uiMachine = setup({
   types: {
     input: {} as Input.Input,
@@ -36,42 +40,35 @@ export const uiMachine = setup({
     events: {} as Events.Events,
   },
   actions: {
-    // Switching to "analyse" also clears the selected listing.
-    assignLens: assign({
-      lens: ({ context, event }) =>
-        event.type === "UI.SET_LENS" ? event.lens : context.lens,
-      selectedId: ({ context, event }) =>
-        event.type === "UI.SET_LENS" && event.lens === "analyse"
-          ? null
-          : context.selectedId,
-    }),
-    assignHover: assign({
-      hoveredListingId: ({ context, event }) =>
-        event.type === "UI.SET_HOVER" ? event.id : context.hoveredListingId,
-      hoverSource: ({ context, event }) =>
-        event.type === "UI.SET_HOVER"
-          ? event.id === null
-            ? null
-            : event.source
-          : context.hoverSource,
-    }),
-    // Sets the selected listing id (UI.SELECT).
-    assignSelectedId: assign({
-      selectedId: ({ event }) => {
-        assertEvent(event, "UI.SELECT");
-        return event.id;
-      },
-    }),
+    assignLens: assignFromEvent("UI.SET_LENS", "lens", "lens"),
+    assignHover: assignFromEvent("UI.SET_HOVER", "hoveredListing", (event) =>
+      event.id ? { id: event.id, source: event.source } : null,
+    ),
+    assignSelectedId: assignFromEvent("UI.SELECT", "selectedId", "id"),
     forwardLensToCity: enqueueActions(({ event, system, enqueue }) => {
       assertEvent(event, "UI.SET_LENS");
       const city = system.get(SystemId.CITY) as CityMachineActor | undefined;
       if (city)
         enqueue.sendTo(city, { type: "LENS.CHANGED", lens: event.lens });
     }),
+    // Analyse has no listing selection — clear it through the same UI.SELECT
+    // action (raised, not an inline write) so the map paint stays in sync.
+    clearSelectionOnAnalyse: enqueueActions(({ event, enqueue }) => {
+      assertEvent(event, "UI.SET_LENS");
+      if (event.lens === "analyse")
+        enqueue.raise({ type: "UI.SELECT", id: null });
+    }),
+    // The selection lives here; the map owns the MapRef, so mirror every change
+    // to it. No loop — MAP.SELECTION_CHANGED only paints, it never forwards back.
+    notifyMapSelect: enqueueActions(({ event, system, enqueue }) => {
+      assertEvent(event, "UI.SELECT");
+      const map = system.get(SystemId.MAP) as MapMachineActor | undefined;
+      if (map)
+        enqueue.sendTo(map, { type: "MAP.SELECTION_CHANGED", id: event.id });
+    }),
     clearSelectionAndHover: assign({
       selectedId: null,
-      hoveredListingId: null,
-      hoverSource: null,
+      hoveredListing: null,
     }),
   },
 }).createMachine({
@@ -81,10 +78,16 @@ export const uiMachine = setup({
   states: {
     active: {
       on: {
-        "UI.SET_LENS": { actions: ["assignLens", "forwardLensToCity"] },
-        "UI.SELECT": { actions: "assignSelectedId" },
+        "UI.SET_LENS": {
+          actions: [
+            "assignLens",
+            "forwardLensToCity",
+            "clearSelectionOnAnalyse",
+          ],
+        },
+        "UI.SELECT": { actions: ["assignSelectedId", "notifyMapSelect"] },
         "UI.SET_HOVER": { actions: "assignHover" },
-        "NAV.START": {
+        SUSPEND: {
           target: "navigating",
           actions: "clearSelectionAndHover",
         },
@@ -92,10 +95,7 @@ export const uiMachine = setup({
     },
     navigating: {
       on: {
-        "CITY.READY": { target: "active" },
-        // Terminal load failure: re-enable UI controls so the user can recover
-        // (switch city / lens). Lens persists; selection was cleared on NAV.START.
-        "CITY.FAILED": { target: "active" },
+        RESUME: { target: "active" },
       },
     },
   },

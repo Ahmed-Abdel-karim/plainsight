@@ -1,28 +1,19 @@
 import type { ActorRefFrom } from "xstate";
 
 import type { cityMachine } from "../city/machine";
+import type { mapMachine } from "../map/machine";
+import type { uiMachine } from "../ui/machine";
 
 /**
- * Root machine context — state the scene root owns directly.
- *
- * The type and its initial value share the name `Context` so a single
- * `import * as Context from "./context"` yields both.
+ * Root machine context. The coordinator holds the refs to the actors the React
+ * tree reads: the persistent `map`/`ui` actors (spawned once in the machine's
+ * initial context factory) and the dynamic `city` actor (spawned per
+ * `CITY.CHANGED`, stopped/replaced on the next one). Actors React never reads —
+ * `worker`/`navigation` — stay invoked and are reached over `system.get`.
  */
 export interface Context {
-  /**
-   * The `city` actor. It is *spawned* fresh per slug on `CITY.CHANGED` (not
-   * invoked), so the root holds its ref here to stop/replace it on the next
-   * navigation. `null` until the first city is dispatched.
-   */
+  readonly mapRef: ActorRefFrom<typeof mapMachine>;
+  readonly uiRef: ActorRefFrom<typeof uiMachine>;
+  /** `null` until the first city is dispatched. */
   readonly cityRef: ActorRefFrom<typeof cityMachine> | null;
-  /**
-   * The slug being navigated to. Set at `NAV.START`, cleared at `CITY.READY`.
-   * Latest-wins when a second `NAV.START` arrives before the first resolves.
-   */
-  readonly pendingSlug: string | null;
 }
-
-export const Context: Context = {
-  cityRef: null,
-  pendingSlug: null,
-};

@@ -57,10 +57,10 @@ export function renderScene(
     actors: {
       worker: workerMachine.provide({ actors: { transport: transport.actor } }),
       city: cityMachine.provide({
-        actors: { loadBrowsePoints: makeLoadBrowsePoints(queryClient) },
+        actors: { ensureBrowseReady: makeLoadBrowsePoints(queryClient) },
       }),
     },
-    actions: { syncUrl: () => {}, prefetchCity: () => {} },
+    actions: { syncUrl: () => {} },
   });
 
   const holder: { root: RootActorRef | null } = { root: null };

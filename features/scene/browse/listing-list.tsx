@@ -15,6 +15,7 @@ import { ListingCard } from "./listing-card";
  */
 export function ListingList({
   listings,
+  listingsByIndex,
   neighbourhoodNames,
   currency,
   hoveredId,
@@ -24,6 +25,7 @@ export function ListingList({
   onSelect,
 }: {
   listings: BrowsePointProperties[];
+  listingsByIndex: Map<number, number>;
   neighbourhoodNames: Record<string, string>;
   currency: string;
   hoveredId: number | null;
@@ -47,9 +49,10 @@ export function ListingList({
   // Only map-driven hover auto-scrolls; list-driven hover must not move the list.
   useEffect(() => {
     if (hoveredId === null || hoverSource !== "map") return;
-    const index = listings.findIndex((listing) => listing.id === hoveredId);
-    if (index >= 0) virtualizer.scrollToIndex(index, { align: "auto" });
-  }, [hoveredId, hoverSource, listings, virtualizer]);
+    const index = listingsByIndex.get(hoveredId);
+    if (index !== undefined)
+      virtualizer.scrollToIndex(index, { align: "auto" });
+  }, [hoveredId, hoverSource, listingsByIndex, virtualizer]);
 
   return (
     <div

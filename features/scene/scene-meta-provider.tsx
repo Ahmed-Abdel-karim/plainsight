@@ -2,12 +2,11 @@
 
 import { createContext, useContext } from "react";
 
-import type { FilterBounds, Scope } from "@/data/types";
+import type { FilterBounds } from "@/data/types";
 
 export interface SceneMeta {
   citySlug: string;
   currency: string;
-  scope: Scope;
   bounds: FilterBounds;
   snapshotLabel: string;
 }

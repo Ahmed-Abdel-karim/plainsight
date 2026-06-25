@@ -1,42 +1,51 @@
 "use client";
 
-import type { ScopeAggregates } from "@/data/contract";
+import dynamic from "next/dynamic";
 
-import { AnalysisCardsSkeleton } from "./analysis-cards-skeleton";
+import type { StatsSnapshot } from "@/data/contract";
+
+import {
+  AnalysisCardsSkeleton,
+  PriceHistogramSkeleton,
+  TopHostsBarSkeleton,
+} from "./analysis-cards-skeleton";
 import { KpiRow } from "./kpi-row";
-import { PriceHistogram } from "./price-histogram";
 import { RoomMixBar } from "./room-mix-bar";
-import { TopHostsBar } from "./top-hosts-bar";
-import { useAggregates, useCityFraming, useIsDefaultView } from "../state";
+import { useCityFraming } from "../state";
+import { useStats } from "./use-stats";
+
+// The two Recharts-backed charts are the route's only importers of recharts (and
+// its redux-toolkit/immer/decimal.js cluster). Loading them lazily keeps that
+// ~80 KB out of the scene's first-load JS; the skeletons hold layout, so the
+// swap-in is shift-free.
+const PriceHistogram = dynamic(
+  () => import("./price-histogram").then((m) => m.PriceHistogram),
+  { ssr: false, loading: PriceHistogramSkeleton },
+);
+const TopHostsBar = dynamic(
+  () => import("./top-hosts-bar").then((m) => m.TopHostsBar),
+  { ssr: false, loading: TopHostsBarSkeleton },
+);
 
 /**
- * The four distribution cards. This component only selects and renders; the
- * city actor owns aggregate recomputation. At the city-wide, full-range/all-rooms
- * view, it renders the server's pre-baked `defaultAggregates`; once a
- * neighbourhood is selected or filters go non-default, the actor publishes live
- * scoped aggregates. Until that scoped result lands, a skeleton stands in.
+ * The four distribution cards. Pure consumer: `useStats` resolves the stats for
+ * the active filter — the server-seeded snapshot for an unfiltered view (city or
+ * neighbourhood), the city actor's live recompute for a real filter — so this
+ * never decides default-vs-live. `null` means the live result is still pending.
  */
 
 export function AnalysisCards({
   currency: defaultCurrency,
-  defaultAggregates,
+  snapshot,
 }: {
   currency: string;
-  defaultAggregates: ScopeAggregates;
+  snapshot: StatsSnapshot;
 }) {
   const city = useCityFraming();
   const currency = city?.currency ?? defaultCurrency;
-  // The server default is the city-wide, unfiltered projection, so it only
-  // stands in for the default view; any neighbourhood or filter makes the view
-  // non-default and we follow the actor's live aggregates.
-  const isDefaultView = useIsDefaultView();
-  const filtered = useAggregates();
+  const aggregates = useStats(snapshot);
 
-  const showSkeleton = !isDefaultView && filtered === null;
-  const aggregates =
-    isDefaultView || filtered === null ? defaultAggregates : filtered;
-
-  if (showSkeleton) return <AnalysisCardsSkeleton />;
+  if (aggregates === null) return <AnalysisCardsSkeleton />;
 
   return (
     <>

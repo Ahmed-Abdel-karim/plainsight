@@ -1,24 +1,17 @@
 import type { MapRef } from "react-map-gl/maplibre";
 
-import type { BBox } from "@/lib/geo/types";
+import type { Theme } from "@/components/theme/theme-provider";
 import type { HexResolution } from "@/lib/hex/types";
 import type { SourceId } from "@/features/scene/map/types";
 import type { HexInspectInfo } from "./context";
 import type * as Input from "./input";
 
 /**
- * Map machine events. DRAFT (see `docs/map-machine-transition-gating.md`).
- *
- * Grouped by source:
- *   - `MAP.*`  — pushed up from the React/MapLibre bridge (mount, lifecycle,
- *                interactions).
- *   - `NAV.START` / `CITY.READY` — the transition window. `NAV.START` (fired at
- *                click, slug known from the href) sends the map to
- *                `ready.suppressed`; `CITY.READY` (city converged) returns it to
- *                `ready.interactive`.
- *
- * `CITY.CHANGED { framing }` is intentionally a *root* event, not a map event —
- * root spawns the city from it; the map only cares about NAV.START / CITY.READY.
+ * Map machine events, grouped by source:
+ *   - `MAP.*`        — the React/MapLibre bridge (mount, lifecycle, interactions)
+ *   - `SUSPEND` / `RESUME` — the coordinator's suppression pair (map shares it
+ *     with ui). `SUSPEND` enters `interaction: "suspended"`; `RESUME` returns to
+ *     `interactive`.
  */
 
 /** Auto-fired when the actor starts; carries the machine `input`. */
@@ -49,19 +42,18 @@ export interface MapSourceLoaded {
   readonly loaded: boolean;
 }
 
-// --- interactions (only honoured in instance.ready) ---
-export interface MapSelect {
-  readonly type: "MAP.SELECT";
+// --- interactions (only honoured in interaction.interactive) ---
+/** Mirror the `ui` selection onto the points source. Sent by `ui` whenever
+ *  `UI.SELECT` lands (the single selection action); the map owns the paint
+ *  because it owns the `MapRef`. */
+export interface MapSelectionChanged {
+  readonly type: "MAP.SELECTION_CHANGED";
   readonly id: number | null;
 }
 export interface MapHover {
   readonly type: "MAP.HOVER";
   readonly id: number | null;
   readonly source: "list" | "map" | null;
-}
-export interface MapFitBounds {
-  readonly type: "MAP.FIT_BOUNDS";
-  readonly bbox: BBox;
 }
 export interface MapHexInspect {
   readonly type: "MAP.HEX_INSPECT";
@@ -71,18 +63,19 @@ export interface MapResolutionChanged {
   readonly type: "MAP.RESOLUTION_CHANGED";
   readonly hexResolution: HexResolution;
 }
+/** MapLibre (re)loaded its style — re-apply the basemap label theming. Carries
+ *  the resolved theme because the machine has no React context. */
+export interface MapStyleLoaded {
+  readonly type: "MAP.STYLE_LOADED";
+  readonly theme: Theme;
+}
 
-// --- data region (transition window) ---
-export interface NavStart {
-  readonly type: "NAV.START";
-  readonly slug: string;
+// --- suppression (shared coordinator pair) ---
+export interface Suspend {
+  readonly type: "SUSPEND";
 }
-export interface CityReady {
-  readonly type: "CITY.READY";
-}
-/** Terminal load failure — lifts the suppressed gate back to interactive. */
-export interface CityFailed {
-  readonly type: "CITY.FAILED";
+export interface Resume {
+  readonly type: "RESUME";
 }
 
 export type Events =
@@ -92,11 +85,10 @@ export type Events =
   | MapReady
   | MapError
   | MapSourceLoaded
-  | MapSelect
+  | MapSelectionChanged
   | MapHover
-  | MapFitBounds
   | MapHexInspect
   | MapResolutionChanged
-  | NavStart
-  | CityReady
-  | CityFailed;
+  | MapStyleLoaded
+  | Suspend
+  | Resume;

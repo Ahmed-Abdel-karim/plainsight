@@ -21,7 +21,6 @@ import {
 } from "nuqs/server";
 
 import { ROOM_TYPES, type RoomType } from "@/data/contract";
-import type { Scope } from "@/data/types";
 
 export type Lens = "analyse" | "browse";
 
@@ -62,11 +61,6 @@ export const sceneSearchParams = {
  */
 export const loadScene = createLoader(sceneSearchParams);
 export const serializeScene = createSerializer(sceneSearchParams);
-
-/** Derive the analysis `Scope` from the `nbhd` param (absent = city-wide). */
-export function scopeFromNbhd(nbhd: string | null): Scope {
-  return nbhd ? { type: "neighbourhood", id: nbhd } : { type: "city" };
-}
 
 /** The scene state projected onto the URL. */
 export interface SceneUrlState {

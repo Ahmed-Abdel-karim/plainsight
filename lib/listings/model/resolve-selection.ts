@@ -1,13 +1,11 @@
 /**
- * Query — the selection half of the projection model. Turns the app's canonical
- * *stored* selection (room/price filter + scope neighbourhood) into the runtime
- * `{ scope, filters }` a {@link ListingQuery} projection consumes, and answers the
- * two questions every consumer asks of a selection: its identity (for skipping a
+ * Turns the app's canonical *stored* selection (room/price filter + neighbourhood)
+ * into the runtime `{ neighbourhood, filters }` a {@link ListingQuery} consumes,
+ * and answers the two questions every consumer asks: its identity (for skipping a
  * redundant recompute) and whether it is the city-wide default the server
- * pre-bakes (so a precomputed projection can stand in for a live one).
+ * precomputes (so a precomputed result can stand in for a live one).
  *
- * Pure and isomorphic, like the projection it feeds — it composes the existing
- * filter codec (`@/lib/filters/normalize`) and `scopeFromNbhd`.
+ * Pure — it composes the filter codec (`@/lib/filters/normalize`).
  */
 import type { FilterBounds } from "@/data/types";
 import {
@@ -15,9 +13,8 @@ import {
   resolveFilters,
   type StoredFilter,
 } from "@/lib/filters/normalize";
-import { scopeFromNbhd } from "@/lib/search-params";
 
-import type { ListingQuery } from "./projection";
+import type { ListingQuery } from "../projections";
 
 /** The persisted selection: the stored room/price filter plus the scope
  *  neighbourhood (null = city-wide). The shape the city actor holds and the URL
@@ -33,7 +30,7 @@ export function resolveQuery(
   bounds: FilterBounds,
 ): ListingQuery {
   return {
-    scope: scopeFromNbhd(stored.nbhd),
+    neighbourhood: stored.nbhd,
     filters: resolveFilters(stored, bounds),
   };
 }
@@ -43,7 +40,7 @@ export function resolveQuery(
  *  recompute when nothing that affects the output changed. */
 export function queryKey(query: ListingQuery): string {
   return JSON.stringify({
-    scope: query.scope,
+    neighbourhood: query.neighbourhood,
     roomTypes: [...query.filters.roomTypes].sort(),
     priceRange: query.filters.priceRange,
   });

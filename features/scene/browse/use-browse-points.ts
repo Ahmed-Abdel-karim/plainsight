@@ -24,8 +24,8 @@ import type {
   BrowsePoint,
   BrowsePointProperties,
 } from "@/data/contract";
-import type { ListingFilters, Scope, SortKey } from "@/data/types";
-import { projectList } from "@/lib/listings/projection";
+import type { ListingFilters, SortKey } from "@/data/types";
+import { listingsFor } from "@/lib/listings";
 
 import { browsePointsQueryOptions } from "../shared/browse-points-query";
 
@@ -36,16 +36,6 @@ export interface UseBrowsePointsResult {
   collection: BrowseCollection | null;
 }
 
-/**
- * The shared points collection for `slug` while `enabled`, with its load status.
- * While `loading` the list shows a skeleton and the map draws no dots; on
- * `error` the lens still toggles and the list shows the empty/error affordance.
- *
- * The geojson is a client-only fetch gated by `enabled`, so the server render and
- * the first client render are both `pending` ⇒ `"loading"` — the Browse slot
- * hydrates identically on both sides. The React Query status maps onto the small
- * `{ status, collection }` shape every consumer already reads.
- */
 export function useBrowsePoints(
   slug: string,
   snapshotId: string,
@@ -64,28 +54,28 @@ export function useBrowsePoints(
   return { status, collection: query.data ?? null };
 }
 
-/**
- * The filtered + sorted list rows for the active scope, filters, and sort key —
- * the same `projectList` the worker uses for Analyse, run live here over the
- * Browse points tier (`BrowsePointProperties`, a structural subset of `Listing`).
- * One projection backs both paths, so the list and the map dots can never
- * disagree with Analyse on what "the active set" is. Memoised; recomputes only
- * when scope/filters/sort change — ~30–60 ms over London's ~62k rows locally.
- *
- * `projectList` is the only import pulled from the projection module, so the
- * worker's hex/aggregate code tree-shakes out of the Browse chunk.
- */
 export function useBrowseListings(
   collection: BrowseCollection | null,
-  scope: Scope,
+  neighbourhood: string | null,
   filters: ListingFilters,
   sort: SortKey,
 ): BrowsePointProperties[] {
+  const rows = useMemo(
+    () =>
+      collection?.features.map((feature: BrowsePoint) => feature.properties),
+    [collection],
+  );
   return useMemo(() => {
-    if (!collection) return [];
-    const rows = collection.features.map(
-      (feature: BrowsePoint) => feature.properties,
-    );
-    return projectList(rows, { scope, filters }, sort);
-  }, [collection, scope, filters, sort]);
+    if (!rows) return [];
+    return listingsFor(rows, { neighbourhood, filters }, sort);
+  }, [rows, neighbourhood, filters, sort]);
+}
+
+export function useListingsByIndex(
+  listings: BrowsePointProperties[],
+): Map<number, number> {
+  return useMemo(
+    () => new Map(listings.map((listing, index) => [listing.id, index])),
+    [listings],
+  );
 }

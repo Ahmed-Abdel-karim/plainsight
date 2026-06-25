@@ -3,7 +3,7 @@ import { fromCallback } from "xstate";
 import type {
   LoadDataResponseMessage,
   ProcessResponseMessage,
-} from "@/lib/listings/worker";
+} from "@/lib/listings";
 import type {
   TransportCommand,
   TransportInput,
@@ -15,10 +15,24 @@ import type {
  * and lets a test replay replies on demand.
  */
 
+type DistributiveOmit<T, K extends PropertyKey> = T extends unknown
+  ? Omit<T, K>
+  : never;
+
+/** A process reply a test replays. `requestId` is optional: omitted, it is stamped
+ *  with the latest matching POST's id (the current request); supply it explicitly
+ *  to replay a stale/cancelled request's reply and assert it is dropped. */
+export type ProcessReplyMessage = DistributiveOmit<
+  ProcessResponseMessage,
+  "requestId"
+> & {
+  requestId?: number;
+};
+
 /** The reply events the real transport sends up to the worker machine. */
 export type TransportReply =
   | { type: "TRANSPORT.LOAD_REPLY"; message: LoadDataResponseMessage }
-  | { type: "TRANSPORT.PROCESS_REPLY"; message: ProcessResponseMessage }
+  | { type: "TRANSPORT.PROCESS_REPLY"; message: ProcessReplyMessage }
   | { type: "TRANSPORT.WORKER_ERROR"; error: Error };
 
 export interface FakeTransport {
@@ -45,11 +59,33 @@ export function createFakeTransport(): FakeTransport {
     },
   );
 
+  const latestRequestId = (type: ProcessResponseMessage["payload"]["type"]) => {
+    for (let i = commands.length - 1; i >= 0; i--) {
+      const command = commands[i];
+      if (command.type === "POST" && command.message.type === type)
+        return command.message.requestId;
+    }
+    return undefined;
+  };
+
   return {
     actor,
     commands,
     reply(event) {
       if (!sendBack) throw new Error("fake transport is not running");
+      if (event.type === "TRANSPORT.PROCESS_REPLY") {
+        const requestId =
+          event.message.requestId ??
+          latestRequestId(event.message.payload.type);
+        sendBack({
+          type: "TRANSPORT.PROCESS_REPLY",
+          message: {
+            ...event.message,
+            requestId: requestId ?? 0,
+          } as ProcessResponseMessage,
+        });
+        return;
+      }
       sendBack(event);
     },
   };

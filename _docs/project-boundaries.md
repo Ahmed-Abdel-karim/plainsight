@@ -1,8 +1,8 @@
 # Project Boundaries
 
-> Draft for review. This document defines the product outcomes and operating
-> constraints of Plainsight v1. Architecture documents describe how the system
-> satisfies them; ADRs record why significant implementation choices were made.
+> This document defines the product outcomes and operating constraints of
+> Plainsight v1. Architecture documents describe how the system satisfies them;
+> ADRs record why significant implementation choices were made.
 
 ## Application Overview
 
@@ -278,8 +278,6 @@ These are implementation gaps, not accepted product limitations:
   drawer trigger.
 - Physical Android, Safari, Firefox, Edge, and iOS Safari verification and the
   production performance baseline are still pending.
-- Sentry remains disabled; errors-only enablement and explicit request-data
-  scrubbing are deployment work.
 - Production must override `NEXT_PUBLIC_CITY_ASSET_BASE_URL` when external
   object storage is used and configure that origin's CORS and immutable cache
   metadata. The committed `/city-assets` path is the same-origin fallback.

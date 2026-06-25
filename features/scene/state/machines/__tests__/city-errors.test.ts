@@ -137,4 +137,34 @@ describe("city machine error signals", () => {
       { type: "city.error", kind: "process", processType: "hexes" },
     ]);
   });
+
+  it("ends in error on a worker-thread crash after the city is ready", () => {
+    scene = setupSceneSystem();
+    const framing = makeMapCityPayload();
+    scene.actor.send({
+      type: "CITY.CHANGED",
+      payload: framing,
+      filter: { roomTypes: [], priceRange: null, nbhd: null },
+    });
+    const city = scene.city as CityMachineActor;
+    const emitted: CityErrorEmitted[] = [];
+    city.on("city.error", (event) => emitted.push(event));
+    // Converge to analyse.ready, where a plain FETCH_ERROR would be dropped.
+    city.send({
+      type: "WORKER.FETCH_OK",
+      slug: framing.slug,
+      snapshotId: framing.snapshotId,
+      count: 3,
+    });
+    expect(city.getSnapshot().value).toEqual({ analyse: "ready" });
+
+    // The worker thread crashes mid-recompute — routed as a terminal fatal error.
+    scene.transport.reply({
+      type: "TRANSPORT.WORKER_ERROR",
+      error: new Error("worker crashed"),
+    });
+
+    expect(city.getSnapshot().value).toEqual({ analyse: "error" });
+    expect(emitted).toEqual([{ type: "city.error", kind: "worker" }]);
+  });
 });

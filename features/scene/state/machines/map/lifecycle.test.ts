@@ -22,11 +22,17 @@ describe("map machine — instance lifecycle", () => {
   it("drops the ref and returns to loading on MAP.UNMOUNTED", () => {
     scene = setupSceneSystem();
     mountFakeMap(scene);
-    expect(scene.map?.getSnapshot().value).toEqual({ ready: "interactive" });
+    expect(
+      scene.map
+        ?.getSnapshot()
+        .matches({ lifecycle: "ready", interaction: "interactive" }),
+    ).toBe(true);
 
     scene.map?.send({ type: "MAP.UNMOUNTED" });
 
-    expect(scene.map?.getSnapshot().value).toBe("loading");
+    expect(scene.map?.getSnapshot().matches({ lifecycle: "loading" })).toBe(
+      true,
+    );
     expect(scene.map?.getSnapshot().context.mapRef).toBeNull();
   });
 
@@ -37,7 +43,7 @@ describe("map machine — instance lifecycle", () => {
     scene.map?.send({ type: "MAP.UNMOUNTED" });
     const next = mountFakeMap(scene);
 
-    scene.map?.send({ type: "MAP.SELECT", id: 5 });
+    scene.ui?.send({ type: "UI.SELECT", id: 5 });
     expect(next.setFeatureState).toHaveBeenCalledWith(
       { source: POINTS_SOURCE_ID, id: 5 },
       { selected: true },
@@ -52,7 +58,7 @@ describe("map machine — instance lifecycle", () => {
     scene.map?.send({ type: "MAP.MOUNTED", mapRef });
     scene.map?.send({ type: "MAP.READY" });
 
-    expect(() => scene?.map?.send({ type: "MAP.SELECT", id: 9 })).not.toThrow();
+    expect(() => scene?.ui?.send({ type: "UI.SELECT", id: 9 })).not.toThrow();
     expect(removed.setFeatureState).not.toHaveBeenCalled();
   });
 });

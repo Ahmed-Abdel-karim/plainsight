@@ -1,8 +1,8 @@
 import { Suspense } from "react";
+import { version } from "@/package.json";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import type { CityMeta } from "@/data/contract";
-import type { Scope } from "@/data/types";
 import {
   AnalysisCardsSkeleton,
   AnalysisPanel,
@@ -10,6 +10,8 @@ import {
 } from "./analysis";
 import { FilterPanel } from "./analysis/filter-panel";
 import { BrowsePanel } from "./browse";
+import { BrowseError } from "./browse/browse-error";
+import { FeatureBoundary } from "@/components/utils/error-boundary";
 import { CitySwitcher } from "./city-switcher";
 import { LensActivity } from "./lens-activity";
 import { ListingCount } from "./listing-count";
@@ -17,7 +19,6 @@ import { Logo } from "@/components/logo";
 
 type MarketPanelContentProps = {
   cityMeta: CityMeta;
-  scope: Scope;
 };
 
 /**
@@ -34,18 +35,17 @@ type MarketPanelContentProps = {
  * aggregates) each still stream behind their own Suspense boundary.
  */
 export function MarketPanelContent({
-  scope,
   cityMeta: { slug: citySlug, country, frame, snapshotLabel },
   cityMeta,
 }: MarketPanelContentProps) {
-  const snapshot = snapshotLabel.trim();
+  const snapshot = snapshotLabel;
 
   return (
     <>
       <div className="flex items-center gap-inline border-b border-border pb-gutter group-data-[vaul-drawer-direction=bottom]/drawer-content:hidden">
         <Logo />
         <span className="ml-auto type-caption-mono text-muted-foreground">
-          v1 · explorer
+          v{version} · explorer
         </span>
       </div>
       <header className="flex flex-col gap-inline">
@@ -68,30 +68,40 @@ export function MarketPanelContent({
         <p className="max-w-sm type-caption text-muted-foreground">{frame}</p>
         <div
           className="flex items-center gap-snug type-caption-mono text-muted-foreground"
-          aria-label={`Data snapshot, ${snapshot}`}
+          aria-label={`Data snapshot, Inside Airbnb, ${snapshot}`}
         >
           <span
             className="size-snug rounded-full bg-muted-foreground"
             aria-hidden="true"
           />
-          Data: {snapshot}
+          Data: Inside Airbnb · {snapshot}
         </div>
       </header>
       <div className="flex min-h-0 flex-1 flex-col gap-stack">
-        <FilterPanel cityMeta={cityMeta} />
-
+        <FeatureBoundary id="scene.filters" resetKey={citySlug}>
+          <FilterPanel cityMeta={cityMeta} />
+        </FeatureBoundary>
         <Suspense fallback={<AnalysisCardsSkeleton />}>
           <LensActivity
             analysis={
-              <div className="flex min-h-0 flex-1 flex-col gap-stack overflow-y-auto">
-                <AnalysisPanel
-                  citySlug={citySlug}
-                  currency={cityMeta.currency}
-                  scope={scope}
-                />
-              </div>
+              <FeatureBoundary id="scene.analysis" resetKey={citySlug}>
+                <div className="flex min-h-0 flex-1 flex-col gap-stack overflow-y-auto">
+                  <AnalysisPanel
+                    citySlug={citySlug}
+                    currency={cityMeta.currency}
+                  />
+                </div>
+              </FeatureBoundary>
             }
-            browse={<BrowsePanel key={citySlug} />}
+            browse={
+              <FeatureBoundary
+                id="scene.browse"
+                resetKey={citySlug}
+                fallback={<BrowseError />}
+              >
+                <BrowsePanel key={citySlug} />
+              </FeatureBoundary>
+            }
           />
         </Suspense>
         <DataProvenance />

@@ -5,6 +5,8 @@ import type { FilterBounds } from "@/data/types";
 
 import { filterListings } from "./filter";
 import {
+  isFullPriceRange,
+  isPriceCapOpen,
   resolveFilters,
   resolvePriceBand,
   resolvePriceRange,
@@ -57,12 +59,36 @@ describe("resolvePriceBand (predicate band)", () => {
   });
 });
 
+describe("isFullPriceRange", () => {
+  it("is true for null and for a range spanning the bounds", () => {
+    expect(isFullPriceRange(null, bounds)).toBe(true);
+    expect(isFullPriceRange([20, 1100], bounds)).toBe(true);
+  });
+
+  it("is false once either handle moves off the bounds", () => {
+    expect(isFullPriceRange([100, 1100], bounds)).toBe(false);
+    expect(isFullPriceRange([20, 800], bounds)).toBe(false);
+  });
+});
+
+describe("isPriceCapOpen", () => {
+  it("is open at/above the cap and for the full range (null)", () => {
+    expect(isPriceCapOpen(null, bounds)).toBe(true);
+    expect(isPriceCapOpen([300, 1100], bounds)).toBe(true);
+    expect(isPriceCapOpen([300, 1200], bounds)).toBe(true);
+  });
+
+  it("is closed when the top handle sits below the cap", () => {
+    expect(isPriceCapOpen([300, 800], bounds)).toBe(false);
+  });
+});
+
 describe("filterListings with the predicate band", () => {
   const listings = [makeListing(50), makeListing(900), makeListing(1500)];
 
   it("keeps listings above the cap at full range", () => {
     const filters = resolveFilters({ roomTypes: [], priceRange: null }, bounds);
-    expect(filterListings(listings, filters).map((l) => l.price)).toEqual([
+    expect(filterListings(filters)(listings).map((l) => l.price)).toEqual([
       50, 900, 1500,
     ]);
   });
@@ -72,7 +98,7 @@ describe("filterListings with the predicate band", () => {
       { roomTypes: [], priceRange: [20, 1000] },
       bounds,
     );
-    expect(filterListings(listings, filters).map((l) => l.price)).toEqual([
+    expect(filterListings(filters)(listings).map((l) => l.price)).toEqual([
       50, 900,
     ]);
   });

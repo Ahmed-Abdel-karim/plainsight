@@ -1,4 +1,4 @@
-import { CheckIcon, ChevronDownIcon } from "lucide-react";
+import { CheckIcon } from "@radix-ui/react-icons";
 
 import {
   DropdownMenu,
@@ -69,20 +69,15 @@ function CitySwitcherDropdown({
           className="group -ml-inline justify-start gap-inline"
         >
           <CityTitle cityName={cityName} nameBySlug={nameBySlug} />
-          <ChevronDownIcon
-            aria-hidden="true"
-            className="size-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180"
-          />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="min-w-56">
-        {cities.map(({ slug, snapshotId, name, listings }) => {
+        {cities.map(({ slug, name, listings }) => {
           const isActive = slug === citySlug;
           return (
             <DropdownMenuItem key={slug} asChild>
               <CityLink
                 slug={slug}
-                snapshotId={snapshotId}
                 isActive={isActive}
                 className="justify-between"
               >

@@ -1,6 +1,7 @@
 import type { ExpressionSpecification } from "maplibre-gl";
 
-import type { ListingFilters, Scope } from "@/data/types";
+import type { ListingFilters } from "@/data/types";
+import { isAllRoomTypes } from "@/lib/filters/normalize";
 
 /**
  * Build the MapLibre `setFilter` expression for the Browse dot layer from the
@@ -10,11 +11,12 @@ import type { ListingFilters, Scope } from "@/data/types";
  *
  * - price: inclusive `[min, max]` band.
  * - roomTypes: empty = all (no clause); else membership test.
- * - scope: a neighbourhood narrows by `neighbourhoodId`; city-wide adds nothing.
+ * - neighbourhood: a neighbourhood narrows by `neighbourhoodId`; `null` (whole
+ *   city) adds nothing.
  */
 export function pointsFilterExpression(
   filters: ListingFilters,
-  scope: Scope,
+  neighbourhood: string | null,
 ): ExpressionSpecification {
   const [min, max] = filters.priceRange;
   const clauses: ExpressionSpecification[] = [
@@ -22,7 +24,7 @@ export function pointsFilterExpression(
     ["<=", ["get", "price"], max],
   ];
 
-  if (filters.roomTypes.length > 0) {
+  if (!isAllRoomTypes(filters.roomTypes)) {
     clauses.push([
       "in",
       ["get", "roomType"],
@@ -30,8 +32,8 @@ export function pointsFilterExpression(
     ] as ExpressionSpecification);
   }
 
-  if (scope.type === "neighbourhood") {
-    clauses.push(["==", ["get", "neighbourhoodId"], scope.id]);
+  if (neighbourhood !== null) {
+    clauses.push(["==", ["get", "neighbourhoodId"], neighbourhood]);
   }
 
   return ["all", ...clauses];

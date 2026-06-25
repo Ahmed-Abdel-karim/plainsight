@@ -7,8 +7,8 @@ import { queryDefaults } from "./config";
  * Surfaces a toast when a main-thread fetch fails for good (after retries) — but
  * only for tiers the query layer *owns*. Active lens-load failures belong to the
  * city lifecycle, which already toasts them via `SceneNotifications`:
- *   - `browse-points` is the active Browse load (the city's `loadBrowsePoints`
- *     actor fails → `city.error`), so the query layer stays silent to avoid a
+ *   - `browse-points` is the active Browse load (the city's `ensureBrowseReady`
+ *     gate fails → `city.error`), so the query layer stays silent to avoid a
  *     second, competing notification.
  *   - analytics runs in the worker thread's own client, handled by the city
  *     machine there.

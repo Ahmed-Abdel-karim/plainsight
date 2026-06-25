@@ -1,6 +1,6 @@
 "use client";
 
-import { Moon, Sun } from "lucide-react";
+import { MoonIcon, SunIcon } from "@radix-ui/react-icons";
 import { useTheme } from "next-themes";
 
 import { Button } from "@/components/ui/button";
@@ -25,8 +25,8 @@ export function ThemeToggle() {
     >
       {/* Icons are driven by the active `.dark` class, so there is no
           server/client mismatch and no mount-gating effect is needed. */}
-      <Moon aria-hidden="true" className="block dark:hidden" />
-      <Sun aria-hidden="true" className="hidden dark:block" />
+      <MoonIcon aria-hidden="true" className="block dark:hidden" />
+      <SunIcon aria-hidden="true" className="hidden dark:block" />
     </Button>
   );
 }

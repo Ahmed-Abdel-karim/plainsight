@@ -1,11 +1,20 @@
 /**
  * Pure hex aggregation kernel. Bins listings to the active H3 resolution and
- * rolls up `count` + `median(price)` per cell. Framework-light (h3-js +
- * d3-array, the locked aggregate engine) so it is unit-testable on its own and
- * runs unchanged inside the listings worker.
+ * rolls up `count` + `median(price)` per cell. Framework-light (h3-js + remeda)
+ * so it is unit-testable on its own and runs unchanged inside the listings
+ * worker.
  */
-import { median, rollup } from "d3-array";
-import { cellToParent } from "h3-js";
+import { cellToBoundary, cellToParent } from "h3-js";
+import {
+  entries,
+  filter,
+  groupBy,
+  map,
+  mapValues,
+  median,
+  pipe,
+  prop,
+} from "remeda";
 
 import type { HexCell, HexResolution } from "./types";
 
@@ -16,33 +25,25 @@ export interface HexInput {
   price: number;
 }
 
-/**
- * Aggregate listings into hex cells at `resolution`. Each row's baked res-8 cell
- * is truncated to the active resolution with `cellToParent`, then grouped to
- * `{ count, medianPrice }`. Rows without an `h3` are skipped; cells with no
- * listings are simply absent — empty, not filled.
- */
-export function aggregateHexes(
-  listings: readonly HexInput[],
-  resolution: HexResolution,
-): HexCell[] {
-  const located = listings.filter(
-    (l): l is HexInput & { h3: string } => l.h3 != null,
-  );
+type LocatedRow = HexInput & { h3: string };
 
-  const grouped = rollup(
-    located,
-    (rows) => ({
-      count: rows.length,
-      // Every group has ≥ 1 row, so d3.median is always defined here.
-      medianPrice: median(rows, (r) => r.price) as number,
-    }),
-    (row) => cellToParent(row.h3, resolution),
-  );
-
-  const cells: HexCell[] = [];
-  for (const [h3, { count, medianPrice }] of grouped) {
-    cells.push({ h3, count, medianPrice });
-  }
-  return cells;
-}
+/** Bin listings to `resolution` and roll each cell up to `count` + median price.
+ *  Empty cells are never produced — only cells with ≥ 1 located listing. */
+export const aggregateHexes =
+  (resolution: HexResolution) =>
+  (listings: readonly HexInput[]): HexCell[] =>
+    pipe(
+      listings,
+      filter((row): row is LocatedRow => row.h3 != null),
+      groupBy((row) => cellToParent(row.h3, resolution)),
+      mapValues((rows) => ({
+        count: rows.length,
+        medianPrice: median(map(rows, prop("price"))) as number,
+      })),
+      entries(),
+      map(([h3, stats]): HexCell => {
+        const ring = cellToBoundary(h3, true) as [number, number][];
+        ring.push(ring[0]);
+        return { h3, ring, ...stats };
+      }),
+    );

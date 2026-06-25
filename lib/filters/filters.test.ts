@@ -34,10 +34,10 @@ describe("filterListings", () => {
       makeListing({ roomType: "Entire home/apt" }),
       makeListing({ roomType: "Private room" }),
     ];
-    const result = filterListings(listings, {
+    const result = filterListings({
       roomTypes: [],
       priceRange: [0, 1000],
-    });
+    })(listings);
     expect(result).toHaveLength(2);
   });
 
@@ -47,10 +47,10 @@ describe("filterListings", () => {
       makeListing({ roomType: "Private room" }),
       makeListing({ roomType: "Shared room" }),
     ];
-    const result = filterListings(listings, {
+    const result = filterListings({
       roomTypes: ["Private room", "Shared room"],
       priceRange: [0, 1000],
-    });
+    })(listings);
     expect(result.map((l) => l.roomType)).toEqual([
       "Private room",
       "Shared room",
@@ -63,10 +63,10 @@ describe("filterListings", () => {
       makeListing({ price: 100 }),
       makeListing({ price: 200 }),
     ];
-    const result = filterListings(listings, {
+    const result = filterListings({
       roomTypes: [],
       priceRange: [100, 200],
-    });
+    })(listings);
     expect(result.map((l) => l.price)).toEqual([100, 200]);
   });
 });
@@ -78,10 +78,10 @@ describe("sortListings", () => {
       makeListing({ price: 50 }),
       makeListing({ price: 100 }),
     ];
-    expect(sortListings(listings, "price_asc").map((l) => l.price)).toEqual([
+    expect(sortListings("price_asc")(listings).map((l) => l.price)).toEqual([
       50, 100, 200,
     ]);
-    expect(sortListings(listings, "price_desc").map((l) => l.price)).toEqual([
+    expect(sortListings("price_desc")(listings).map((l) => l.price)).toEqual([
       200, 100, 50,
     ]);
     // input untouched
@@ -95,7 +95,7 @@ describe("sortListings", () => {
       makeListing({ reviewsPerMonth: 3.4 }),
     ];
     expect(
-      sortListings(listings, "reviews_desc").map((l) => l.reviewsPerMonth),
+      sortListings("reviews_desc")(listings).map((l) => l.reviewsPerMonth),
     ).toEqual([3.4, 1.2, null]);
   });
 
@@ -106,7 +106,7 @@ describe("sortListings", () => {
       makeListing({ numberOfReviews: 12 }),
     ];
     expect(
-      sortListings(listings, "review_count_desc").map((l) => l.numberOfReviews),
+      sortListings("review_count_desc")(listings).map((l) => l.numberOfReviews),
     ).toEqual([50, 12, 5]);
   });
 
@@ -117,14 +117,14 @@ describe("sortListings", () => {
       makeListing({ id: 10, price: 100, numberOfReviews: 5 }),
       makeListing({ id: 20, price: 100, numberOfReviews: 5 }),
     ];
-    expect(sortListings(listings, "price_asc").map((l) => l.id)).toEqual([
+    expect(sortListings("price_asc")(listings).map((l) => l.id)).toEqual([
       10, 20, 30,
     ]);
-    expect(sortListings(listings, "price_desc").map((l) => l.id)).toEqual([
+    expect(sortListings("price_desc")(listings).map((l) => l.id)).toEqual([
       10, 20, 30,
     ]);
     expect(
-      sortListings(listings, "review_count_desc").map((l) => l.id),
+      sortListings("review_count_desc")(listings).map((l) => l.id),
     ).toEqual([10, 20, 30]);
   });
 
@@ -136,8 +136,8 @@ describe("sortListings", () => {
       { id: 1, price: 50, reviewsPerMonth: 4, numberOfReviews: 9 },
       { id: 2, price: 100, reviewsPerMonth: null, numberOfReviews: 5 },
     ];
-    expect(sortListings(rows, "price_asc").map((r) => r.id)).toEqual([1, 2, 3]);
-    expect(sortListings(rows, "reviews_desc").map((r) => r.id)).toEqual([
+    expect(sortListings("price_asc")(rows).map((r) => r.id)).toEqual([1, 2, 3]);
+    expect(sortListings("reviews_desc")(rows).map((r) => r.id)).toEqual([
       1, 3, 2,
     ]);
   });
@@ -149,7 +149,7 @@ describe("computeAggregates", () => {
       makeListing({ hostListingsCount: 5 }),
       makeListing({ hostListingsCount: 5 }),
     ];
-    const aggregates = computeAggregates(listings);
+    const aggregates = computeAggregates(1000)(listings);
 
     expect(aggregates.listingCount).toBe(2);
     expect(aggregates.meetsFloor).toBe(false);
@@ -174,7 +174,7 @@ describe("computeAggregates", () => {
     multi.forEach((l, i) => {
       if (i < 5) l.reviewsPerMonth = 2;
     });
-    const aggregates = computeAggregates([...multi, ...singles]);
+    const aggregates = computeAggregates(1000)([...multi, ...singles]);
 
     expect(aggregates.meetsFloor).toBe(true);
     // 10 of 20 listings belong to a host with >= 2 listings
@@ -187,43 +187,41 @@ describe("computeAggregates", () => {
   });
 
   it("returns a null median for an empty set", () => {
-    expect(computeAggregates([]).medianPrice).toBeNull();
+    expect(computeAggregates(1000)([]).medianPrice).toBeNull();
   });
 });
 
 describe("computeAggregates › priceHistogram", () => {
   it("is empty for no listings", () => {
-    expect(computeAggregates([]).priceHistogram).toEqual([]);
+    expect(computeAggregates(100)([]).priceHistogram).toEqual([]);
   });
 
-  it("collapses to a single bin when every price is equal", () => {
-    const listings = Array.from({ length: 3 }, () =>
-      makeListing({ price: 75 }),
-    );
-    expect(computeAggregates(listings).priceHistogram).toEqual([
-      { x0: 75, x1: 75, count: 3 },
-    ]);
-  });
-
-  it("produces 20 contiguous equal-width bins with the max clamped into the last", () => {
-    // prices 0,5,…,100 → lo=0, hi=100, width=5. Each 5k lands left-closed in bin
-    // k; hi (100) clamps into the last bin alongside 95.
-    const prices = Array.from({ length: 21 }, (_, i) => i * 5);
-    const hist = computeAggregates(
+  it("produces 20 contiguous equal-width bins from min to priceCap", () => {
+    // prices 0,5,…,95 → lo=0, hi=cap=100, width=5; price k*5 lands left-closed in bin k.
+    const prices = Array.from({ length: 20 }, (_, i) => i * 5);
+    const hist = computeAggregates(100)(
       prices.map((price) => makeListing({ price })),
     ).priceHistogram;
 
     expect(hist).toHaveLength(20);
-    // edges
     expect(hist[0]).toMatchObject({ x0: 0, x1: 5 });
     expect(hist[19]).toMatchObject({ x0: 95, x1: 100 });
-    // contiguity: each bin's upper edge is the next bin's lower edge
     for (let i = 0; i < hist.length - 1; i++) {
       expect(hist[i].x1).toBe(hist[i + 1].x0);
     }
-    // top-edge clamp: 95 and 100 both fall in the final bin
+    expect(hist.reduce((sum, b) => sum + b.count, 0)).toBe(prices.length);
+  });
+
+  it("folds prices at or above priceCap into the top bin", () => {
+    // lo=0, cap=100, width=5. 0 → first bin; 100 and 250 (>= cap) → the top bin.
+    const prices = [0, 100, 250];
+    const hist = computeAggregates(100)(
+      prices.map((price) => makeListing({ price })),
+    ).priceHistogram;
+
+    expect(hist).toHaveLength(20);
+    expect(hist[0].count).toBe(1);
     expect(hist[19].count).toBe(2);
-    // every price is counted exactly once
     expect(hist.reduce((sum, b) => sum + b.count, 0)).toBe(prices.length);
   });
 });

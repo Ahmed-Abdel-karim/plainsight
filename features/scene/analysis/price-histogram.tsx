@@ -1,25 +1,36 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Bar, BarChart, Cell, ReferenceLine, XAxis, YAxis } from "recharts";
+import {
+  Bar,
+  BarChart,
+  Rectangle,
+  ReferenceLine,
+  XAxis,
+  YAxis,
+  type BarShapeProps,
+} from "recharts";
 import type { ScopeAggregates } from "@/data/contract";
 import {
   ChartContainer,
   ChartTooltip,
   type ChartConfig,
 } from "@/components/ui/chart";
-import { formatCurrency } from "../shared/format";
+import { formatCurrency, formatPercent } from "../shared/format";
+import { InspectStats } from "../shared/inspect-stats";
 import { ChartCard } from "./chart-card";
 
 const chartConfig = {
   count: { label: "Listings", color: "var(--data-bar)" },
 } satisfies ChartConfig;
 
+type PriceBin = ScopeAggregates["priceHistogram"][number];
+
 /**
  * Price-distribution histogram with a median marker, rendered on the shadcn
- * `Chart` (Recharts) component. Hovering a band highlights its bar and fills the
- * persistent hover strip below with the band range · listing count · share —
- * matching the prototype's `chart-hover-strip`.
+ * `Chart` (Recharts) component. Hovering a band highlights its bar and surfaces
+ * a floating tooltip — styled to match the map's hex inspect popup — with the
+ * band's price range, listing count, and share.
  */
 export function PriceHistogram({
   aggregates,
@@ -65,8 +76,6 @@ export function PriceHistogram({
       ? `Listings per nightly band · median ${formatCurrency(median, currency)}`
       : "Listings per nightly band";
 
-  const hovered = active != null ? bins[active] : null;
-
   return (
     <ChartCard title="Price distribution" subtitle={subtitle}>
       <ChartContainer config={chartConfig} className="aspect-auto h-32 w-full">
@@ -80,7 +89,14 @@ export function PriceHistogram({
           <YAxis hide />
           <ChartTooltip
             cursor={false}
-            content={<HoverReporter onActive={reportActive} />}
+            content={
+              <BandTooltip
+                bins={bins}
+                totalCount={totalCount}
+                currency={currency}
+                onActive={reportActive}
+              />
+            }
           />
           {medianIdx >= 0 ? (
             <ReferenceLine
@@ -90,18 +106,21 @@ export function PriceHistogram({
               strokeWidth={1}
             />
           ) : null}
-          <Bar dataKey="count" radius={2} isAnimationActive={false}>
-            {data.map((_, i) => (
-              <Cell
-                key={i}
+          <Bar
+            dataKey="count"
+            radius={2}
+            isAnimationActive={false}
+            shape={(props: BarShapeProps) => (
+              <Rectangle
+                {...props}
                 fill={
-                  i === active
+                  props.index === active
                     ? "var(--color-brand-emphasis)"
                     : "var(--color-count)"
                 }
               />
-            ))}
-          </Bar>
+            )}
+          />
         </BarChart>
       </ChartContainer>
 
@@ -110,57 +129,69 @@ export function PriceHistogram({
         <span>{formatCurrency(priceMax, currency)}</span>
       </div>
 
-      <div
-        className="flex min-h-5 items-center gap-1.5 type-caption-mono tabular-nums"
-        aria-live="polite"
-      >
-        {hovered ? (
-          <>
-            <span className="text-foreground">
-              {formatCurrency(hovered.x0, currency)}–
-              {formatCurrency(hovered.x1, currency)}
-            </span>
-            <span className="text-muted-foreground/60" aria-hidden>
-              ·
-            </span>
-            <span className="text-muted-foreground">
-              {hovered.count.toLocaleString("en")} listings
-            </span>
-            <span className="text-muted-foreground/60" aria-hidden>
-              ·
-            </span>
-            <span className="text-foreground">
-              {Math.round((hovered.count / totalCount) * 100)}%
-            </span>
-          </>
-        ) : (
-          <span className="text-muted-foreground">Hover a bar for details</span>
-        )}
-      </div>
+      {/* Screen-reader equivalent of the bars — the SVG chart carries no numbers. */}
+      <ul className="sr-only">
+        <li>
+          {totalCount.toLocaleString("en")} listings across {bins.length} price
+          bands.
+        </li>
+        {bins.map((band) => (
+          <li key={band.x0}>
+            {formatCurrency(band.x0, currency)}–
+            {formatCurrency(band.x1, currency)}:{" "}
+            {band.count.toLocaleString("en")} listings (
+            {formatPercent(band.count / totalCount)})
+          </li>
+        ))}
+      </ul>
     </ChartCard>
   );
 }
 
 /**
- * Tooltip-content bridge: Recharts passes the active band index in here; we lift
- * it to the chart's state to drive the persistent hover strip (and keyboard
- * navigation via `accessibilityLayer`) instead of rendering a floating tooltip.
+ * Tooltip content for a hovered band. Lifts the active index to the chart's
+ * state (driving the bar highlight) and renders the shared inspect readout with
+ * the band's price range, listing count, and share of the total.
  */
-function HoverReporter({
+function BandTooltip({
   active,
   activeIndex,
+  bins,
+  totalCount,
+  currency,
   onActive,
 }: {
   active?: boolean;
   activeIndex?: string | number;
+  bins: PriceBin[];
+  totalCount: number;
+  currency: string;
   onActive: (index: number | null) => void;
 }) {
+  const index =
+    active && activeIndex != null && activeIndex !== ""
+      ? Number(activeIndex)
+      : null;
+
   useEffect(() => {
-    onActive(
-      active && activeIndex != null && activeIndex !== ""
-        ? Number(activeIndex)
-        : null,
-    );
-  }, [active, activeIndex, onActive]);
-  return null;
+    onActive(index);
+  }, [index, onActive]);
+
+  if (index == null) return null;
+  const band = bins[index];
+  if (!band) return null;
+
+  return (
+    <InspectStats
+      stats={[
+        {
+          label: "Price",
+          value: `${formatCurrency(band.x0, currency)}–${formatCurrency(band.x1, currency)}`,
+          emphasis: true,
+        },
+        { label: "Listings", value: band.count.toLocaleString("en") },
+        { label: "Share", value: formatPercent(band.count / totalCount) },
+      ]}
+    />
+  );
 }

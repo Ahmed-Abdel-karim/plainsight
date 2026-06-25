@@ -48,7 +48,7 @@ export function normalizeRoomTypes(selected: RoomType[]): RoomType[] {
 
 /** Expand the canonical `[]` to every room type — for display / iteration. */
 export function expandRoomTypes(roomTypes: RoomType[]): RoomType[] {
-  return roomTypes.length === 0 ? [...ROOM_TYPES] : roomTypes;
+  return isAllRoomTypes(roomTypes) ? [...ROOM_TYPES] : roomTypes;
 }
 
 // --- price range (canonical: null = full range) ---
@@ -61,6 +61,25 @@ export function normalizePriceRange(
   return range && range[0] === bounds.min && range[1] === bounds.max
     ? null
     : range;
+}
+
+/** No price constraint (the stored "full range" form) — the named counterpart
+ *  to {@link isAllRoomTypes}. */
+export function isFullPriceRange(
+  range: [number, number] | null,
+  bounds: FilterBounds,
+): boolean {
+  return normalizePriceRange(range, bounds) === null;
+}
+
+/** True when the top handle sits at/above the city's `priceCap` ceiling, i.e.
+ *  the range is open-ended ("and above") — `null` is open at the top too. The
+ *  predicate behind `resolvePriceBand`'s `Infinity` and the slider's "+" marker. */
+export function isPriceCapOpen(
+  range: [number, number] | null,
+  bounds: FilterBounds,
+): boolean {
+  return !range || range[1] >= bounds.max;
 }
 
 /** Resolve a stored (maybe-null) range to a concrete `[min, max]` band — for the
@@ -84,7 +103,7 @@ export function resolvePriceBand(
   bounds: FilterBounds,
 ): [number, number] {
   if (!range) return [bounds.min, Infinity];
-  return [range[0], range[1] >= bounds.max ? Infinity : range[1]];
+  return [range[0], isPriceCapOpen(range, bounds) ? Infinity : range[1]];
 }
 
 // --- combined ---

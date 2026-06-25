@@ -35,6 +35,11 @@ export interface Context {
    *  shimmer); `[]` means computed-but-empty. Once set it stays a (possibly
    *  stale) array across recomputes — stale-while-revalidate, no shimmer. */
   readonly hexCells: HexCell[] | null;
+  /** Signature (resolved filters + the bucketed `HexResolution`, not raw zoom) the
+   *  current `hexCells` were last *requested* for. Lets the analyse leg skip a
+   *  redundant hex recompute on re-entry — including a zoom out-and-back that lands
+   *  in the same resolution band. `null` until the first request. */
+  readonly hexesFilterKey: string | null;
 }
 
 export const Context: Context = {
@@ -48,4 +53,5 @@ export const Context: Context = {
   aggregates: null,
   aggregatesFilterKey: null,
   hexCells: null,
+  hexesFilterKey: null,
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { ChevronDownIcon, ReloadIcon } from "@radix-ui/react-icons";
 
 import { usePendingSlug } from "../state";
 
@@ -27,14 +27,20 @@ export function CityTitle({
     pendingSlug !== null ? (nameBySlug[pendingSlug] ?? pendingSlug) : cityName;
 
   return (
-    <>
-      <h1 className="m-0 type-title text-foreground capitalize">{title}</h1>
+    <div className="flex w-full items-center justify-between">
+      <div className="flex items-center gap-3">
+        <h1 className="m-0 type-title text-foreground capitalize">{title}</h1>
+        <ChevronDownIcon
+          aria-hidden="true"
+          className="size-4 text-muted-foreground transition-transform group-data-[state=open]:rotate-180"
+        />
+      </div>
       {pendingSlug !== null && (
-        <Loader2
+        <ReloadIcon
           aria-hidden
           className="size-4 animate-spin text-muted-foreground"
         />
       )}
-    </>
+    </div>
   );
 }
