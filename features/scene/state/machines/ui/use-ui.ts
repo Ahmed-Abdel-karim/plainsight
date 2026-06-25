@@ -5,11 +5,11 @@ import { useCallback } from "react";
 import type { Lens } from "@/lib/search-params";
 
 import type { UiMachineActor } from "./machine";
-import { useRootRef } from "../root/use-root";
+import { SceneActorContext } from "../../provider";
 import { createMachineStateSelector } from "../utils";
 
 function useUiActorRef(): UiMachineActor {
-  return useRootRef().system.get("ui");
+  return SceneActorContext.useSelector((s) => s.context.uiRef);
 }
 
 const createUiSelector = createMachineStateSelector(useUiActorRef);

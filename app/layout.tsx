@@ -5,9 +5,6 @@ import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Toaster } from "@/components/ui/sonner";
-import { QueryProvider } from "@/components/query/query-provider";
-import { SceneProvider } from "@/features/scene";
-import { getCitiesData } from "@/data";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -45,15 +42,11 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const cities = await getCitiesData();
-  const snapshotById = Object.fromEntries(
-    cities.map(({ slug, snapshotId }) => [slug, snapshotId]),
-  );
   return (
     <html
       lang="en"
@@ -73,11 +66,7 @@ export default async function RootLayout({
           enableSystem={false}
         >
           <ThemeToggle />
-          <QueryProvider>
-            <SceneProvider snapshotById={snapshotById}>
-              {children}
-            </SceneProvider>
-          </QueryProvider>
+          {children}
           <Toaster />
         </ThemeProvider>
       </body>

@@ -8,6 +8,7 @@ import {
   fromPromise,
   sendTo,
   setup,
+  stateIn,
 } from "xstate";
 
 import type { BrowseCollection, ScopeAggregates } from "@/data/contract";
@@ -262,6 +263,7 @@ export const cityMachine = setup({
         processType: event.processType,
       } as const;
     }),
+    emitWorkerFatal: emit({ type: "city.error", kind: "worker" } as const),
 
     // Notify the coordinator only; root translates CITY.READY → RESUME for
     // map + ui. City stays decoupled from the other machines.
@@ -312,6 +314,20 @@ export const cityMachine = setup({
       guard: "fetchIsCurrent",
       actions: "emitProcessError",
     },
+    // A worker-thread crash is terminal regardless of lens or substate (loading
+    // or ready) — route to whichever leg's error state so the scene un-suppresses
+    // and the user is told analysis is unavailable.
+    "WORKER.FATAL_ERROR": [
+      {
+        guard: stateIn(".browse"),
+        target: ".browse.error",
+        actions: "emitWorkerFatal",
+      },
+      {
+        target: ".analyse.error",
+        actions: "emitWorkerFatal",
+      },
+    ],
   },
   states: {
     deciding: {

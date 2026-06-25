@@ -55,6 +55,15 @@ export interface WorkerFetchError {
   readonly snapshotId: string;
   readonly error: Error;
 }
+/** The worker thread crashed (uncaught throw / OOM), not a handled fetch or
+ *  process rejection. Terminal from any lens — the worker can no longer serve
+ *  this city. Slug-stamped with the city's own identity by the worker router. */
+export interface WorkerFatalError {
+  readonly type: "WORKER.FATAL_ERROR";
+  readonly slug: string;
+  readonly snapshotId: string;
+  readonly error: Error;
+}
 /** A recompute landed. City assigns aggregates or hexCells from the result. */
 export interface WorkerProcessResult {
   readonly type: "WORKER.PROCESS_RESULT";
@@ -80,6 +89,7 @@ export type Events =
   | MapResolutionChanged
   | WorkerFetchOk
   | WorkerFetchError
+  | WorkerFatalError
   | WorkerProcessResult
   | WorkerProcessError;
 
@@ -87,10 +97,11 @@ export type Events =
 
 /** A city-level failure worth surfacing. `load` is the terminal data-load
  *  failure; `process` is a recompute (`hexes`/`aggregates`) that didn't land —
- *  the last good result stays on screen, but the user is told it's stale. */
+ *  the last good result stays on screen, but the user is told it's stale;
+ *  `worker` is a worker-thread crash that ends analysis for this city. */
 export interface CityErrorEmitted {
   readonly type: "city.error";
-  readonly kind: "load" | "process";
+  readonly kind: "load" | "process" | "worker";
   readonly processType?: ProcessType;
 }
 

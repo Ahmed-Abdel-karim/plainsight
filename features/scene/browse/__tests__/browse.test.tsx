@@ -191,7 +191,7 @@ describe("browse region", () => {
     expect(queryListingList()).toBeNull();
 
     await scene.user.click(
-      screen.getByRole("button", { name: "Reset filters" }),
+      screen.getByRole("button", { name: "Show all listings" }),
     );
 
     const list = await findListingList();

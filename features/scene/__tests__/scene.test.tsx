@@ -141,17 +141,20 @@ describe("scene error notifications", () => {
     scene.navigateToCity();
     scene.setLens("browse"); // browse lens triggers the /points fetch
 
-    // The active Browse load belongs to the city lifecycle (C-0011): one toast,
-    // not a second, competing query-layer "Couldn't load listings".
+    // The active Browse load belongs to the city lifecycle: one toast, not a
+    // second, competing query-layer one. The in-panel `BrowseError` ("Couldn't
+    // load listings") is the distinct, expected surface, so scope the negative
+    // to the notifications region — the toaster must not also carry it.
     expect(
       await screen.findByText("Couldn't load this city"),
     ).toBeInTheDocument();
+    const notifications = screen.getByRole("region", {
+      name: /notifications/i,
+    });
     expect(
-      screen.queryByText("Couldn't load listings"),
+      within(notifications).queryByText("Couldn't load listings"),
     ).not.toBeInTheDocument();
-    expect(
-      await axe(screen.getByRole("region", { name: /notifications/i })),
-    ).toHaveNoViolations();
+    expect(await axe(notifications)).toHaveNoViolations();
   });
 
   it("toasts when the boundaries fetch fails", async () => {
@@ -206,15 +209,19 @@ describe("scene error notifications", () => {
     scene.setLens("browse");
 
     // Browse load → city lifecycle; boundaries → query layer. Distinct owners,
-    // distinct toasts, and no duplicate browse notification.
+    // distinct toasts, and no duplicate browse notification in the toaster (the
+    // in-panel `BrowseError` is the separate, expected surface).
     expect(
       await screen.findByText("Couldn't load this city"),
     ).toBeInTheDocument();
     expect(
       await screen.findByText("Couldn't load map areas"),
     ).toBeInTheDocument();
+    const notifications = screen.getByRole("region", {
+      name: /notifications/i,
+    });
     expect(
-      screen.queryByText("Couldn't load listings"),
+      within(notifications).queryByText("Couldn't load listings"),
     ).not.toBeInTheDocument();
   });
 });

@@ -18,12 +18,13 @@ import * as Context from "./context";
 import type * as Events from "./events";
 
 /**
- * Scene root — a flat coordinator. It invokes the session machines and
- * translates the two lifecycle inputs into the shared map/ui suppression pair:
- * `NAV.STARTED` (from `navigation`) → `SUSPEND`; `CITY.READY`/`CITY.FAILED`
- * (from `city`) → `RESUME`. It owns the `city` actor's spawn/stop and mirrors
- * settled selection to the URL. No gate, no pending state — that lives in
- * `navigation`.
+ * Scene root — a flat coordinator. It spawns the persistent `map`/`ui` actors in
+ * context (the refs the React tree reads) and invokes the `worker`/`navigation`
+ * session machines, then translates the two lifecycle inputs into the shared
+ * map/ui suppression pair: `NAV.STARTED` (from `navigation`) → `SUSPEND`;
+ * `CITY.READY`/`CITY.FAILED` (from `city`) → `RESUME`. It owns the `city` actor's
+ * spawn/stop and mirrors settled selection to the URL. No gate, no pending
+ * state — that lives in `navigation`.
  */
 export const rootMachine = setup({
   types: {
@@ -91,10 +92,15 @@ export const rootMachine = setup({
   },
 }).createMachine({
   id: "scene",
-  context: Context.Context,
+  // Spawned in the initial context factory (not `entry`) so the refs exist at
+  // actor creation — before `start()` and on the server — closing the gap where
+  // a React render/SSR read of an invoked child's `system.get` ref sees nothing.
+  context: ({ spawn }) => ({
+    mapRef: spawn("map", { systemId: SystemId.MAP, input: {} }),
+    uiRef: spawn("ui", { systemId: SystemId.UI, input: {} }),
+    cityRef: null,
+  }),
   invoke: [
-    { src: "map", systemId: SystemId.MAP, input: {} },
-    { src: "ui", systemId: SystemId.UI, input: {} },
     { src: "worker", systemId: SystemId.WORKER, input: {} },
     { src: "navigation", systemId: SystemId.NAVIGATION },
   ],

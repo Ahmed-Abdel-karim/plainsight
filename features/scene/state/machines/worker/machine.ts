@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import { type ActorRefFrom, assertEvent, enqueueActions, setup } from "xstate";
 
 import type { ProcessRequestMessage } from "@/lib/listings";
@@ -183,16 +184,19 @@ export const workerMachine = setup({
       }
     }),
 
-    // Worker-thread crash — terminal for whatever city is loading. Stamp it with
-    // the current city's own slug so its FETCH_ERROR guard accepts it.
+    // Worker-thread crash — terminal for the current city in any lens/substate.
+    // Stamp it with the city's own slug so its guard accepts it, and report to
+    // Sentry: unlike a handled fetch/process rejection this is a genuine crash,
+    // and it bypasses the React error boundaries that own every other capture.
     routeWorkerError: enqueueActions(({ event, system, enqueue }) => {
       assertEvent(event, "TRANSPORT.WORKER_ERROR");
+      Sentry.captureException(event.error, { tags: { boundary: "worker" } });
       const city = system.get(SystemId.CITY) as CityMachineActor | undefined;
       if (!city) return;
       const slug = city.getSnapshot().context.framing?.slug ?? "";
       const snapshotId = city.getSnapshot().context.framing?.snapshotId ?? "";
       enqueue.sendTo(city, {
-        type: "WORKER.FETCH_ERROR",
+        type: "WORKER.FATAL_ERROR",
         slug,
         snapshotId,
         error: event.error,

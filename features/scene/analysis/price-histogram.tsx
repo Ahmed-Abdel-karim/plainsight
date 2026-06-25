@@ -128,6 +128,22 @@ export function PriceHistogram({
         <span>{formatCurrency(priceMin, currency)}</span>
         <span>{formatCurrency(priceMax, currency)}</span>
       </div>
+
+      {/* Screen-reader equivalent of the bars — the SVG chart carries no numbers. */}
+      <ul className="sr-only">
+        <li>
+          {totalCount.toLocaleString("en")} listings across {bins.length} price
+          bands.
+        </li>
+        {bins.map((band) => (
+          <li key={band.x0}>
+            {formatCurrency(band.x0, currency)}–
+            {formatCurrency(band.x1, currency)}:{" "}
+            {band.count.toLocaleString("en")} listings (
+            {formatPercent(band.count / totalCount)})
+          </li>
+        ))}
+      </ul>
     </ChartCard>
   );
 }

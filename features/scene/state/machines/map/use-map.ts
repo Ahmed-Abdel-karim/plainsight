@@ -9,13 +9,13 @@ import type { HexResolution } from "@/lib/hex/types";
 import type { SourceId } from "@/features/scene/map/types";
 import type { HexInspectInfo } from "./context";
 import type { MapMachineActor } from "./machine";
-import { useRootRef } from "../root/use-root";
+import { SceneActorContext } from "../../provider";
 import { createMachineStateSelector } from "../utils";
 
 export type { HexInspectInfo };
 
 function useMapActorRef(): MapMachineActor {
-  return useRootRef().system.get("map");
+  return SceneActorContext.useSelector((s) => s.context.mapRef);
 }
 
 /** Stable send function for the map actor. Does not subscribe to snapshots. */

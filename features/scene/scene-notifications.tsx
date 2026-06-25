@@ -31,6 +31,14 @@ export function SceneNotifications() {
         );
         return;
       }
+      if (event.kind === "worker") {
+        notifyError(
+          "city-worker",
+          "Analysis unavailable",
+          "The analysis engine stopped. Reload the page to continue.",
+        );
+        return;
+      }
       notifyError(
         "city-compute",
         "Couldn't update the view",
