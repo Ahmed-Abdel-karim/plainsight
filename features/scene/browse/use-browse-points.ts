@@ -17,15 +17,8 @@
  * worker is untouched because Browse only needs the pre-built points tier.
  */
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
 
-import type {
-  BrowseCollection,
-  BrowsePoint,
-  BrowsePointProperties,
-} from "@/data/contract";
-import type { ListingFilters, SortKey } from "@/data/types";
-import { projectBrowseListings } from "@/lib/listings";
+import type { BrowseCollection } from "@/data/contract";
 
 import { browsePointsQueryOptions } from "../shared/browse-points-query";
 
@@ -52,30 +45,4 @@ export function useBrowsePoints(
       ? "error"
       : "loading";
   return { status, collection: query.data ?? null };
-}
-
-export function useBrowseListings(
-  collection: BrowseCollection | null,
-  neighbourhood: string | null,
-  filters: ListingFilters,
-  sort: SortKey,
-): BrowsePointProperties[] {
-  const rows = useMemo(
-    () =>
-      collection?.features.map((feature: BrowsePoint) => feature.properties),
-    [collection],
-  );
-  return useMemo(() => {
-    if (!rows) return [];
-    return projectBrowseListings(rows, { neighbourhood, filters }, sort);
-  }, [rows, neighbourhood, filters, sort]);
-}
-
-export function useListingsByIndex(
-  listings: BrowsePointProperties[],
-): Map<number, number> {
-  return useMemo(
-    () => new Map(listings.map((listing, index) => [listing.id, index])),
-    [listings],
-  );
 }

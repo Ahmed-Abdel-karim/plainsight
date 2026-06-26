@@ -9,8 +9,7 @@ import {
   DataProvenance,
 } from "./analysis";
 import { FilterPanel } from "./analysis/filter-panel";
-import { BrowsePanel } from "./browse";
-import { BrowseError } from "./browse/browse-error";
+import { BrowseError, BrowsePanel } from "./browse";
 import { FeatureBoundary } from "@/components/utils/error-boundary";
 import { CitySwitcher } from "./city-switcher";
 import { LensActivity } from "./lens-activity";

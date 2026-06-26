@@ -14,8 +14,8 @@ import {
 import { cn } from "@/lib/utils";
 import { formatCurrency } from "../shared/format";
 import { useCityFraming } from "../state";
-import { useCityBoundaries } from "../shared/use-city-boundaries";
 import { useLens } from "../shared/use-lens";
+import { useNeighbourhoodNames } from "../shared/use-neighbourhood-names";
 import { useBrowsePoints } from "./use-browse-points";
 import { ListingDetailBody } from "./listing-detail-body";
 import { ListingGallery } from "./listing-gallery";
@@ -52,7 +52,10 @@ export function ListingDetail() {
   const { collection } = useBrowsePoints(citySlug, snapshotId, {
     enabled: isBrowse,
   });
-  const boundaries = useCityBoundaries(citySlug || null, snapshotId || null);
+  const neighbourhoodNames = useNeighbourhoodNames(
+    citySlug || null,
+    snapshotId || null,
+  );
 
   const listing = useMemo(() => {
     if (selectedId === null || !collection) return null;
@@ -64,11 +67,10 @@ export function ListingDetail() {
 
   const neighbourhoodName = useMemo(() => {
     if (!listing) return "";
-    const match = boundaries?.features.find(
-      (f) => f.properties.id === listing.neighbourhoodId,
+    return (
+      neighbourhoodNames[listing.neighbourhoodId] ?? listing.neighbourhoodId
     );
-    return match?.properties.name ?? listing.neighbourhoodId;
-  }, [boundaries, listing]);
+  }, [neighbourhoodNames, listing]);
 
   const open = listing !== null;
   const rt = listing ? ROOM_DISPLAY[listing.roomType] : null;

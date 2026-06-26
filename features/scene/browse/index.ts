@@ -1,2 +1,2 @@
 export { ListingDetail } from "./listing-detail";
-export { BrowsePanel } from "./browse-panel";
+export { BrowseError, BrowsePanel } from "./panel";
