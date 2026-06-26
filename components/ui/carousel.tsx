@@ -182,7 +182,7 @@ function CarouselPrevious({
   ...props
 }: React.ComponentProps<typeof Button>) {
   const { orientation, scrollPrev, canScrollPrev } = useCarousel();
-
+  console.log(orientation);
   return (
     <Button
       data-slot="carousel-previous"
@@ -226,7 +226,10 @@ function CarouselNext({
         className,
       )}
       disabled={!canScrollNext}
-      onClick={scrollNext}
+      onClick={() => {
+        console.log("next");
+        scrollNext();
+      }}
       {...props}
     >
       <ChevronRightIcon />
