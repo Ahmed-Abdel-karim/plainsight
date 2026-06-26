@@ -20,7 +20,11 @@ import {
   resolveFilters,
 } from "@/lib/filters/normalize";
 import type { HexCell, HexResolution } from "@/lib/hex/types";
-import { queryKey, resolveQuery, type ListingQuery } from "@/lib/listings";
+import {
+  listingSelectionKey,
+  resolveListingSelection,
+  type ResolvedListingSelection,
+} from "@/lib/listings";
 import { type Lens } from "@/lib/search-params";
 
 import { createEventAssigner } from "../utils";
@@ -43,21 +47,19 @@ const PRICE_RECOMPUTE_MS = 250;
 const toWorker = ({ system }: { system: { get: (id: string) => unknown } }) =>
   system.get(SystemId.WORKER) as WorkerMachineRef;
 
-/** The city's current selection resolved into a `{ neighbourhood, filters }`
- *  query — the single input the worker aggregates request and its dedupe key both
- *  derive from, so the request and the staleness check can never drift apart. */
-const cityQuery = (context: Context.Context): ListingQuery =>
-  resolveQuery(context.filter, priceBounds(context.framing));
+/** The city's current selection resolved for projections and stale checks. */
+const citySelection = (context: Context.Context): ResolvedListingSelection =>
+  resolveListingSelection(context.filter, priceBounds(context.framing));
 
-/** The worker aggregates request for the city's current query. */
+/** The worker aggregates request for the city's current selection. */
 const aggregatesRequest = (context: Context.Context) => {
-  const query = cityQuery(context);
+  const selection = citySelection(context);
   return {
     type: "WORKER.REQUEST_AGGREGATES",
     slug: context.framing!.slug,
     snapshotId: context.framing!.snapshotId,
-    neighbourhood: query.neighbourhood,
-    filters: query.filters,
+    neighbourhood: selection.neighbourhood,
+    filters: selection.filters,
     priceCap: context.framing!.priceCap,
   } as const;
 };
@@ -110,9 +112,9 @@ export const cityMachine = setup({
     // Readiness gate for the browse lens: awaits the points tier (an instant hit
     // once the nav prefetch has warmed it) so `loading → ready` can resume the
     // scene. The resolved collection is discarded — the UI reads points via
-    // useBrowsePoints. Placeholder so the machine has no React / data dependency;
-    // the real loader (closured over the app QueryClient) is injected at the
-    // provider boundary — see shared/browse-points-query.
+    // useBrowsePoints. The default keeps the machine free of React/data
+    // dependencies; the real loader (closured over the app QueryClient) is
+    // injected at the provider boundary — see shared/browse-points-query.
     ensureBrowseReady: fromPromise<
       BrowseCollection,
       { slug: string; snapshotId: string }
@@ -216,18 +218,23 @@ export const cityMachine = setup({
     // `requestAggregatesIfStale` can later tell whether a recompute is needed.
     requestAggregates: enqueueActions(({ context, system, enqueue }) => {
       enqueue.sendTo(toWorker({ system }), aggregatesRequest(context));
-      enqueue.assign({ aggregatesFilterKey: queryKey(cityQuery(context)) });
+      enqueue.assign({
+        aggregatesFilterKey: listingSelectionKey(citySelection(context)),
+      });
     }),
-    // Entry-time variant: recompute only if absent or the query changed since
+    // Entry-time variant: recompute only if absent or the selection changed since
     // (e.g. a filter/scope set while in the browse leg, which doesn't recompute).
     requestAggregatesIfStale: enqueueActions(({ context, system, enqueue }) => {
       if (
         context.aggregates !== null &&
-        context.aggregatesFilterKey === queryKey(cityQuery(context))
+        context.aggregatesFilterKey ===
+          listingSelectionKey(citySelection(context))
       )
         return;
       enqueue.sendTo(toWorker({ system }), aggregatesRequest(context));
-      enqueue.assign({ aggregatesFilterKey: queryKey(cityQuery(context)) });
+      enqueue.assign({
+        aggregatesFilterKey: listingSelectionKey(citySelection(context)),
+      });
     }),
 
     // Price drags arrive per-tick (the slider is machine-controlled); assign each

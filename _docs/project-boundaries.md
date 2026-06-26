@@ -190,7 +190,9 @@ The core journey is:
   external image must not corrupt already loaded market context. Retry and error
   messages must be bounded so one failure does not create repeated notifications.
 - **NFR-013 — Privacy:** The application has no accounts, sign-up, advertising,
-  product analytics, behavioral tracking, or session replay.
+  custom event tracking, behavioral tracking, or session replay. Vercel Analytics
+  and Speed Insights may collect page-level and performance telemetry in
+  production.
 - **NFR-014 — Errors-only monitoring:** Production Sentry use is limited to
   error reporting. Tracing, log ingestion, replay, profiling, user feedback, and
   user identity are disabled. Request bodies, query strings, cookies, and

@@ -1,14 +1,17 @@
 import type { CityAggregates, Listing, Neighbourhood } from "@/data/contract";
 import type { FilterBounds } from "@/data/types";
 
-import { createListings } from "../service/create-listings-service";
+import { createListingsService } from "../service/create-listings-service";
 
 export function buildCityAggregates(
   rows: readonly Listing[],
   bounds: FilterBounds,
   names: Record<string, string>,
 ): CityAggregates {
-  const snapshot = createListings(rows, bounds).unfiltered();
+  const snapshot = createListingsService(
+    rows,
+    bounds,
+  ).getUnfilteredStatsSnapshot();
 
   const neighbourhoods: Neighbourhood[] = Object.entries(
     snapshot.neighbourhoods,

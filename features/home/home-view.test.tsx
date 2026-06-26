@@ -49,9 +49,7 @@ describe("landing view", () => {
       screen.getByText(/built on dated public inside airbnb snapshots/i),
     ).toBeInTheDocument();
     expect(
-      screen.getByText(
-        /read-only.*inside airbnb data.*no tracking, no sign-up/i,
-      ),
+      screen.getByText(/read-only.*inside airbnb data.*no sign-up/i),
     ).toBeInTheDocument();
   });
 

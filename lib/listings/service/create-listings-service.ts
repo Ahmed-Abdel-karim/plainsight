@@ -1,9 +1,7 @@
 /**
- * Listings — the single data API over a city's immutable rows. You hand it the
- * rows + price bounds once, then ask it for shaped data by `Filter`: stats for
- * the cards, the browse list, the hex grid, a count. It owns what "unfiltered"
- * means, so callers send a filter and read data without ever branching on
- * default-vs-not.
+ * Listings service — the single data API over a city's immutable rows. You hand
+ * it the rows + price bounds once, then ask it for projections by listing
+ * selection: stats, the browse list, the city hex grid, and a count.
  *
  * A thin façade over the existing pure projection functions — same math, one
  * entry point — so it runs identically in the worker, on the main thread, and in
@@ -20,27 +18,26 @@ import type { FilterBounds, SortKey } from "@/data/types";
 import type { HexCell, HexResolution } from "@/lib/hex/types";
 
 import {
-  hexesFor,
-  listingsFor,
-  selectListings,
-  statsFor,
+  projectBrowseListings,
+  projectCityHexes,
+  projectScopeStats,
+  selectListingsBySelection,
 } from "../projections";
 import {
-  isDefaultView,
-  resolveQuery,
-  type StoredQuery,
+  isDefaultListingSelection,
+  resolveListingSelection,
+  type StoredListingSelection,
 } from "../model/resolve-selection";
 
-/** A selection over the rows: which neighbourhood (null = whole city) and the
- *  room/price filter. The one input every read takes. */
-export interface Filter {
+/** Stored UI selection: scope plus room/price filters. */
+export interface ListingSelection {
   readonly neighbourhood: string | null;
   readonly roomTypes: RoomType[];
   readonly priceRange: [number, number] | null;
 }
 
 /** The empty selection — whole city, all room types, full price range. */
-export const UNFILTERED: Filter = {
+export const UNFILTERED_SELECTION: ListingSelection = {
   neighbourhood: null,
   roomTypes: [],
   priceRange: null,
@@ -51,48 +48,58 @@ export type Stats = ScopeAggregates;
 
 export type { StatsSnapshot };
 
-export interface Listings {
-  getStats(filter: Filter): Stats;
-  getListings(filter: Filter, sort: SortKey): Listing[];
-  getHexes(filter: Filter, resolution: HexResolution): HexCell[];
-  getCount(filter: Filter): number;
-  isUnfiltered(filter: Filter): boolean;
-  /** The unfiltered stats for the city and each neighbourhood. */
-  unfiltered(): StatsSnapshot;
+export interface ListingsService {
+  getStats(selection: ListingSelection): Stats;
+  getListings(selection: ListingSelection, sort: SortKey): Listing[];
+  /**
+   * Returns the city-wide hex density grid. Neighbourhood scope is intentionally
+   * ignored; only room-type and price filters affect the grid.
+   */
+  getCityHexes(
+    selection: ListingSelection,
+    resolution: HexResolution,
+  ): HexCell[];
+  getListingCount(selection: ListingSelection): number;
+  isUnfiltered(selection: ListingSelection): boolean;
+  /** The unfiltered stats snapshot for the city and each neighbourhood. */
+  getUnfilteredStatsSnapshot(): StatsSnapshot;
 }
 
-function toStored(filter: Filter): StoredQuery {
+function toStored(selection: ListingSelection): StoredListingSelection {
   return {
-    nbhd: filter.neighbourhood,
-    roomTypes: filter.roomTypes,
-    priceRange: filter.priceRange,
+    nbhd: selection.neighbourhood,
+    roomTypes: selection.roomTypes,
+    priceRange: selection.priceRange,
   };
 }
 
-/** Build a Listings API over a city's rows. `bounds` is the city's price band,
- *  used to resolve the open-ended price filter (see `resolvePriceBand`). */
-export function createListings(
+/** Build a listings service over a city's rows and price bounds. */
+export function createListingsService(
   rows: readonly Listing[],
   bounds: FilterBounds,
-): Listings {
-  const query = (filter: Filter) => resolveQuery(toStored(filter), bounds);
+): ListingsService {
+  const resolveSelection = (selection: ListingSelection) =>
+    resolveListingSelection(toStored(selection), bounds);
 
-  const getStats = (filter: Filter) =>
-    statsFor(rows, query(filter), bounds.max);
+  const getStats = (selection: ListingSelection) =>
+    projectScopeStats(rows, resolveSelection(selection), bounds.max);
 
   return {
     getStats,
-    getListings: (filter, sort) => listingsFor(rows, query(filter), sort),
-    getHexes: (filter, resolution) =>
-      hexesFor(rows, query(filter).filters, resolution),
-    getCount: (filter) => selectListings(query(filter))(rows).length,
-    isUnfiltered: (filter) => isDefaultView(toStored(filter), bounds),
-    unfiltered: () => ({
-      city: getStats(UNFILTERED),
+    getListings: (selection, sort) =>
+      projectBrowseListings(rows, resolveSelection(selection), sort),
+    getCityHexes: (selection, resolution) =>
+      projectCityHexes(rows, resolveSelection(selection).filters, resolution),
+    getListingCount: (selection) =>
+      selectListingsBySelection(resolveSelection(selection))(rows).length,
+    isUnfiltered: (selection) =>
+      isDefaultListingSelection(toStored(selection), bounds),
+    getUnfilteredStatsSnapshot: () => ({
+      city: getStats(UNFILTERED_SELECTION),
       neighbourhoods: Object.fromEntries(
         neighbourhoodIds(rows).map((id) => [
           id,
-          getStats({ ...UNFILTERED, neighbourhood: id }),
+          getStats({ ...UNFILTERED_SELECTION, neighbourhood: id }),
         ]),
       ),
     }),

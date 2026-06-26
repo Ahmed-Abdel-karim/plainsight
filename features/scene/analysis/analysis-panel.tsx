@@ -7,8 +7,8 @@ import { AsyncBoundary } from "@/components/utils/async-boundary";
 /**
  * Server loader for the Analyse cards. Reads the city's unfiltered stats snapshot
  * (city + every neighbourhood) from the pre-baked cube and hands it to the client
- * `AnalysisCards`, which seeds it into React Query — so the default view renders
- * in the static shell — and follows the city actor for a real filter.
+ * `AnalysisCards`, which can render the default city-wide selection in the
+ * static shell and follow the city actor for live room/price-filtered projections.
  */
 export function AnalysisPanel({
   citySlug,

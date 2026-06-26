@@ -34,7 +34,7 @@ export function HomeView() {
           aria-hidden="true"
           className="inline-block size-1.5 rounded-full bg-brand-emphasis"
         />
-        <span>Read-only · Inside Airbnb data · No tracking, no sign-up</span>
+        <span>Read-only · Inside Airbnb data · No sign-up</span>
       </footer>
     </main>
   );

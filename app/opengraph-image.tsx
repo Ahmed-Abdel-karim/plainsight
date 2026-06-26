@@ -94,7 +94,7 @@ export default function OpengraphImage() {
           }}
         />
         <div style={{ fontSize: "24px", color: FAINT }}>
-          Built on public Inside Airbnb snapshots · No tracking
+          Public Inside Airbnb snapshots · No sign-up
         </div>
       </div>
     </div>,

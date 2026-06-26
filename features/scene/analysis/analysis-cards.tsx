@@ -28,10 +28,9 @@ const TopHostsBar = dynamic(
 );
 
 /**
- * The four distribution cards. Pure consumer: `useStats` resolves the stats for
- * the active filter — the server-seeded snapshot for an unfiltered view (city or
- * neighbourhood), the city actor's live recompute for a real filter — so this
- * never decides default-vs-live. `null` means the live result is still pending.
+ * The four distribution cards. Pure consumer: `useStats` resolves the projection
+ * for the active selection, so this never decides default-vs-live. `null` means
+ * the live result is still pending.
  */
 
 export function AnalysisCards({

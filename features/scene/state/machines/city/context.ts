@@ -8,7 +8,7 @@ import type { MapCityPayload } from "@/data/types";
  *
  * Groups defining the city's state:
  *   - `framing`: slug / bbox / priceScale / currency
- *   - `filter`: roomTypes / priceRange / nbhd
+ *   - `filter`: stored selection fields (roomTypes / priceRange / nbhd)
  *   - analyse output: aggregates / hexCells
  *
  * The type and its initial value share the name `Context` so a single
@@ -26,7 +26,7 @@ export interface Context {
   readonly analyticsLoaded: boolean;
 
   readonly aggregates: ScopeAggregates | null;
-  /** Signature (resolved filters + scope) the current `aggregates` were last
+  /** Signature (resolved room/price filters + scope) the current `aggregates` were last
    *  *requested* for. Lets the analyse leg skip a redundant recompute on re-entry
    *  when nothing changed, while still recomputing if a filter changed meanwhile
    *  (e.g. set while in the browse leg). `null` until the first request. */

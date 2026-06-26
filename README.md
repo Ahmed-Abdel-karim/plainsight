@@ -1,174 +1,277 @@
 # Plainsight
 
-**An interactive short-term-rental market explorer — where listings are, what
-they cost, and who controls them.**
+**A frontend-first geospatial market explorer for short-term-rental data.**
 
-Plainsight renders four cities (London, Berlin, Manchester, Amsterdam) on an
-interactive map with a market-analysis panel, all from a single dated public
-snapshot. Read-only, no tracking, no sign-up.
+Plainsight lets users explore where short-term rentals are concentrated, what they cost, and how a market is shaped by room type, neighbourhood, and host structure.
 
-**▶ Live demo: [plainsight-theta.vercel.app](https://plainsight-theta.vercel.app/)**
+It is built as a public, read-only portfolio demo using attributed public Inside Airbnb snapshots, transformed into static frontend assets for a reproducible geospatial analysis experience.
 
-![Plainsight — the Analyse and Browse lenses, with the mobile view](docs/media/hero.png)
+**Live demo:** https://plainsight-theta.vercel.app/
+
+![Plainsight hero — Analyse and Browse lenses](docs/media/hero.png)
 
 <p>
   <img alt="Next.js 16" src="https://img.shields.io/badge/Next.js-16-black?logo=next.js" />
   <img alt="React 19" src="https://img.shields.io/badge/React-19-149eca?logo=react" />
-  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript" />
+  <img alt="TypeScript strict" src="https://img.shields.io/badge/TypeScript-strict-3178c6?logo=typescript" />
   <img alt="XState 5" src="https://img.shields.io/badge/XState-5-2c3e50" />
-  <img alt="MapLibre" src="https://img.shields.io/badge/MapLibre-GL-295dfe" />
+  <img alt="MapLibre GL" src="https://img.shields.io/badge/MapLibre-GL-295dfe" />
 </p>
 
-## Contents
+---
 
-- [Features](#features)
-- [How it works](#how-it-works)
-- [Tech stack](#tech-stack)
-- [Project structure](#project-structure)
-- [Getting started](#getting-started)
-- [Scripts](#scripts)
-- [Configuration](#configuration)
-- [Testing](#testing)
-- [Deployment](#deployment)
-- [Data & attribution](#data--attribution)
-- [License](#license)
+## Why this project exists
 
-## Features
+I chose Plainsight as a frontend-first case study because a map-based data explorer creates real client-side engineering problems that a mostly static CRUD demo would not expose:
 
-- **One map, two lenses.** Switch a single map between **Analyse** (investor —
-  aggregate price, room-mix, and host structure with a hex density layer, KPI and
-  chart cards) and **Browse** (renter — the individual public listings behind the
-  aggregates, as map points, a scrollable list, and detail).
-- **Filter and scope.** Narrow by room type, price range, or neighbourhood; the
-  map, aggregates, and listing set stay in sync.
-- **Off-thread analytics.** Heavy aggregation runs in a Web Worker, so the map
-  and UI stay responsive; a city's listings are cached so revisiting it is
-  instant.
-- **Restorable state.** The lens, selection, scope, and filters live in the URL —
-  share or reopen an exploration exactly as it was.
-- **Dark-first, accessible, responsive.** Working dark/light themes, full
-  keyboard path, WCAG-AA targets, and a desktop sidebar that becomes a mobile
-  bottom-sheet from one component.
-- **One immutable snapshot per city.** Every map layer, aggregate, count, and
-  listing traces to the same dated public snapshot — no estimates, no live data.
+- an expensive client-only map that should persist across city navigation
+- large browser-side datasets that need fast filtering and aggregation
+- interaction state that should be shareable and restorable from the URL
+- route, map, UI, worker, and city lifecycles that need explicit coordination
+- a dense responsive interface that still needs clear semantics, keyboard paths, and accessible fallbacks
 
-## How it works
+The public demo uses curated static snapshots so the project is reproducible, reviewable, and deployable without accounts, uploads, storage, or backend infrastructure. Static data is a demo boundary, not the only possible product direction.
 
-Plainsight is a **Next.js 16 App Router** application with **Cache Components /
-PPR**. There is **no backend**: each city is an immutable, dated snapshot served
-as static assets, and all filtering and aggregation happens in the browser (heavy
-work off the main thread in a Web Worker).
+A future version could support user-imported city datasets, but that would add validation, storage, privacy, moderation, cost, and operational concerns that are intentionally outside this public portfolio scope.
 
-Scene orchestration — the coordination of the map, the worker, the URL, and the
-city-switch lifecycle — is owned by a single **XState v5 actor system** (a `root`
-machine invoking session-lifetime `map` / `ui` / `worker` machines and spawning a
-`city` machine per navigation), rather than ad-hoc effects.
+---
 
-The full picture — module boundaries, runtime/data flow, and the state-machine
-diagrams — is in [`_docs/architecture.md`](_docs/architecture.md). Product scope
-and constraints are in
-[`_docs/project-boundaries.md`](_docs/project-boundaries.md); the key decisions
-are recorded as ADRs in [`_docs/decisions/`](_docs/decisions/).
+## What you can do
+
+- Explore four curated markets: London, Berlin, Manchester, and Amsterdam.
+- Switch between two lenses over the same map:
+  - **Analyse** — city-wide spatial patterns, median price hexes, room mix, host structure, and market summaries.
+  - **Browse** — individual public listings behind the aggregates, shown as map points and a virtualized list.
+
+- Narrow the selection by room type, price range, and neighbourhood.
+- Inspect the relationship between map layers, listing results, and market summaries.
+- Share or reopen an exploration through URL state.
+
+---
+
+## What this demonstrates
+
+Plainsight is designed to show senior frontend engineering in a non-trivial app:
+
+| Area                  | What the project demonstrates                                                                     |
+| --------------------- | ------------------------------------------------------------------------------------------------- |
+| Geospatial UI         | MapLibre map layers, city boundaries, point layers, H3 hex aggregation, map legends               |
+| Frontend architecture | Clear module boundaries, route-persistent scene layout, client/server separation                  |
+| State orchestration   | XState actor system for route, map, UI, worker, and city lifecycles                               |
+| Performance           | Web Worker analytics, preprocessed data tiers, cache/revisit behavior, virtualized listing browse |
+| Product correctness   | Dated snapshot language, data provenance, no invented live availability                           |
+| UI engineering        | Design tokens, spacing rhythm, responsive panel/drawer composition, theme support                 |
+| Accessibility         | Semantic regions, keyboard paths for non-map workflows, text alternatives for visual meaning      |
+| Delivery confidence   | TypeScript strict mode, unit/machine/UI tests, Playwright E2E, CI checks                          |
+
+---
+
+## Architecture overview
+
+Plainsight is a **Next.js App Router** application with a frontend-owned scene subsystem.
+
+The scene is built around a persistent map shell. City navigation swaps the city-specific panel and data, but the expensive MapLibre instance stays mounted. This makes the app behave like a continuous analytical workspace rather than a set of disconnected pages.
+
+At runtime:
+
+1. Next.js serves static city routes and snapshot metadata.
+2. The scene provider owns a session-lifetime actor system.
+3. The map and UI actors persist while navigating between cities.
+4. The city actor is replaced when the selected city changes.
+5. A shared worker handles listing projections and aggregation off the main thread.
+6. Settled lens, scope, filters, and selection are mirrored into the URL.
+
+```txt
+app/
+  routes, layouts, metadata, Suspense boundaries
+
+features/
+  home/
+  scene/
+    analysis/
+    browse/
+    map/
+    state/
+    shared/
+
+data/
+  loaders, contracts, snapshot access
+
+lib/
+  listings, filters, geo, search params, worker-safe logic
+
+docs/
+  architecture, decisions, testing, performance, accessibility, design notes
+```
+
+For the deeper engineering story, read:
+
+- [Case study](CASE_STUDY.md)
+- [Architecture](docs/architecture.md)
+- [Performance](docs/performance.md)
+- [Accessibility](docs/accessibility.md)
+- [Testing strategy](docs/testing.md)
+- [Architecture decisions](docs/decisions/)
+
+---
+
+## Key engineering decisions
+
+### Route-persistent map
+
+The map is expensive and client-only, so it is mounted above the city route segment. City navigation changes the surrounding scene data without recreating the MapLibre instance.
+
+### XState for orchestration
+
+The app does not use XState for every value. It uses XState where the hard problem is coordination: route intent, committed navigation, map readiness, UI suppression, city replacement, worker replies, and stale result protection.
+
+Local UI remains local. Server/cache data remains in Next.js or TanStack Query. The actor system owns lifecycle and event coordination.
+
+### Web Worker for client-side analytics
+
+Filtering, listing projection, and hex aggregation can become expensive on large city snapshots. The worker keeps analytical work off the main thread so map interaction and UI feedback remain responsive.
+
+### Curated static snapshots for the public demo
+
+The public demo is read-only and snapshot-based so it can be hosted cheaply, reviewed consistently, and understood without accounts or setup. Every visible figure is tied to a dated public dataset.
+
+### Map as enhancement, not blocker
+
+The map is central to exploration, but non-spatial workflow meaning should not depend on color or position alone. Counts, filters, selections, loading states, and listing details are exposed through text and semantic UI as well.
+
+---
 
 ## Tech stack
 
-| Area          | Choice                                                              |
-| ------------- | ------------------------------------------------------------------- |
-| Framework     | Next.js 16 (App Router, Cache Components / PPR) · React 19          |
-| Language      | TypeScript (strict)                                                 |
-| Map           | MapLibre GL via react-map-gl · OpenFreeMap base tiles               |
-| State         | XState v5 (scene orchestration) · TanStack Query (data/cache layer) |
-| Styling       | Tailwind CSS v4 · shadcn/ui primitives · design tokens              |
-| Geo / compute | h3-js hex aggregation · a dedicated Web Worker for analytics        |
-| Tooling       | pnpm · Vitest · Playwright · ESLint · Prettier                      |
+| Area        | Choice                                               |
+| ----------- | ---------------------------------------------------- |
+| Framework   | Next.js 16 App Router, React 19                      |
+| Language    | TypeScript strict mode                               |
+| Map         | MapLibre GL via react-map-gl                         |
+| State       | XState v5, TanStack Query                            |
+| Styling     | Tailwind CSS v4, shadcn/ui primitives, design tokens |
+| Geospatial  | H3, GeoJSON                                          |
+| Charts/data | Recharts, d3-array                                   |
+| Performance | Web Worker projections, list virtualization          |
+| Testing     | Vitest, Testing Library, Playwright, axe checks      |
+| Delivery    | pnpm, GitHub Actions, Vercel                         |
 
-Snapshots ship as immutable, versioned static assets — no database or application
-backend.
-
-## Project structure
-
-Feature-based ("screaming") architecture; dependencies point downward only.
-
-```text
-app/         Routes — compose features, own Suspense & generateStaticParams
-features/    Product surfaces — scene/ (the map explorer) and home/ (city picker)
-components/  Shared, cross-feature UI only — ui/ (shadcn), theme/, chrome
-data/        The IO seam — loaders → repository (ports & adapters), snapshots
-lib/         Pure kernel — filters, geo, hex, the listings worker engine, query
-_docs/       Architecture, conventions, testing, project boundaries, ADRs
-```
-
-See [`_docs/architecture.md`](_docs/architecture.md) for the layer rules and the
-`features/scene` breakdown.
+---
 
 ## Getting started
 
-**Prerequisites:** Node.js 24 (see `.nvmrc`) and [pnpm](https://pnpm.io).
+### Prerequisites
+
+- Node.js 24
+- pnpm 11
+
+### Install and run
 
 ```bash
 pnpm install
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open:
+
+```txt
+http://localhost:3000
+```
+
+---
 
 ## Scripts
 
-| Command         | What it does                               |
-| --------------- | ------------------------------------------ |
-| `pnpm dev`      | Start the dev server                       |
-| `pnpm build`    | Production build                           |
-| `pnpm start`    | Serve the production build                 |
-| `pnpm test`     | Unit, machine, and UI integration (Vitest) |
-| `pnpm test:e2e` | End-to-end browser tests (Playwright)      |
-| `pnpm lint`     | ESLint (`lint:strict` fails on warnings)   |
-| `pnpm format`   | Prettier write (`format:check` to verify)  |
+| Command             | Purpose                                      |
+| ------------------- | -------------------------------------------- |
+| `pnpm dev`          | Start the development server                 |
+| `pnpm build`        | Build the production app                     |
+| `pnpm start`        | Serve the production build                   |
+| `pnpm test`         | Run unit, machine, and UI integration tests  |
+| `pnpm test:e2e`     | Run Playwright end-to-end tests              |
+| `pnpm lint`         | Run ESLint                                   |
+| `pnpm lint:strict`  | Run ESLint with zero warnings allowed        |
+| `pnpm format`       | Format the repo                              |
+| `pnpm format:check` | Check formatting                             |
+| `pnpm lighthouse`   | Run local Lighthouse script, when configured |
+| `pnpm lhci`         | Run Lighthouse CI script                     |
 
-## Configuration
+---
 
-All build-time defaults are non-secret `NEXT_PUBLIC_*` values (see `.env`):
+## Testing and CI
 
-- `NEXT_PUBLIC_SITE_URL` — deploy origin; sets `metadataBase` for canonical/OG
-  URLs. Defaults to `http://localhost:3000`.
-- `NEXT_PUBLIC_CITY_ASSET_BASE_URL` — origin for the immutable city tiers.
-  Defaults to the same-origin `/city-assets`; point it at a CDN/object store to
-  serve them externally (configure that origin's CORS and immutable cache
-  headers).
+The project uses a layered testing strategy:
 
-## Testing
+- pure unit tests for listings, filters, search params, and geospatial logic
+- machine tests for XState lifecycle and race-prone coordination
+- UI integration tests for rendered behavior and accessibility semantics
+- Playwright E2E tests for real browser workflows
+- Lighthouse checks for selected performance and layout budgets
 
-The suite follows a Testing-Trophy split — pure logic and XState machines as unit
-tests, rendered behavior as UI integration tests (accessibility-first queries,
-MSW-backed data), and real user journeys as Playwright E2E. Full philosophy,
-layers, and rules: [`_docs/testing.md`](_docs/testing.md).
+GitHub Actions runs formatting, linting, type checks, tests, build, E2E, and Lighthouse CI through:
 
-```bash
-pnpm test          # Vitest: unit + machine + UI integration
-pnpm test:e2e      # Playwright: end-to-end journeys
+```txt
+.github/workflows/ci.yml
 ```
 
-## Deployment
+---
 
-Built for [Vercel](https://vercel.com) (`vercel.json`); CI runs lint, type-check,
-and the test suites via GitHub Actions (`.github/workflows/ci-cd.yml`). The app
-prerenders one static route per city (`generateStaticParams`), and the immutable
-city tiers are served with long-lived `immutable` cache headers — set
-`NEXT_PUBLIC_CITY_ASSET_BASE_URL` to serve them from a CDN in production.
+## Data source and attribution
 
-## Data & attribution
+Plainsight is built on public short-term-rental datasets published by [Inside Airbnb](https://insideairbnb.com/), an independent project that provides downloadable Airbnb listing, review, calendar, and neighbourhood datasets for research and public-interest analysis.
 
-- **Listings data:** [Inside Airbnb](https://insideairbnb.com) — dated public
-  snapshots (September 2025). Every figure traces to one immutable snapshot; no
-  estimates and no live data. Inside Airbnb data is published under
-  [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
-- **Base map:** [OpenFreeMap](https://openfreemap.org), built on
-  [© OpenStreetMap](https://www.openstreetmap.org/copyright) contributors.
-- **Listing photos:** placeholder images from [Unsplash](https://unsplash.com),
-  standing in for a real listing-image host.
+The public demo uses dated Inside Airbnb snapshots:
+
+| City               | Source snapshot   |
+| ------------------ | ----------------- |
+| Amsterdam          | 11 September 2025 |
+| Berlin             | 23 September 2025 |
+| Greater Manchester | 26 September 2025 |
+| London             | 14 September 2025 |
+
+Inside Airbnb publishes its data under the [Creative Commons Attribution 4.0 International license](https://creativecommons.org/licenses/by/4.0/).
+
+Plainsight transforms the original CSV and GeoJSON files into static application assets for filtering, aggregation, and map rendering. The transformed data remains derived from Inside Airbnb and is attributed accordingly.
+
+Plainsight is not affiliated with, endorsed by, or sponsored by Airbnb or Inside Airbnb. Airbnb is a trademark of its owner. The app presents dated public snapshot observations only; it does not claim live availability, booking status, host verification, forecasts, or real-time market data.
+
+Base map attribution is provided in the app UI. Representative listing imagery is decorative placeholder imagery and does not represent real listing photos.
+
+---
+
+## Privacy and analytics
+
+Plainsight has no accounts, sign-up, advertising, session replay, or custom event tracking.
+
+The public deployment may use Vercel Analytics and Speed Insights for aggregate usage and performance visibility. No application-specific tracking events are implemented.
+
+---
+
+## Project status
+
+Plainsight is an active portfolio project.
+
+Current focus:
+
+- reviewer-facing documentation and case study
+- accessibility improvements, especially making the map an enhancement rather than a workflow blocker
+- performance measurements for large city snapshots
+- design-system polish around spacing, rhythm, and responsive scene layout
+
+Planned documentation:
+
+- `CASE_STUDY.md`
+- `docs/architecture.md`
+- `docs/performance.md`
+- `docs/accessibility.md`
+- `docs/design-system.md`
+- `docs/data-model.md`
+- `docs/decisions/`
+
+---
 
 ## License
 
-> **TODO:** no license file is committed yet. Add a `LICENSE` (and a
-> `package.json` `"license"` field) to declare how the code may be used. Note the
-> Inside Airbnb data is CC BY 4.0 (attribution above), independent of the code
-> license.
+License is not declared yet. The code remains all-rights-reserved until a `LICENSE` file and `package.json` license field are added.
+
+The Inside Airbnb data is licensed separately under CC BY 4.0 and is attributed independently of the code license.

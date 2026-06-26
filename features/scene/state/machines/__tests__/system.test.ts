@@ -27,7 +27,7 @@ describe("connected scene system", () => {
     scene = undefined;
   });
 
-  it("boots with map, ui, worker and navigation invoked, and no city yet", () => {
+  it("boots with persistent session actors and no city yet", () => {
     scene = setupSceneSystem();
 
     expect(scene.map).toBeDefined();

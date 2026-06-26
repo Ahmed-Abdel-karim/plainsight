@@ -45,7 +45,7 @@ const PHOTO_SET_IDS: string[][] = [
   [
     "photo-1567767292278-a4f21aa2d36e",
     "photo-1505693416388-ac5ce068fe85",
-    "photo-1556909114-f6e7ad7d3136",
+    "photo-1758240689297-d8613ca753f3",
     "photo-1620626011761-996317b8d101",
     "photo-1512917774080-9991f1c4c750",
   ],
@@ -66,7 +66,7 @@ const PHOTO_SET_IDS: string[][] = [
   [
     "photo-1502672260266-1c1ef2d93688",
     "photo-1522771739844-6a9f6d5f14af",
-    "photo-1556909114-f6e7ad7d3136",
+    "photo-1758240689297-d8613ca753f3",
     "photo-1620626011761-996317b8d101",
     "photo-1568605114967-8130f3a36994",
   ],
@@ -87,7 +87,7 @@ const PHOTO_SET_IDS: string[][] = [
   [
     "photo-1505691938895-1758d7feb511",
     "photo-1560185009-dddeb820c7b7",
-    "photo-1556909114-f6e7ad7d3136",
+    "photo-1758240689297-d8613ca753f3",
     "photo-1620626011761-996317b8d101",
     "photo-1583847268964-b28dc8f51f92",
   ],

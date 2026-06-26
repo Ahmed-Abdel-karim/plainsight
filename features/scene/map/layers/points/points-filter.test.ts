@@ -2,13 +2,14 @@ import { describe, expect, it } from "vitest";
 
 import type { RoomType } from "@/data/contract";
 import type { ListingFilters } from "@/data/types";
-import { selectListings } from "@/lib/listings";
+import { selectListingsBySelection } from "@/lib/listings";
 
 import { pointsFilterExpression } from "./points-filter";
 
 /**
- * The GPU dot filter restates the list predicate (`selectListings`) as a MapLibre
- * expression, so the dots and the Browse list must agree on the visible set.
+ * The GPU dot filter restates the list predicate (`selectListingsBySelection`)
+ * as a MapLibre expression, so the dots and the Browse list must agree on the
+ * visible set.
  * This evaluates the expression against the same rows and asserts the id sets
  * match. The mini-evaluator handles only the clause shapes the function emits.
  */
@@ -74,7 +75,7 @@ const cases: { filters: ListingFilters; neighbourhood: string | null }[] = [
   },
 ];
 
-describe("pointsFilterExpression parity with selectListings", () => {
+describe("pointsFilterExpression parity with selectListingsBySelection", () => {
   it.each(cases)(
     "agrees on the visible set ($neighbourhood)",
     ({ filters, neighbourhood }) => {
@@ -82,7 +83,7 @@ describe("pointsFilterExpression parity with selectListings", () => {
       const fromExpr = rows
         .filter((r) => evalExpr(expr, r as unknown as Record<string, unknown>))
         .map((r) => r.id);
-      const fromPredicate = selectListings<Row>({
+      const fromPredicate = selectListingsBySelection<Row>({
         neighbourhood,
         filters,
       })(rows).map((r) => r.id);

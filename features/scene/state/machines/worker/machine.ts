@@ -12,10 +12,10 @@ import type * as Input from "./input";
 import { transportActor } from "./transport";
 
 /**
- * Worker machine — a **session-lifetime** actor invoked by the root (sibling of
- * map/ui), shared across every city. It is a flat request-router with no per-city
- * lifecycle of its own: that lives in the city machine. It invokes a thin
- * `transport` child for the raw `postMessage` pipe.
+ * Worker machine — a **session-lifetime** actor invoked by the root alongside
+ * the spawned map/ui actors, shared across every city. It is a flat
+ * request-router with no per-city lifecycle of its own: that lives in the city
+ * machine. It invokes a thin `transport` child for the raw `postMessage` pipe.
  *
  * Coalescing is modelled directly as state. Each process type (`hexes`,
  * `aggregates`) is its own parallel region with two states — `idle` and `busy`.

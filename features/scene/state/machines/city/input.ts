@@ -14,7 +14,7 @@ export interface Input {
    * `loading`, which has no filter handlers — an event would be dropped. Seeding
    * via input means the city reaches `ready` already filtered, so its first
    * hex/aggregate request uses the deep-linked filter instead of computing a
-   * default view and then correcting it.
+   * default projection and then correcting it.
    */
   readonly filter: Context["filter"];
 }
