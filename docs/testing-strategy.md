@@ -1,5 +1,11 @@
 Plainsight — Testing strategy (living decisions doc)
 
+> **STALE PLANNING LOG.** This old `docs/` file may contain historical paths,
+> mocks, and API names from before the current `features/scene` actor system and
+> `_docs/` refresh. Use [`../_docs/testing.md`](../_docs/testing.md) for current
+> testing guidance and [`../_docs/architecture.md`](../_docs/architecture.md) for
+> current architecture.
+
 > **Status:** Working decisions log, not the final ADR. We resolve one principle
 > at a time and record the settled rule here so we never re-derive it. This file
 > is the raw material that the polished architecture/decision docs (the portfolio
@@ -370,7 +376,7 @@ act via `user-event`, assert via queries.
 
 ### Global — `test/` (cross-cutting only)
 
-- `render.tsx` — the custom `render` (wraps the app providers: theme, nuqs,
+- `render.tsx` — the custom `render` (wraps the app providers: theme,
   `QueryClient` retry-off, scene provider) **and re-exports** everything from RTL
   plus `userEvent`. This is the Testing Library "test-utils" role for the project.
 - `queries.ts` — global custom queries (`buildQueries`), merged into

@@ -78,8 +78,11 @@ At runtime:
 2. The scene provider owns a session-lifetime actor system.
 3. The map and UI actors persist while navigating between cities.
 4. The city actor is replaced when the selected city changes.
-5. A shared worker handles listing projections and aggregation off the main thread.
-6. Settled lens, scope, filters, and selection are mirrored into the URL.
+5. A shared worker handles analytics-row loading, H3 projection, and aggregate
+   recomputation off the main thread.
+6. TanStack Query caches public points and boundaries assets for Browse and map
+   rendering.
+7. Settled lens, scope, filters, and selection are mirrored into the URL.
 
 ```txt
 app/
@@ -101,17 +104,17 @@ lib/
   listings, filters, geo, search params, worker-safe logic
 
 docs/
-  architecture, decisions, testing, performance, accessibility, design notes
+  old notes; current architecture/testing docs are in _docs/
+_docs/
+  architecture, conventions, testing, decisions
 ```
 
 For the deeper engineering story, read:
 
 - [Case study](CASE_STUDY.md)
-- [Architecture](docs/architecture.md)
-- [Performance](docs/performance.md)
-- [Accessibility](docs/accessibility.md)
-- [Testing strategy](docs/testing.md)
-- [Architecture decisions](docs/decisions/)
+- [Architecture](_docs/architecture.md)
+- [Testing strategy](_docs/testing.md)
+- [Architecture decisions](_docs/decisions/)
 
 ---
 
@@ -129,7 +132,7 @@ Local UI remains local. Server/cache data remains in Next.js or TanStack Query. 
 
 ### Web Worker for client-side analytics
 
-Filtering, listing projection, and hex aggregation can become expensive on large city snapshots. The worker keeps analytical work off the main thread so map interaction and UI feedback remain responsive.
+Filtering for Analyse, H3 projection, and aggregate recomputation can become expensive on large city snapshots. The worker keeps those analytical jobs off the main thread. Browse uses prebuilt `points.geojson` cached by TanStack Query, then derives its filtered and sorted list in the client from that smaller tier.
 
 ### Curated static snapshots for the public demo
 
@@ -143,18 +146,18 @@ The map is central to exploration, but non-spatial workflow meaning should not d
 
 ## Tech stack
 
-| Area        | Choice                                               |
-| ----------- | ---------------------------------------------------- |
-| Framework   | Next.js 16 App Router, React 19                      |
-| Language    | TypeScript strict mode                               |
-| Map         | MapLibre GL via react-map-gl                         |
-| State       | XState v5, TanStack Query                            |
-| Styling     | Tailwind CSS v4, shadcn/ui primitives, design tokens |
-| Geospatial  | H3, GeoJSON                                          |
-| Charts/data | Recharts, d3-array                                   |
-| Performance | Web Worker projections, list virtualization          |
-| Testing     | Vitest, Testing Library, Playwright, axe checks      |
-| Delivery    | pnpm, GitHub Actions, Vercel                         |
+| Area        | Choice                                                             |
+| ----------- | ------------------------------------------------------------------ |
+| Framework   | Next.js 16 App Router, React 19                                    |
+| Language    | TypeScript strict mode                                             |
+| Map         | MapLibre GL via react-map-gl                                       |
+| State       | XState v5, TanStack Query                                          |
+| Styling     | Tailwind CSS v4, shadcn/ui primitives, design tokens               |
+| Geospatial  | H3, GeoJSON                                                        |
+| Charts/data | Recharts, d3-array                                                 |
+| Performance | Web Worker analytics, React Query asset cache, list virtualization |
+| Testing     | Vitest, Testing Library, Playwright, axe checks                    |
+| Delivery    | pnpm, GitHub Actions, Vercel                                       |
 
 ---
 

@@ -39,6 +39,15 @@ XState adds complexity and a learning curve. That cost is accepted because its
 boilerplate is cheaper than building, testing, documenting, and maintaining a
 custom orchestration layer.
 
+## Current Implementation Note
+
+The implemented scene actor system is mounted by `SceneProvider` in
+`app/(scene)/layout.tsx`, not root `app/layout.tsx`. Root currently uses
+`settled <-> switching` to gate URL writes and map/UI suspension. The navigation
+machine is a separate `NAV.INTENT` / `NAV.COMMIT` path tracker, and the map
+machine is parallel with `lifecycle` and `interaction` regions. See
+[`../architecture.md`](../architecture.md) for the current topology.
+
 ## Rejected Alternatives
 
 - **Redux with redux-observable:** considered from prior experience, but not
@@ -49,7 +58,8 @@ custom orchestration layer.
 
 ## References
 
-- [Map transition design](../../docs/map-machine-transition-gating.md)
+- [Current architecture](../architecture.md)
+- [Historical map transition design](../../docs/map-machine-transition-gating.md)
 - [XState documentation](https://stately.ai/docs/xstate)
 - [Zustand introduction](https://zustand.docs.pmnd.rs/getting-started/introduction)
 - [redux-observable documentation](https://redux-observable.js.org/)
