@@ -4,9 +4,9 @@ import type { Listing, RoomType } from "@/data/contract";
 import type { FilterBounds } from "@/data/types";
 
 import {
-  createListings,
-  UNFILTERED,
-  type Filter,
+  createListingsService,
+  UNFILTERED_SELECTION,
+  type ListingSelection,
 } from "./create-listings-service";
 
 const bounds: FilterBounds = { min: 20, max: 1100 };
@@ -51,48 +51,69 @@ const rows: Listing[] = [
   }),
 ];
 
-const api = createListings(rows, bounds);
+const api = createListingsService(rows, bounds);
 
-describe("createListings", () => {
-  it("getCount narrows by neighbourhood + room + price", () => {
-    expect(api.getCount(UNFILTERED)).toBe(3);
-    expect(api.getCount({ ...UNFILTERED, neighbourhood: "centre" })).toBe(2);
+describe("createListingsService", () => {
+  it("getListingCount narrows by neighbourhood + room + price", () => {
+    expect(api.getListingCount(UNFILTERED_SELECTION)).toBe(3);
     expect(
-      api.getCount({
-        ...UNFILTERED,
+      api.getListingCount({
+        ...UNFILTERED_SELECTION,
+        neighbourhood: "centre",
+      }),
+    ).toBe(2);
+    expect(
+      api.getListingCount({
+        ...UNFILTERED_SELECTION,
         roomTypes: ["Private room"] as RoomType[],
       }),
     ).toBe(1);
-    expect(api.getCount({ ...UNFILTERED, priceRange: [20, 300] })).toBe(2);
+    expect(
+      api.getListingCount({
+        ...UNFILTERED_SELECTION,
+        priceRange: [20, 300],
+      }),
+    ).toBe(2);
   });
 
-  it("getStats matches the count for the same filter", () => {
-    const filter: Filter = { ...UNFILTERED, neighbourhood: "centre" };
-    expect(api.getStats(filter).listingCount).toBe(api.getCount(filter));
+  it("getStats matches the count for the same selection", () => {
+    const selection: ListingSelection = {
+      ...UNFILTERED_SELECTION,
+      neighbourhood: "centre",
+    };
+    expect(api.getStats(selection).listingCount).toBe(
+      api.getListingCount(selection),
+    );
   });
 
   it("getListings returns the narrowed set, sorted", () => {
     const prices = api
-      .getListings({ ...UNFILTERED, neighbourhood: "centre" }, "price_asc")
+      .getListings(
+        { ...UNFILTERED_SELECTION, neighbourhood: "centre" },
+        "price_asc",
+      )
       .map((l) => l.price);
     expect(prices).toEqual([50, 200]);
   });
 
   it("isUnfiltered is true only for the empty whole-city selection", () => {
-    expect(api.isUnfiltered(UNFILTERED)).toBe(true);
-    expect(api.isUnfiltered({ ...UNFILTERED, neighbourhood: "centre" })).toBe(
-      false,
-    );
+    expect(api.isUnfiltered(UNFILTERED_SELECTION)).toBe(true);
     expect(
       api.isUnfiltered({
-        ...UNFILTERED,
+        ...UNFILTERED_SELECTION,
+        neighbourhood: "centre",
+      }),
+    ).toBe(false);
+    expect(
+      api.isUnfiltered({
+        ...UNFILTERED_SELECTION,
         roomTypes: ["Private room"] as RoomType[],
       }),
     ).toBe(false);
   });
 
-  it("unfiltered() snapshots the city and each neighbourhood", () => {
-    const snapshot = api.unfiltered();
+  it("getUnfilteredStatsSnapshot snapshots the city and each neighbourhood", () => {
+    const snapshot = api.getUnfilteredStatsSnapshot();
     expect(snapshot.city.listingCount).toBe(3);
     expect(Object.keys(snapshot.neighbourhoods).sort()).toEqual([
       "centre",

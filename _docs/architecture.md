@@ -8,7 +8,7 @@ system as it stands; `conventions.md` covers how to work inside it, and
 ## System Overview
 
 Plainsight is a read-only short-term-rental market explorer. A user picks a
-curated city, reads its dated market context, narrows the view by room type,
+curated city, reads its dated market context, narrows the selection by room type,
 price, or neighbourhood, and switches between two lenses over one map:
 
 - **Analyse** (investor) — aggregate price/room-mix/host structure, a hex
@@ -107,7 +107,7 @@ reflected into the machine on the client.
    the `loadBrowsePoints` actor and `prefetchCity` action, both closured over the
    app React Query client — via `machine.provide()`.
 3. **`SceneUrlLoader`** dispatches `CITY.CHANGED` on mount, spawning a fresh
-   `city` actor seeded with the URL filter.
+   `city` actor seeded with the URL selection.
 4. The **city** machine asks the shared **worker** to load and aggregate
    listings off-thread; results return slug-stamped and are reconciled into the
    map and UI imperative layers.
@@ -119,8 +119,12 @@ flowchart LR
   loaders["data/loaders<br/>(server-only, cached)"] --> page["(scene)/[city]/page"]
   page -->|primitives| provider["SceneProvider"]
   provider --> root["root actor"]
-  root -->|spawn| city["city machine"]
-  city -->|slug-stamped request| worker["worker (shared)"]
+  root -->|spawn in context| map["map machine"]
+  root -->|spawn in context| ui["ui machine"]
+  root -->|invoke| worker["worker machine"]
+  root -->|invoke| navigation["navigation machine"]
+  root -->|spawn/replace| city["city machine"]
+  city -->|slug-stamped request| worker
   worker -->|Web Worker| transport["off-thread compute"]
   transport -->|result| city
   city -->|CITY.READY / data| map["map machine"]
@@ -144,17 +148,18 @@ city-switch windows, stale worker replies) rather than storing values — see AD
 other through the receptionist (`system.get(SystemId.*)`); lifetime dictates the
 mechanism:
 
-| Machine    | Lifetime | Mechanism | Owns                                                 |
-| ---------- | -------- | --------- | ---------------------------------------------------- |
-| **root**   | session  | —         | the navigation gate + the single `NAV.START` fan-out |
-| **map**    | session  | invoked   | the MapLibre instance lifecycle + interaction gating |
-| **ui**     | session  | invoked   | lens, selection, hover                               |
-| **worker** | session  | invoked   | the shared Web Worker + listings cache               |
-| **city**   | per-city | spawned   | per-city load/aggregate, slug-stamped staleness      |
+| Machine        | Lifetime | Mechanism               | Owns                                                 |
+| -------------- | -------- | ----------------------- | ---------------------------------------------------- |
+| **root**       | session  | —                       | the navigation gate + the single `NAV.START` fan-out |
+| **map**        | session  | spawned in root context | the MapLibre instance lifecycle + interaction gating |
+| **ui**         | session  | spawned in root context | lens, selection, hover                               |
+| **worker**     | session  | invoked                 | the shared Web Worker + listings cache               |
+| **navigation** | session  | invoked                 | path changes and in-scene navigation intent          |
+| **city**       | per-city | spawned/replaced        | per-city load/aggregate, slug-stamped staleness      |
 
 The **worker is shared across cities**, so its listings cache survives navigation
 — revisiting a city is a cache hit, not a refetch. The **city** machine is
-spawned fresh per navigation and stopped on the next one.
+spawned fresh per navigation and stopped/replaced on the next one.
 
 **The navigation gate.** `root.running` is refined into `idle ⇄ navigating` to own
 the city-switch window. A switcher click (`NAV.START`) prefetches the slug, stamps

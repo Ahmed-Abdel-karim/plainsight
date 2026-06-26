@@ -11,7 +11,7 @@ import {
   resolveFilters,
   resolvePriceRange,
 } from "@/lib/filters/normalize";
-import { isDefaultView } from "@/lib/listings";
+import { isDefaultListingSelection } from "@/lib/listings";
 
 import { SceneActorContext } from "../../provider";
 import type { CityMachineActor } from "./machine";
@@ -142,11 +142,9 @@ export const useIsDefaultFilter = createCitySelector((s) =>
   ),
 );
 
-/** True when the active view is the city-wide default — no neighbourhood and
- *  default room/price filters. This is the projection the server pre-bakes, so a
- *  consumer can show the server default instead of waiting on a live recompute. */
-export const useIsDefaultView = createCitySelector((s) =>
-  isDefaultView(
+/** True when the active selection is city-wide with default room/price filters. */
+export const useIsDefaultListingSelection = createCitySelector((s) =>
+  isDefaultListingSelection(
     s?.context.filter ?? { roomTypes: [], priceRange: null, nbhd: null },
     priceBounds(s?.context.framing ?? null),
   ),

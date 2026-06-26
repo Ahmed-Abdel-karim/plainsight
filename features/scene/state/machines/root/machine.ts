@@ -43,7 +43,7 @@ export const rootMachine = setup({
   },
   actions: {
     // Injected at the provider boundary (see root/prefetch.ts), closured over
-    // the slug→snapshot map + app QueryClient. Placeholder so the machine is
+    // the slug→snapshot map + app QueryClient. The default keeps the machine
     // self-contained and testable without a data dependency.
     prefetch: () => {},
     fanSuspend: enqueueActions(({ system, enqueue }) => {

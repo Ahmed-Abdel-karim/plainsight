@@ -1,9 +1,7 @@
-# Draft Architecture Docs
+# Project Documentation
 
-This folder is a staging area for future project documentation. It is not active
-project guidance yet. Keep these files skeletal until the refactor is finished,
-then fill them with clean, short rules and move or merge them into the active
-`docs/` tree.
+This folder holds the project documentation for architecture, conventions,
+testing, boundaries, and decisions.
 
 ## How To Use This Folder
 
@@ -21,9 +19,8 @@ then fill them with clean, short rules and move or merge them into the active
 - Use `decisions/` for why important architecture choices were made. These are
   ADRs, not general rules. Prefer short records for decisions that changed the
   system shape or constrain future work.
-- Use `AGENTS.md` and `CLAUDE.md` as staged future AI-agent instruction
-  templates only. They are intentionally inside `_docs/` so they are not active
-  repo instructions yet.
+- Use `AGENTS.md` and `CLAUDE.md` as reference copies for repo-level agent
+  guidance.
 
 ## What Goes Where
 
@@ -34,8 +31,8 @@ _docs/
   project-boundaries.md     # requirements, constraints, assumptions, limits
   conventions.md            # contributor rules and repo conventions
   testing.md                # testing philosophy, layers, rules, commands
-  AGENTS.md                 # staged future shared agent instructions
-  CLAUDE.md                 # staged future Claude wrapper/import file
+  AGENTS.md                 # shared agent instruction reference
+  CLAUDE.md                 # Claude wrapper/import reference
   decisions/
     README.md               # ADR index and ADR usage rules
     0000-template.md        # ADR template

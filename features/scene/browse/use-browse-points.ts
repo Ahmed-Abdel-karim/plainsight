@@ -25,7 +25,7 @@ import type {
   BrowsePointProperties,
 } from "@/data/contract";
 import type { ListingFilters, SortKey } from "@/data/types";
-import { listingsFor } from "@/lib/listings";
+import { projectBrowseListings } from "@/lib/listings";
 
 import { browsePointsQueryOptions } from "../shared/browse-points-query";
 
@@ -67,7 +67,7 @@ export function useBrowseListings(
   );
   return useMemo(() => {
     if (!rows) return [];
-    return listingsFor(rows, { neighbourhood, filters }, sort);
+    return projectBrowseListings(rows, { neighbourhood, filters }, sort);
   }, [rows, neighbourhood, filters, sort]);
 }
 

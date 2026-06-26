@@ -116,7 +116,7 @@ export const mapMachine = setup({
     },
 
     // Injected at the provider boundary (see provider.tsx); the restyle helper
-    // lives in shared/map-theme. Placeholder so the machine stays self-contained.
+    // lives in shared/map-theme. The default keeps the machine self-contained.
     applyMapTheme: enqueueActions(() => {}),
 
     // --- side-effecting MapLibre calls ---
