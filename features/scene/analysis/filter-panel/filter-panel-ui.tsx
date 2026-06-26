@@ -8,12 +8,9 @@ import { formatCurrency } from "../../shared/format";
 import { ROOM_DISPLAY } from "../../shared/room-display";
 
 /**
- * Filter panel. Owns its filter ↔ URL state directly via `useFilterControls` (shared
- * with the Analyse cards + Browse list through the nuqs URL params, not props),
- * so it renders once above both tabs and stays in sync with them. Every control
- * drives the city machine directly; the machine is the single source of truth and
- * coalesces a price drag into one worker recompute. An empty room selection means
- * "all".
+ * Presentational filter controls. State is supplied by `FilterPanel`, which
+ * shares filter state with Analyse, Browse, and URL sync through the scene actor
+ * system. An empty room selection means "all".
  *
  * Only the static, server-derived `bounds` + `currency` come in as props (threaded
  * from the page's cached meta read); everything filter-shaped lives here.

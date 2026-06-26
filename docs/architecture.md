@@ -4,7 +4,9 @@ Plainsight — Module Architecture (AI implementation guide)
 > `components/scene/` four-layer model and the "defer `features/`" decision —
 > both reversed. The app is now feature-based (`features/scene`, `features/home`;
 > `components/` is shared UI only) on the XState actor system, not Zustand.
-> Current rules live in `CLAUDE.md` and `_docs/`. Kept for history only.
+> Current rules live in [`../_docs/architecture.md`](../_docs/architecture.md),
+> [`../_docs/conventions.md`](../_docs/conventions.md), and `CLAUDE.md`. Kept
+> for history only.
 
 Companion to Constitution **Principle VI — Layered Feature Architecture** and the
 **Project Rules → Module Boundaries** section. The constitution states the obligations; this

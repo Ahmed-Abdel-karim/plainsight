@@ -41,6 +41,14 @@ How a snapshot is divided between immediate server-rendered summaries and full
 client detail is a separate decision. Off-main-thread analytical processing is
 also recorded separately.
 
+## Current Implementation Note
+
+The current repository keeps server-facing tiers in `data/snapshots`
+(`manifest`, `meta`, and `aggregates`) and browser-facing tiers under
+`public/city-assets/{slug}/{snapshotId}/` by default (`analytics`, `points`, and
+`boundaries`). `NEXT_PUBLIC_CITY_ASSET_BASE_URL` can move the browser-facing
+tiers to an external asset origin without changing the data contract.
+
 ## Rejected Alternatives
 
 - **Database-backed application:** appropriate for live records, user uploads,

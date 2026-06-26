@@ -177,8 +177,8 @@ export function setupSceneSystem({
 
 /**
  * Mount a fake MapLibre instance into the running scene and bring the map actor
- * to `ready.interactive` (`MAP.MOUNTED` then `MAP.READY`). Returns the spied map
- * methods for assertions.
+ * to lifecycle `ready` while interaction remains `interactive` (`MAP.MOUNTED`
+ * then `MAP.READY`). Returns the spied map methods for assertions.
  */
 export function mountFakeMap(
   scene: ReturnType<typeof setupSceneSystem>,

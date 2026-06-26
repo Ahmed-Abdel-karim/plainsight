@@ -6,10 +6,10 @@ import { createFakeMaplibreMap } from "@/test/scene/fake-map";
 import { mountFakeMap, setupSceneSystem } from "../__tests__/utils";
 
 /**
- * The map actor is session-persistent (it lives in the root layout), so it
- * outlives any single MapLibre instance. These cases pin the two guards that
- * keep it from operating on a *removed* map — the actual cause of the
- * `getSource`-on-undefined crash once the provider was lifted above the canvas.
+ * The map actor is session-persistent inside the scene layout, so it outlives
+ * any single MapLibre instance. These cases pin the two guards that keep it from
+ * operating on a *removed* map — the actual cause of the `getSource`-on-undefined
+ * crash once the provider was lifted above the canvas.
  */
 describe("map machine — instance lifecycle", () => {
   let scene: ReturnType<typeof setupSceneSystem> | undefined;

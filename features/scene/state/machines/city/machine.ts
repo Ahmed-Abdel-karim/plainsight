@@ -338,7 +338,6 @@ export const cityMachine = setup({
   },
   states: {
     deciding: {
-      // check the relevant initial state based on the Lens
       entry: "raiseInitialLens",
     },
     browse: {

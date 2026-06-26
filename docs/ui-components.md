@@ -1,6 +1,13 @@
 Plainsight — Build Rules (AI implementation guide)
+
+> **STALE PROTOTYPE-ERA GUIDE.** This old `docs/` file predates the current
+> `_docs/` architecture refresh and contains obsolete state-management guidance.
+> Use [`../_docs/architecture.md`](../_docs/architecture.md) for current
+> architecture and [`../_docs/conventions.md`](../_docs/conventions.md) for
+> current implementation conventions.
+
 What this project is
-A map-based rental-market explorer. Dark-first, dense, analytical (Observable/Datawrapper, not a consumer app). Next.js App Router + TypeScript. One map, two lenses (Browse = renter, Analyse = investor) switched by a toggle. State: nuqs owns URL view-state; Zustand owns client store state through the constitution-required Next.js store factory/provider pattern.
+A map-based rental-market explorer. Dark-first, dense, analytical (Observable/Datawrapper, not a consumer app). Next.js App Router + TypeScript. One map, two lenses (Browse = renter, Analyse = investor) switched by a toggle. The state-management notes in this prototype-era guide are obsolete; current scene state uses the XState actor system described in `_docs/architecture.md`.
 The three inputs you are working from
 
 tokens.css — the design system. Single source of truth for color, spacing, type, radius, map tokens. Never edit values to fix a styling problem; consume the tokens.

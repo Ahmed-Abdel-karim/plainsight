@@ -1,5 +1,11 @@
 # E2E Implementation Plan
 
+> **STALE IMPLEMENTATION PLAN.** This old `docs/` file records completed E2E
+> setup work and may use historical paths. Use
+> [`../_docs/testing.md`](../_docs/testing.md) for current testing guidance and
+> [`../_docs/architecture.md`](../_docs/architecture.md) for current
+> architecture.
+
 Status: Complete
 
 ## Progress

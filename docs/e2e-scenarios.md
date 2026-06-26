@@ -1,5 +1,11 @@
 Plainsight — E2E scenarios (Phase C)
 
+> **STALE SCENARIO NOTES.** This old `docs/` file is retained as historical E2E
+> planning context and may contain old paths or data endpoints. Use
+> [`../_docs/testing.md`](../_docs/testing.md) for current testing guidance and
+> [`../_docs/architecture.md`](../_docs/architecture.md) for current
+> architecture.
+
 > Companion to `docs/testing-strategy.md`. That file holds the _why_ (Principle 3,
 > the trophy, the MapGrab/option-A decision); this file is the **executable scope**
 > for the E2E layer — the settled scenario set and the seams to build it on. Where

@@ -37,9 +37,9 @@ export interface TransportInput {
  * terminates the worker on stop.
  *
  * The worker thread is created **lazily on the first command**, not on start: the
- * worker actor is session-lifetime and now mounts on the home page too (the scene
- * providers live in the root layout), but only the city machine ever sends a
- * command, so `/` never pays for a `new Worker()` or its bundle.
+ * worker actor is session-lifetime inside the scene layout, but only the city
+ * machine sends commands. Entering the scene does not pay for a `new Worker()` or
+ * its bundle until a city load/process request actually needs it.
  */
 export const transportActor = fromCallback<TransportCommand, TransportInput>(
   ({ input, sendBack, receive }) => {
