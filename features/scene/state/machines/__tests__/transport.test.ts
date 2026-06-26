@@ -4,10 +4,10 @@ import { createActor } from "xstate";
 import { transportActor } from "../worker/transport";
 
 /**
- * The worker actor is session-lifetime and now mounts on the home page too (the
- * scene providers live in the root layout). The transport must therefore defer the
- * real `new Worker()` until a city actually sends a command, so `/` never pays for
- * a worker thread. These tests pin that timing via the `createWorker` seam.
+ * The worker actor is session-lifetime inside the scene layout. The transport
+ * must still defer the real `new Worker()` until a city actually sends a command,
+ * so entering the scene shell never pays for a worker thread before it is needed.
+ * These tests pin that timing via the `createWorker` seam.
  */
 describe("transportActor worker lifecycle", () => {
   function fakeWorker() {

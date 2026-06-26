@@ -21,7 +21,7 @@ import { CityTitle } from "./city-title";
  * already on hand), so there's no layout shift while the index loads.
  *
  * Stays a server component (the index comes from the server-only `@/data`
- * barrel); the only interactive bit — firing `NAV.START` on click — is isolated
+ * barrel); the only interactive bit — firing `NAV.INTENT` on click — is isolated
  * in the `CityLink` client wrapper.
  */
 export function CitySwitcher({ citySlug }: { citySlug: string }) {

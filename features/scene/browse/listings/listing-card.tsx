@@ -1,39 +1,10 @@
 "use client";
 
-import Image from "next/image";
-import { useState } from "react";
-
 import type { BrowsePointProperties } from "@/data/contract";
 import { cn } from "@/lib/utils";
-import { formatCurrency } from "../shared/format";
-import { getListingPhotos } from "./listing-photos";
-import { ListingThumb } from "./listing-thumb";
-import { ROOM_DISPLAY } from "../shared/room-display";
-import { shimmer } from "./shimmer";
-
-const COVER_SHIMMER = shimmer(1, 1);
-
-/** 56px set-cover photo for a list row; degrades to the stripe placeholder on
- * load error so the list never shows a broken image. */
-function ListingCover({ variant }: { variant: number }) {
-  const [failed, setFailed] = useState(false);
-  if (failed) return <ListingThumb variant={variant} />;
-  const cover = getListingPhotos({ imageVariant: variant })[0];
-  return (
-    <span className="relative block size-14 shrink-0 overflow-hidden rounded-md bg-muted">
-      <Image
-        src={cover.url}
-        alt=""
-        fill
-        sizes="56px"
-        placeholder="blur"
-        blurDataURL={COVER_SHIMMER}
-        onError={() => setFailed(true)}
-        className="object-cover"
-      />
-    </span>
-  );
-}
+import { formatCurrency } from "../../shared/format";
+import { ROOM_DISPLAY } from "../../shared/room-display";
+import { ListingCover } from "./listing-cover";
 
 /**
  * One row in the Browse list. It is a button because it opens the listing detail

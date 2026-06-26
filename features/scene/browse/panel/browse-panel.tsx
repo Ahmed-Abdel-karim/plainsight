@@ -8,7 +8,7 @@ import type { SortKey } from "@/data/types";
 import { BrowseEmpty } from "./browse-empty";
 import { BrowseError } from "./browse-error";
 import { BrowseSummary } from "./browse-summary";
-import { ListingList } from "../listing-list";
+import { ListingList } from "../listings";
 import { SortControl } from "./sort-control";
 import {
   useBrowseCityParams,

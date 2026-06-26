@@ -18,10 +18,10 @@ import * as Context from "./context";
 import type * as Events from "./events";
 
 /**
- * It spawns the persistent `map`/`ui` actors in
- * context (the refs the React tree reads) and invokes the `worker`/`navigation`
- * session machines, then translates the two lifecycle inputs into the shared
- * map/ui suppression pair: `NAV.STARTED` (from `navigation`) → `SUSPEND`;
+ * Root coordinator. It spawns the persistent `map`/`ui` actors in context (the
+ * refs the React tree reads) and invokes the `worker`/`navigation` session
+ * machines, then translates the two lifecycle inputs into the shared map/ui
+ * suppression pair: `NAV.STARTED` (from `navigation`) → `SUSPEND`;
  * `CITY.READY`/`CITY.FAILED` (from `city`) → `RESUME`. It owns the `city` actor's
  * spawn/stop and mirrors settled selection to the URL. Its two states gate that
  * mirror: `URL.SYNC` writes only in `settled`; while `switching` (a city switch

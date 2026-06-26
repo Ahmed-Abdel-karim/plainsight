@@ -8,8 +8,8 @@ import { usePendingSlug } from "../state";
  * The switcher trigger title. Normally the current city's name; while a city
  * switch is in flight it optimistically shows the *pending* city (so the header
  * matches the click immediately instead of lagging on the old city until the new
- * route resolves) with a spinner alongside. `pendingSlug` is non-null exactly
- * between `NAV.START` and `CITY.READY`, so it drives both the name and the
+ * route resolves) with a spinner alongside. `pendingSlug` is non-null while the
+ * navigation actor has a pending path, so it drives both the name and the
  * spinner. The dropdown itself stays enabled — the user can keep switching.
  *
  * `nameBySlug` is passed from the server component (which holds the cities index);

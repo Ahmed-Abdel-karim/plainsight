@@ -50,7 +50,7 @@ export function SceneUrlLoader({
     // Selection lives on `ui` too. SELECT after SET_LENS so a
     // `?lens=browse&listing=…` deep link keeps its listing (switching to
     // `analyse` clears selection; browse does not).
-    selectListing(listing);
+    selectListing(lens === "browse" ? listing : null);
   }, [city, changeCity, setLens, selectListing]);
 
   return null;

@@ -12,14 +12,14 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { cn } from "@/lib/utils";
-import { formatCurrency } from "../shared/format";
-import { useCityFraming } from "../state";
-import { useLens } from "../shared/use-lens";
-import { useNeighbourhoodNames } from "../shared/use-neighbourhood-names";
-import { useBrowsePoints } from "./use-browse-points";
+import { formatCurrency } from "../../shared/format";
+import { useCityFraming } from "../../state";
+import { useLens } from "../../shared/use-lens";
+import { useNeighbourhoodNames } from "../../shared/use-neighbourhood-names";
+import { useBrowsePoints } from "../use-browse-points";
 import { ListingDetailBody } from "./listing-detail-body";
 import { ListingGallery } from "./listing-gallery";
-import { ROOM_DISPLAY } from "../shared/room-display";
+import { ROOM_DISPLAY } from "../../shared/room-display";
 
 /** Side panel on desktop (>=lg), bottom sheet below. */
 function useDrawerDirection(): "right" | "bottom" {
