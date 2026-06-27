@@ -1,0 +1,4 @@
+interface:
+  display_name: "File Issue"
+  short_description: "Create a structured Plainsight GitHub issue"
+  default_prompt: "Use $issue to file this work as a structured Plainsight GitHub issue."
