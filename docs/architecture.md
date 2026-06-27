@@ -63,7 +63,7 @@ data/
 lib/
   pure reusable logic and browser/server-safe calculation modules
 
-_docs/
+docs/
   engineering docs and ADRs
 ```
 

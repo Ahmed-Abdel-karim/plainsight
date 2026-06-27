@@ -100,7 +100,7 @@ The result is a frontend-owned scene subsystem. Next.js provides static routes
 and server-readable snapshot tiers. The browser owns the interactive analytical
 workspace.
 
-Detailed engineering docs live in [`_docs/`](_docs/README.md). This case study
+Detailed engineering docs live in [`docs/`](docs/README.md). This case study
 keeps the story at portfolio level instead of repeating every architecture rule.
 
 ---
@@ -150,7 +150,7 @@ should be ignored during navigation, and how stale async results are prevented
 from affecting the current city.
 
 The detailed actor topology and runtime sequences are documented in
-[`_docs/runtime-orchestration.md`](_docs/runtime-orchestration.md).
+[`docs/runtime-orchestration.md`](docs/runtime-orchestration.md).
 
 ---
 

@@ -95,17 +95,17 @@ app/       routes, layouts, metadata, server/client composition
 features/  home and scene feature domains
 data/      snapshot contracts, loaders, and server-facing read models
 lib/       pure filters, listing projections, geo, URL, and worker-safe logic
-_docs/     engineering docs and ADRs
+docs/     engineering docs and ADRs
 ```
 
 For deeper detail:
 
 - [Case study](CASE_STUDY.md)
-- [Engineering docs](_docs/README.md)
-- [Architecture](_docs/architecture.md)
-- [Runtime orchestration](_docs/runtime-orchestration.md)
-- [Testing strategy](_docs/testing.md)
-- [Architecture decisions](_docs/decisions/)
+- [Engineering docs](docs/README.md)
+- [Architecture](docs/architecture.md)
+- [Runtime orchestration](docs/runtime-orchestration.md)
+- [Testing strategy](docs/testing.md)
+- [Architecture decisions](docs/decisions/)
 
 ---
 
