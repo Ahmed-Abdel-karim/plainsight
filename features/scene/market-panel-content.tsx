@@ -13,7 +13,7 @@ import { BrowseError, BrowsePanel } from "./browse";
 import { FeatureBoundary } from "@/components/utils/error-boundary";
 import { CitySwitcher } from "./city-switcher";
 import { LensActivity } from "./lens-activity";
-import { ListingCount } from "./listing-count";
+import { CityListingCount } from "./listing-count";
 import { Logo } from "@/components/logo";
 
 type MarketPanelContentProps = {
@@ -52,12 +52,8 @@ export function MarketPanelContent({
         <div className="flex flex-wrap items-center gap-inline text-muted-foreground type-label">
           <span>{country}</span>
           <span aria-hidden="true">·</span>
-          <span
-            role="status"
-            aria-live="polite"
-            className="font-mono text-foreground tabular-nums"
-          >
-            <ListingCount
+          <span className="font-mono text-foreground tabular-nums">
+            <CityListingCount
               fallback={
                 <Skeleton className="inline-block h-4 w-20 align-middle" />
               }

@@ -42,8 +42,11 @@ export interface AnalysisSetup extends SceneRenderResult {
 export function setupAnalysis(
   options: AnalysisSetupOptions = {},
 ): AnalysisSetup {
-  const framing = makeMapCityPayload(options.framing);
   const defaultAggregates = options.defaultAggregates ?? makeRichAggregates();
+  const framing = makeMapCityPayload({
+    cityListingCount: defaultAggregates.listingCount,
+    ...options.framing,
+  });
   const filter = {
     roomTypes: [] as RoomType[],
     priceRange: null as [number, number] | null,

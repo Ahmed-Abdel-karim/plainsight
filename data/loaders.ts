@@ -43,10 +43,9 @@ export async function getCityMeta(slug: string): Promise<CityMeta | null> {
 }
 
 /**
- * Scope listing totals that frame the client header/trigger: the city-wide
- * count, the neighbourhood count for the scope label, and an unfiltered
- * per-neighbourhood total map so a client neighbourhood selection updates the
- * header without a server round trip. All read from the already-cached cube.
+ * Listing totals that frame the city baseline and scoped result summaries: the
+ * city-wide count, neighbourhood count, and an unfiltered per-neighbourhood
+ * total map. All are read from the already-cached cube.
  */
 export async function getCityScopeCounts(slug: string): Promise<{
   cityListingCount: number;

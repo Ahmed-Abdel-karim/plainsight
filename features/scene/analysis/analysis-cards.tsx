@@ -11,7 +11,7 @@ import {
 } from "./analysis-cards-skeleton";
 import { KpiRow } from "./kpi-row";
 import { RoomMixBar } from "./room-mix-bar";
-import { useCityFraming } from "../state";
+import { useCityFraming, useScopeListingCount } from "../state";
 import { useStats } from "./use-stats";
 
 // The two Recharts-backed charts are the route's only importers of recharts (and
@@ -43,15 +43,53 @@ export function AnalysisCards({
   const city = useCityFraming();
   const currency = city?.currency ?? defaultCurrency;
   const aggregates = useStats(snapshot);
+  const scopeListingCount = useScopeListingCount();
 
   if (aggregates === null) return <AnalysisCardsSkeleton />;
 
   return (
     <>
+      <AnalysisSummary
+        shown={aggregates.listingCount}
+        total={scopeListingCount ?? aggregates.listingCount}
+      />
       <KpiRow aggregates={aggregates} currency={currency} />
       <PriceHistogram aggregates={aggregates} currency={currency} />
       <RoomMixBar aggregates={aggregates} />
       <TopHostsBar aggregates={aggregates} />
     </>
   );
+}
+
+function AnalysisSummary({ shown, total }: { shown: number; total: number }) {
+  const allListingsShown = shown === total;
+
+  return (
+    <p
+      role="status"
+      aria-live="polite"
+      className="type-caption text-muted-foreground tabular-nums"
+    >
+      {allListingsShown ? (
+        <>
+          All{" "}
+          <span className="font-mono text-foreground">
+            {formatListingCount(shown)}
+          </span>{" "}
+          listings in this view
+        </>
+      ) : (
+        <>
+          <span className="font-mono text-foreground">
+            {formatListingCount(shown)}
+          </span>{" "}
+          of {formatListingCount(total)} listings match this view
+        </>
+      )}
+    </p>
+  );
+}
+
+function formatListingCount(value: number): string {
+  return value.toLocaleString("en");
 }

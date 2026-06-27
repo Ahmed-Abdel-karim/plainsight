@@ -92,6 +92,11 @@ export const useNbhd = createCitySelector(
   (s) => s?.context.filter.nbhd ?? null,
 );
 
+/** The active city's unfiltered snapshot total. */
+export const useCityListingCount = createCitySelector(
+  (s) => s?.context.framing?.cityListingCount ?? null,
+);
+
 /** The active scope's unfiltered listing total, selected from the city actor's
  *  server-seeded framing: the per-neighbourhood total, falling back to the
  *  city-wide total when city-scoped (or a neighbourhood id is missing). `null`
