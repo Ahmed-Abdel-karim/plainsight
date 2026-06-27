@@ -6,6 +6,7 @@ import { BrowsePanel } from "@/features/scene/browse";
 import { useCityFraming } from "@/features/scene/state/machines/city/use-city";
 import { LensActivity } from "@/features/scene/lens-activity";
 import { LensSwitcher } from "@/features/scene/lens-switcher";
+import { CityListingCount } from "@/features/scene/listing-count";
 import { MapCanvas } from "@/features/scene/map/map-canvas";
 import { SystemId } from "@/features/scene/state/machines/constants";
 import type { CityMachineActor } from "@/features/scene/state/machines/city/machine";
@@ -124,6 +125,9 @@ export function setupScene(
 
   const result = renderScene(
     <>
+      <p>
+        <CityListingCount fallback="Loading listings…" />
+      </p>
       <LensSwitcher />
       <FilterWhenFramed cityMeta={cityMetaFor(framing.slug)} />
       <LensActivity

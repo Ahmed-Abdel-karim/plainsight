@@ -183,8 +183,8 @@ function BrowseListingBody({
 function BrowseLoadingList() {
   return (
     <div className="flex flex-col gap-snug" aria-hidden="true">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <Skeleton key={i} className="h-16 w-full rounded-md" />
+      {Array.from({ length: 3 }).map((_, i) => (
+        <Skeleton key={i} className="h-14 w-full rounded-md" />
       ))}
     </div>
   );

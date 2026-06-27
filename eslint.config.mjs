@@ -41,7 +41,7 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     "design/**",
   ]),
-  // Test-quality guardrails (docs/testing-strategy.md, Principle 5.2).
+  // Test-quality guardrails (docs/testing.md).
   // Vitest hygiene applies to every test file (recommended already errors on
   // no-focused-tests / expect-expect / valid-expect — a "test" with no assertion
   // fails lint). Disable autofix on no-focused-tests so a stray `.only` can't be

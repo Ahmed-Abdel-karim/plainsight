@@ -82,6 +82,7 @@ describe("scene cross-region interaction", () => {
     expect(within(await findListingList()).getAllByRole("button")).toHaveLength(
       3,
     );
+    expect(screen.getByText("3 listings")).toBeInTheDocument();
     const filterBefore = (
       await findMapLayer(POINTS_CIRCLE_LAYER_ID)
     ).getAttribute("data-layer-filter");
@@ -91,6 +92,8 @@ describe("scene cross-region interaction", () => {
     expect(within(await findListingList()).getAllByRole("button")).toHaveLength(
       2,
     );
+    expect(screen.getByText("3 listings")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent("2 of 3 listings");
     expect(
       getMapLayer(POINTS_CIRCLE_LAYER_ID).getAttribute("data-layer-filter"),
     ).not.toEqual(filterBefore);

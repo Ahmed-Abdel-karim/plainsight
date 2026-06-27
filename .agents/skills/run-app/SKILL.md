@@ -1,6 +1,6 @@
 ---
 name: run-app
-description: Browser-drive and visually verify the Plainsight Next.js scene with a real Chromium, MapLibre WebGL, SwiftShader, Playwright, and axe-core. Use after changes under components/scene, components/theme, app/[city], map styles, responsive layout, interactions, hydration, or accessibility; use whenever unit tests cannot prove that the rendered map and UI actually work.
+description: Browser-drive and visually verify the Plainsight Next.js scene with a real Chromium, MapLibre WebGL, SwiftShader, Playwright, and axe-core. Use after browser-visible changes under features/scene, components/theme, app/(scene)/[city], map styles, responsive layout, interactions, hydration, or accessibility, and whenever automated tests cannot prove that the rendered map and UI actually work.
 ---
 
 # Run App
