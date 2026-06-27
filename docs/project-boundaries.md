@@ -270,7 +270,7 @@ rather than this requirements document.
 ## Known Pre-Release Boundaries
 
 These are remaining verification and deployment boundaries for a production-style
-release. They do not block the public portfolio demo, but they document what is
+release. They do not block the public case study, but they document what is
 and is not fully verified.
 
 - Automated serious/critical axe checks pass for primary non-map UI surfaces.

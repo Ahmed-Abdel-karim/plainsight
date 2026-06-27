@@ -6,7 +6,7 @@ Plainsight helps users explore where short-term rentals are concentrated, what
 they cost, and how a market is shaped by room type, neighbourhood, and host
 structure.
 
-It is a public, read-only portfolio demo built from attributed Inside Airbnb
+public, read-only frontend architecture case study built from attributed Inside Airbnb
 snapshots. The data is transformed into static frontend assets so the experience
 is reproducible, reviewable, and deployable without accounts or backend
 infrastructure.
@@ -37,7 +37,7 @@ that a mostly static CRUD demo does not:
 - a visual map workflow that still needs semantic, keyboard-friendly fallback
   paths.
 
-The public demo uses curated static snapshots. That is an intentional portfolio
+The public demo uses curated static snapshots. That is an intentional case study
 boundary: the app can be reviewed consistently without sign-up, uploads,
 storage, moderation, or operational backend concerns.
 
@@ -273,7 +273,7 @@ implemented.
 
 ## Project status
 
-Plainsight is an active portfolio project.
+Plainsight is an active case study project.
 
 Current focus:
 
