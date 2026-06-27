@@ -61,7 +61,7 @@ const eslintConfig = defineConfig([
     files: COMPONENT_TEST_GLOBS,
     ignores: [MACHINE_TESTS],
   },
-  // Architecture boundaries — enforced, not just documented (see _docs/conventions.md).
+  // Architecture boundaries — enforced, not just documented (see docs/conventions.md).
   // Downward-only layers, no sibling-feature imports, and no deep relative chains.
   {
     files: [

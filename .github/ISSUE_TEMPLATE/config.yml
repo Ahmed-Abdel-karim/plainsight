@@ -1,5 +1,5 @@
 blank_issues_enabled: false
 contact_links:
   - name: Project conventions & boundaries
-    url: https://github.com/Ahmed-Abdel-karim/plainsight/blob/master/_docs/README.md
+    url: https://github.com/Ahmed-Abdel-karim/plainsight/blob/master/docs/README.md
     about: Read the architecture, conventions, and issue-tracking guide before filing.

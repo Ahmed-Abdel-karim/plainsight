@@ -221,7 +221,9 @@ The core journey is:
 
 The rationale for immutable snapshots and the no-backend boundary is recorded in
 [ADR 0003](decisions/0003-use-immutable-city-snapshots.md). Snapshot tiering and
-delivery are the subject of ADR 0004 rather than this requirements document.
+delivery are the subject of
+[ADR 0006](decisions/0006-tier-city-snapshots-and-share-calculation-core.md)
+rather than this requirements document.
 
 ## Assumptions
 

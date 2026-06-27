@@ -19,7 +19,7 @@ ref, but nullable since it is absent before the first navigation.)
 ## Issue tracking
 
 To file a GitHub issue from a finding, use the `/issue` skill (or follow
-`_docs/issue-tracking.md` directly). Labels come from `.github/labels.sh`.
+`docs/issue-tracking.md` directly). Labels come from `.github/labels.sh`.
 
 ## Folder structure
 
