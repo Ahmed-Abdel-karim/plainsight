@@ -1,112 +1,268 @@
-Plainsight — Module Architecture (AI implementation guide)
+# Architecture
 
-> ⚠️ **SUPERSEDED — do not follow as current guidance.** This describes the old
-> `components/scene/` four-layer model and the "defer `features/`" decision —
-> both reversed. The app is now feature-based (`features/scene`, `features/home`;
-> `components/` is shared UI only) on the XState actor system, not Zustand.
-> Current rules live in [`../_docs/architecture.md`](../_docs/architecture.md),
-> [`../_docs/conventions.md`](../_docs/conventions.md), and `CLAUDE.md`. Kept
-> for history only.
+This document explains the current engineering shape of Plainsight.
 
-Companion to Constitution **Principle VI — Layered Feature Architecture** and the
-**Project Rules → Module Boundaries** section. The constitution states the obligations; this
-doc explains the model, shows the tree, and gives the rationale. When the two disagree, the
-constitution wins.
+It is an implementation-facing overview for contributors, reviewers, and future
+maintainers. It does not repeat product requirements, testing policy, or full
+ADR rationale.
 
-## What this governs
+Read this with:
 
-Where a file goes, and what it is allowed to import. Plainsight is organized in four layers.
-**Dependencies point downward only** — a layer may import from layers below it, never above.
+- [Project boundaries](project-boundaries.md) for product scope and constraints.
+- [Runtime orchestration](runtime-orchestration.md) for actor diagrams and
+  runtime sequences.
+- [Architecture decisions](decisions/README.md) for why load-bearing choices were
+  made.
 
-```
-app/         routes — compose features, own Suspense / generateStaticParams, no business logic
-components/  UI    — scene/ (the feature) + city-picker/ + home/ + ui/ (shadcn) + theme/ + logo
-data/        IO seam — ports & adapters; loaders.ts is the ONLY data entry point for the UI
-lib/         shared kernel — pure / framework-light: geo, filters, the listings worker engine
-```
+The implementation is the source of truth. If this document conflicts with code,
+fix the document or the implementation in the same change.
 
-`app/` → may import `components/`, `data/`, `lib/`.
-`components/` → may import `data/`, `lib/`, and `components/ui/`. A feature MAY import shared
-UI; it MUST NOT import another sibling feature, and MUST NOT import `app/`.
-`data/` → may import `lib/` (types/pure helpers). MUST NOT import `components/`, `app/`.
-`lib/` → may model against the **domain kernel** — the type-only shared vocabulary in
-`data/contract.ts` + `data/types.ts` (shapes and pure policy constants), which sits logically
-below `lib`; the `data/` prefix is storage co-location, not an IO edge. `lib/` MUST NOT import
-`data/` **runtime** (loaders/repository/selectors), `components/`, or `app/`.
+## System overview
 
-## Target tree
+Plainsight is a frontend-first geospatial analysis app.
 
-```
-app/                              # routes only
-  (scene)/layout.tsx              #   persistent map shell across city nav
-  (scene)/[city]/page.tsx         #   gate on meta; 404 if city missing
-  page.tsx  layout.tsx  globals.css  tokens.css
+The public version uses immutable Inside Airbnb snapshots that are transformed
+into static application assets. Next.js renders stable city routes and small
+materialized summaries. The browser owns the interactive scene: persistent map,
+XState actor system, filters, Browse list, Analyse recomputation, and URL state.
 
-components/
-  ui/                             # shadcn primitives — SHARED, never feature-specific
-  theme/                          # cross-cutting: provider + toggle (>1 consumer)
-  logo.tsx                        # shared chrome
-  city-picker/                    # domain: choose a city (home)
-  home/                           # home view shell
-  scene/                          # ★ THE feature — self-contained
-    scene-view.tsx  market-panel-content.tsx  scene-drawer.tsx  city-switcher.tsx
-    listing-count.tsx  market-header.tsx  map-legend.tsx
-    use-city-listings.ts          #   the feature's client hook (NOT in lib/)
-    analysis/                     #   sub-slice: kpis, charts, filters, use-filters
-    map/                          #   sub-slice: basemap, canvas, neighbourhoods, map-store
-      neighbourhoods/
+```mermaid
+flowchart TD
+  route["Next.js city route"] --> layout["(scene) layout"]
+  layout --> provider["SceneProvider"]
+  provider --> actors["XState actor system"]
+  actors --> map["Persistent MapLibre map"]
+  actors --> ui["Scene UI"]
+  actors --> city["Active city actor"]
+  actors --> worker["Session worker actor"]
 
-data/                             # IO seam — keep centralized, do not dissolve into features
-  contract.ts  index.ts  types.ts  loaders.ts  selectors.ts
-  repository/{index,port,static-json,postgres}.ts   # the swap seam
-  sql/schema.sql
-
-lib/                              # shared kernel — pure, no feature knowledge
-  geo/  filters/
-  listings/                       # off-thread engine: worker, client, compute, protocol
-  utils.ts
+  city --> snapshots["Static city snapshot tiers"]
+  worker --> analytics["analytics rows"]
+  map --> publicAssets["points, boundaries, tiles"]
+  ui --> url["URL scene state"]
 ```
 
-## Rules
+Core runtime idea:
 
-**Rule 1 — Slice by domain, not by kind.** A feature folder owns its components, its
-feature-specific hooks/state, and its view-models together. Do NOT create global `hooks/`,
-`stores/`, or `components/`-by-type buckets. _Why:_ things that change together live together;
-you read one folder to understand one capability.
+> The route changes, but the scene session persists. The active city actor is
+> replaced while the expensive map, UI actor, worker actor, and query cache stay
+> alive for the scene route group.
 
-**Rule 2 — `components/` (outside `ui/`) is for SHARED UI only.** If exactly one feature uses
-a component, it lives in that feature. Promotion to a shared location requires a **second**
-consumer. _Why:_ premature sharing creates false coupling; `theme/` and `logo` earn their spot
-because the whole app uses them.
+## Module boundaries
 
-**Rule 3 — `data/` is the only IO boundary.** All persistence/IO goes through the `@/data`
-barrel (`data/loaders`). Nothing outside `data/` may import `data/repository/*` — that's the
-ports-and-adapters swap seam (`static-json` ↔ `postgres`), wired in exactly one place
-(`data/repository/index.ts`). _Why:_ one seam to swap the backing store; cached reads stay
-request-API-free (see `[[client-imports-from-data-contract]]` and `[[data-architecture-tiers]]`).
+```text
+app/
+  Next.js routes, layouts, metadata, server/client composition boundaries
 
-**Rule 4 — `lib/` is the shared kernel.** Pure, framework-light, domain-agnostic-ish: geo
-math, filter/sort, the listings worker engine. If a `lib/` module imports a feature, a
-component, or `app/`, it does not belong in `lib/`. _Why:_ the kernel must be reusable and
-testable without the UI. (This is why the React hook `use-city-listings` lives in
-`components/scene/`, not `lib/listings/` — the worker _engine_ is kernel; the _hook_ is feature.)
+features/
+  product features and scene sub-domains
 
-**Rule 5 — Declare boundaries per file.** `import "server-only"` on server modules,
-`"use server"` on mutations, `"use client"` on stores/hooks/interactive components — at the
-top. _Why:_ the server/client cut is legible without tracing the import graph.
+data/
+  server-facing snapshot access, contracts, and typed loaders
 
-**Rule 6 — Routes stay thin; tests co-located; kebab-case files.** `app/` composes features
-and owns `<Suspense>` placement and `generateStaticParams` — no data shaping, no logic. Tests
-sit next to source (`*.test.ts(x)`). All files are kebab-case, including components.
+lib/
+  pure reusable logic and browser/server-safe calculation modules
 
-## Why not `features/` yet
+_docs/
+  engineering docs and ADRs
+```
 
-The `next16-commerce` sibling uses top-level `features/<domain>/` vertical slices. That pattern
-earns its keep with **several independent domains that change for different reasons**
-(product / cart / category / user / auth). Plainsight is effectively **one** product surface
-(the city-market scene) plus a thin city picker. A `features/` rename here would be a
-mechanical move of `components/scene` → `features/scene` that buys no new boundary — ceremony,
-not architecture. **Defer it.** Adopt `features/` only when a genuinely independent second
-domain appears (e.g. auth, saved searches, a multi-city comparison view). The boundary that
-matters today is the one above: scene is self-contained, `data/` is the IO seam, `lib/` is the
-kernel.
+Rules:
+
+- `app/` composes routes and layouts. It should not own domain algorithms.
+- `features/scene/` owns the map scene, Browse, Analyse, and actor system.
+- `data/` owns snapshot loading and server-facing read models.
+- `lib/` owns pure logic such as filters, listings projections, search params,
+  and geo helpers.
+- Shared UI primitives stay in `components/ui/`.
+- Import boundaries are described in [Conventions](conventions.md) and enforced
+  by ESLint where practical.
+
+## Scene domains
+
+The scene feature is split by runtime responsibility:
+
+| Domain      | Owns                                                                  |
+| ----------- | --------------------------------------------------------------------- |
+| `analysis/` | Analyse panels, summaries, charts, aggregate presentation             |
+| `browse/`   | Browse list, listing rows, selection drawer, browse-specific controls |
+| `map/`      | Map shell, MapLibre canvas, layers, legends, map event wiring         |
+| `state/`    | XState machines, actor provider, actor hooks, event contracts         |
+| `shared/`   | Cross-scene utilities, shared view helpers, shared scene UI pieces    |
+
+No scene sub-domain should import another sub-domain's internals. Shared code
+moves to `shared/`, `state/`, `lib/`, or `components/ui/` depending on ownership.
+
+## Persistent scene layout
+
+The map lives in the `(scene)` route group layout, above the city route segment.
+That layout owns the scene session: query provider, scene actor provider,
+notifications, and `MapView`.
+
+City pages provide city-specific server data and panel content, but they do not
+own the MapLibre instance. This keeps city navigation from destroying and
+recreating the expensive map runtime.
+
+The decision is recorded in
+[ADR 0004](decisions/0004-persist-scene-runtime-in-route-group.md).
+
+## Data architecture
+
+Plainsight uses snapshot tiers rather than a live database.
+
+| Tier                    | Used by            | Purpose                                          |
+| ----------------------- | ------------------ | ------------------------------------------------ |
+| city manifest           | server/build       | enabled city list and asset metadata             |
+| city metadata           | server/RSC         | city framing, labels, snapshot dates, price caps |
+| materialized aggregates | server/RSC         | page-start KPIs and city/neighbourhood summaries |
+| boundaries              | browser/map        | neighbourhood outlines and labels                |
+| points                  | browser/map/Browse | one feature per listing for map dots and Browse  |
+| analytics rows          | browser worker     | recompute Analyse aggregates and H3 cells        |
+
+Server-facing tiers are small and cacheable. Browser-facing tiers can be larger
+and are fetched by the client only when needed.
+
+The immutable snapshot decision is recorded in
+[ADR 0003](decisions/0003-use-immutable-city-snapshots.md). Snapshot tiering is
+recorded in
+[ADR 0006](decisions/0006-tier-city-snapshots-and-share-calculation-core.md).
+
+### Calculation integrity
+
+Snapshot materialization and runtime recomputation share the same calculation
+core.
+
+The offline aggregate generator, client worker, and main-thread Browse
+projections use pure listing/filter projection modules. Server/RSC code does not
+reimplement those calculations at request time. It reads committed materialized
+aggregate tiers and selects from them directly.
+
+This protects three user-visible surfaces from drifting:
+
+- page-start KPIs from materialized aggregates;
+- Analyse worker recomputation for filters, scope, and H3 cells;
+- Browse filtering and sorting over the listing point tier.
+
+Generator tests rebuild materialized aggregate output from analytics rows and
+compare it with the committed snapshot output.
+
+## Runtime architecture
+
+The scene runtime is an XState actor system. XState is used for orchestration,
+not for every local UI value.
+
+| Actor        | Lifetime      | Owns                                                             |
+| ------------ | ------------- | ---------------------------------------------------------------- |
+| `root`       | scene session | city replacement, suppression window, URL write gate             |
+| `navigation` | scene session | route intent and route commit                                    |
+| `map`        | scene session | MapLibre lifecycle, feature-state painting, map interaction gate |
+| `ui`         | scene session | lens, hover, selected listing, navigation-time UI drop window    |
+| `worker`     | scene session | load/process routing, cancellation, request coalescing           |
+| `city`       | active city   | current city filter, lens leg, load status, stale-result guards  |
+
+Root spawns session actors that React needs synchronously and invokes session
+services that run for the scene lifetime. Root also spawns and replaces the
+current city actor when the city changes.
+
+Detailed actor diagrams and runtime sequences live in
+[Runtime orchestration](runtime-orchestration.md). The XState decision is
+recorded in
+[ADR 0002](decisions/0002-use-xstate-for-scene-orchestration.md).
+
+## State ownership
+
+| State                                 | Owner                                                |
+| ------------------------------------- | ---------------------------------------------------- |
+| active city slug and snapshot framing | city actor input/context                             |
+| current lens                          | UI actor, forwarded to city                          |
+| filters and neighbourhood scope       | city actor                                           |
+| selected listing and hover            | UI actor, mirrored to map for feature-state painting |
+| MapLibre readiness and loaded sources | map actor                                            |
+| worker request ids and process slots  | worker actor                                         |
+| query cache for public assets         | TanStack Query                                       |
+| URL serialization                     | root action reading live UI/city snapshots           |
+
+Local component-only state should remain local. Server/cache data should remain
+in Next.js or TanStack Query. Actors own lifecycle coordination and race-prone
+cross-domain state.
+
+## URL state
+
+The URL stores semantic scene state, not low-level map runtime state.
+
+URL-backed:
+
+- lens;
+- neighbourhood scope;
+- room-type filter;
+- price filter;
+- selected listing in Browse.
+
+Runtime-only:
+
+- map camera and zoom;
+- hover;
+- MapLibre readiness;
+- loaded source flags;
+- worker request status;
+- navigation suppression;
+- transient loading and error details.
+
+`SceneUrlLoader` is the URL-to-state entry point. `UrlWriteSync` observes
+semantic scene state and asks root to sync. Root writes only while `settled` and
+drops `URL.SYNC` while switching cities.
+
+The URL decision is recorded in
+[ADR 0007](decisions/0007-treat-url-params-as-client-scene-state.md).
+
+## Runtime safety
+
+The actor system protects these failure-prone edges:
+
+- navigation starts before route commit;
+- stale UI events from the previous city arrive during a switch;
+- worker replies arrive after cancellation or after city replacement;
+- MapLibre source data reloads and clears feature-state;
+- URL writes happen while city-switch defaults are being cleared;
+- Analyse recomputation fails while the last good result is still visible.
+
+Safety rules:
+
+- root suppresses map/UI on `NAV.STARTED` and resumes on `CITY.READY` or
+  `CITY.FAILED`;
+- city replacement cancels old worker work;
+- worker process slots use request ids to drop stale replies;
+- city validates slug and snapshot id before accepting worker results;
+- UI structurally drops interaction events while navigating;
+- map interaction has its own suspended state independent of map loading.
+
+## Rendering model
+
+The app keeps the map and analytical UI decoupled:
+
+- Map rendering is a client-only enhancement around MapLibre.
+- Server Components provide stable route structure and page-start snapshot data.
+- Browse can expose listing evidence without depending on map interaction.
+- Analyse uses map layers for spatial meaning and panels/charts for textual
+  meaning.
+- The map is important, but non-map workflows must still expose counts, filters,
+  selections, loading state, and errors through semantic UI.
+
+## Documentation maintenance
+
+When changing architecture, update only the canonical docs:
+
+- structure or ownership changes: this file;
+- runtime event flow/state diagrams: `runtime-orchestration.md`;
+- why a load-bearing choice changed: a new ADR or an updated ADR;
+- product scope/requirements: `project-boundaries.md`;
+- test expectations: `testing.md`;
+- contributor rules: `conventions.md`.
+
+## Related documents
+
+- [Project boundaries](project-boundaries.md)
+- [Runtime orchestration](runtime-orchestration.md)
+- [Testing strategy](testing.md)
+- [Conventions](conventions.md)
+- [Architecture decisions](decisions/README.md)

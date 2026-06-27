@@ -1,50 +1,87 @@
-# Plainsight docs
+# Plainsight Engineering Docs
 
-This folder contains the deeper engineering documentation behind Plainsight.
+This folder contains the official engineering documentation for Plainsight.
 
-For the portfolio narrative, start with the root-level [CASE_STUDY.md](../CASE_STUDY.md).  
-For the quick project overview, start with the root-level [README.md](../README.md).
+The implementation is the source of truth. These docs explain the current system,
+record load-bearing decisions, and define the rules contributors should follow.
+When code and docs drift, update the docs in the same change that updates the
+implementation.
 
-## Reading guide
+## Documentation model
 
-| Document                          | Purpose                                                                                  |
-| --------------------------------- | ---------------------------------------------------------------------------------------- |
-| [Architecture](architecture.md)   | How the app is structured: routes, scene runtime, actor system, map lifecycle, data flow |
-| [Decisions](decisions/)           | ADRs explaining why major technical choices were made                                    |
-| [Performance](performance.md)     | Browser-side data, Web Worker projections, map persistence, and performance constraints  |
-| [Accessibility](accessibility.md) | Accessibility strategy, map-as-enhancement approach, and current limitations             |
-| [Design system](design-system.md) | Tokens, spacing rhythm, themes, responsive layout, and UI composition                    |
-| [Data model](data-model.md)       | Inside Airbnb snapshots, transformed assets, provenance, and future import direction     |
-| [Testing](testing.md)             | Testing strategy across unit, machine, UI integration, E2E, accessibility, and CI        |
-| [Deployment](deployment.md)       | Public deployment, static assets, caching, analytics, and operational boundaries         |
+The docs are intentionally split by reader need:
 
-## Suggested reading paths
+- **What must the product do?** See [Project boundaries](project-boundaries.md).
+- **How is the system shaped?** See [Architecture](architecture.md).
+- **How does the runtime move?** See [Runtime orchestration](runtime-orchestration.md).
+- **Why was a load-bearing choice made?** See [Architecture decisions](decisions/README.md).
+- **How do we prove behavior?** See [Testing strategy](testing.md).
+- **How should contributors change code?** See [Conventions](conventions.md).
 
-For a quick review:
+This follows a lightweight version of these documentation practices:
 
-1. [README](../README.md)
-2. [Case study](../CASE_STUDY.md)
-3. [Architecture](architecture.md)
+- Diátaxis: separate documentation by user need — explanation, how-to,
+  reference, and tutorial.
+- C4: keep architecture diagrams small, hierarchical, and audience-focused.
+- arc42: cover goals, constraints, building blocks, runtime behavior, decisions,
+  quality, and known risks without copying the full template.
+- GitHub Mermaid: keep diagrams as code so they are version-controlled and
+  reviewable.
 
-For a deeper frontend engineering review:
+## File ownership
 
-1. [Case study](../CASE_STUDY.md)
-2. [Architecture](architecture.md)
-3. [Performance](performance.md)
-4. [Testing](testing.md)
-5. [Decisions](decisions/)
+| File                       | Owns                                                                                             | Does not own                                           |
+| -------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------ |
+| `project-boundaries.md`    | Functional requirements, non-functional requirements, assumptions, limits, non-goals, known gaps | Implementation design or ADR rationale                 |
+| `architecture.md`          | System shape, module boundaries, data model, runtime ownership, rendering model, safety rules    | Full state-machine diagrams or product requirements    |
+| `runtime-orchestration.md` | Actor diagrams, state diagrams, sequence diagrams, runtime movement                              | Architecture narrative or ADR rationale                |
+| `testing.md`               | Test layers, contracts, mocks, commands, release confidence                                      | Architecture walkthrough                               |
+| `conventions.md`           | Repository rules and contributor conventions                                                     | Requirements or decision history                       |
+| `decisions/`               | Architecture Decision Records                                                                    | General architecture overview                          |
+| `AGENTS.md`                | Short guidance for repo agents                                                                   | Human-facing documentation duplicated from other files |
+| `CLAUDE.md`                | Claude-specific wrapper guidance                                                                 | Shared project rules                                   |
 
-For product/UI review:
+## What goes where
 
-1. [Case study](../CASE_STUDY.md)
-2. [Design system](design-system.md)
-3. [Accessibility](accessibility.md)
-4. [Data model](data-model.md)
+Use one canonical home for each idea:
 
-## Documentation status
+| Topic                                    | Canonical home                                                  |
+| ---------------------------------------- | --------------------------------------------------------------- |
+| Product scope and non-goals              | `project-boundaries.md`                                         |
+| Feature/module/layer boundaries          | `architecture.md`                                               |
+| Persistent scene layout                  | ADR 0004 + short architecture summary                           |
+| XState actor topology                    | `architecture.md` summary + `runtime-orchestration.md` diagrams |
+| Runtime event sequences                  | `runtime-orchestration.md`                                      |
+| Immutable snapshots                      | ADR 0003 + architecture data section                            |
+| Snapshot tiers and calculation integrity | ADR 0006 + architecture data section                            |
+| URL state semantics                      | ADR 0007 + architecture URL section                             |
+| Test strategy                            | `testing.md`                                                    |
+| Repo conventions                         | `conventions.md`                                                |
 
-Some documents may start as focused summaries and become deeper references over time. The goal is to keep each document scoped:
+When another file needs the same idea, use one short sentence and link to the
+canonical home instead of repeating the full explanation.
 
-- README provides the concise project overview.
-- CASE_STUDY explains why the project matters.
-- docs/ proves the engineering decisions and tradeoffs.d
+## Diagram policy
+
+Use diagrams only when they reduce cognitive load.
+
+- Put high-level system/data diagrams in `architecture.md`.
+- Put state-machine and sequence diagrams in `runtime-orchestration.md`.
+- Put diagrams in ADRs only when the decision is hard to understand without one.
+- Prefer Mermaid code blocks over screenshots so diagrams are reviewable.
+- Do not create a giant “whole app” diagram.
+
+## Update checklist
+
+When changing architecture, runtime, data flow, or tests, check whether the
+change affects:
+
+- [Architecture](architecture.md)
+- [Runtime orchestration](runtime-orchestration.md)
+- [Project boundaries](project-boundaries.md)
+- [Testing strategy](testing.md)
+- [Conventions](conventions.md)
+- [Architecture decisions](decisions/README.md)
+
+Do not update every file by default. Update only the canonical home and any
+short cross-reference that would otherwise become misleading.

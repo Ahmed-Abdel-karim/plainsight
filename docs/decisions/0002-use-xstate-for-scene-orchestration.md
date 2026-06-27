@@ -59,7 +59,7 @@ machine is parallel with `lifecycle` and `interaction` regions. See
 ## References
 
 - [Current architecture](../architecture.md)
-- [Historical map transition design](../../docs/map-machine-transition-gating.md)
+- [Runtime orchestration](../runtime-orchestration.md)
 - [XState documentation](https://stately.ai/docs/xstate)
 - [Zustand introduction](https://zustand.docs.pmnd.rs/getting-started/introduction)
 - [redux-observable documentation](https://redux-observable.js.org/)

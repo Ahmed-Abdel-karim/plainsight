@@ -60,5 +60,6 @@ tiers to an external asset origin without changing the data contract.
 
 ## References
 
-- [Deployment research](../../PORTFOLIO_FINALIZATION.md#deployment-research-note-large-data-delivery)
+- [Project boundaries](../project-boundaries.md)
+- [Current architecture](../architecture.md)
 - [Vercel Function limits](https://vercel.com/docs/functions/limitations)

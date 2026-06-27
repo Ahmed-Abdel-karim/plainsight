@@ -6,7 +6,7 @@ import { getCitiesData } from "@/data";
 /**
  * City scene shell — owns the whole client scene subsystem. The actor system +
  * React Query providers live here (not the root layout) so their client JS stays
- * off non-scene routes like the home picker. They persist across city↔city
+ * off non-scene routes like the home route. They persist across city↔city
  * navigation within this segment and reset only when navigation leaves `(scene)`
  * entirely. This layout sits above the `[city]` segment, so the WebGL map
  * persists across `/amsterdam → /berlin`; only `{children}` (the per-city
