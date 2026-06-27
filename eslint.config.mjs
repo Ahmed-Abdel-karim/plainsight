@@ -40,6 +40,7 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     "design/**",
+    "playwright-report/**",
   ]),
   // Test-quality guardrails (docs/testing.md).
   // Vitest hygiene applies to every test file (recommended already errors on
