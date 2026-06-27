@@ -14,6 +14,7 @@ infrastructure.
 **Live demo:** https://plainsight-theta.vercel.app/
 
 ![Plainsight hero — Analyse and Browse lenses](docs/media/hero.png)
+![Plainsight gif — Analyse and Browse lenses](docs/media/analyse-browse.gif)
 
 <p>
   <img alt="Next.js 16" src="https://img.shields.io/badge/Next.js-16-black?logo=next.js" />
