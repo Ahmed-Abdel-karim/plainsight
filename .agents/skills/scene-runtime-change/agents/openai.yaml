@@ -1,0 +1,4 @@
+interface:
+  display_name: "Scene Runtime Change"
+  short_description: "Safely change the Plainsight actor runtime"
+  default_prompt: "Use $scene-runtime-change to update the Plainsight scene actor runtime safely."

@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { FeatureBoundary } from "@/components/utils/error-boundary";
 import { getCityScopeCounts } from "@/data";
 import type { CityMeta } from "@/data/contract";
-import { ListingCount } from "./listing-count";
+import { CityListingCount } from "./listing-count";
 import { ListingDetail } from "./browse";
 import { SceneDrawer } from "./scene-drawer";
 import { ScenePanels } from "./scene-panels";
@@ -58,7 +58,7 @@ export function SceneView({ cityMeta }: { cityMeta: CityMeta }) {
           <SceneDrawer
             cityName={cityMeta.name}
             triggerCount={
-              <ListingCount fallback={<Skeleton className="h-3 w-16" />} />
+              <CityListingCount fallback={<Skeleton className="h-3 w-16" />} />
             }
           >
             <MarketPanelContent cityMeta={cityMeta} />

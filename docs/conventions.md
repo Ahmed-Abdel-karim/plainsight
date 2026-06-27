@@ -1,6 +1,8 @@
 # Conventions
 
-This document defines contributor-facing repository rules.
+This document expands the contributor-facing repository rules. Root
+[`AGENTS.md`](../AGENTS.md) is canonical for coding agents; this document
+provides supporting examples and rationale and must remain aligned with it.
 
 Anything a tool can check is a gate, not prose. Prettier owns formatting,
 TypeScript owns types, and ESLint owns import and layer boundaries. This file
@@ -129,30 +131,6 @@ Rules:
   switches.
 
 _Enforced:_ Prettier for formatting through `pnpm format:check`.
-
-## Comments
-
-Prefer self-documenting code first: better names, stronger types, smaller
-functions, and clearer boundaries.
-
-Use comments for:
-
-- non-obvious decisions;
-- public contracts, boundaries, lifecycle rules, or invariants;
-- timing, ordering, caching, concurrency, or actor coordination;
-- browser, framework, accessibility, or worker limitations;
-- external references that explain a constraint.
-
-Do not use comments to:
-
-- repeat obvious code;
-- preserve implementation history;
-- mention old task IDs, phase names, or component names;
-- leave commented-out code;
-- narrate JSX, imports, or assignments.
-
-Use JSDoc for exported public contracts when names and types are not enough. Use
-short `//` comments for local implementation notes. A stale comment is a bug.
 
 ## Tests
 

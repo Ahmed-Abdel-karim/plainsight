@@ -41,6 +41,7 @@ export function AnalysisCardsSkeleton() {
     // the parent's gap) while still carrying the loading role for screen readers.
     <div role="status" aria-busy="true" className="contents">
       <span className="sr-only">Loading distributions…</span>
+      <Skeleton className="h-4 w-48" />
       <div className="grid grid-cols-3 divide-x divide-border overflow-hidden rounded-lg border border-border">
         {["Median price", "Multi-host share", "Reviews / month"].map(
           (label) => (

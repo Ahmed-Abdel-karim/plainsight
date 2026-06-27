@@ -49,6 +49,9 @@ describe("analysis region", () => {
     expect(screen.getByText("Median price")).toBeInTheDocument();
     expect(screen.getByText("Multi-host share")).toBeInTheDocument();
     expect(screen.getByText("Reviews / month")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "All 1,000 listings in this view",
+    );
 
     const roomMix = within(getChartCard("Room-type mix"));
     expect(roomMix.getByText("Entire")).toBeInTheDocument();
@@ -89,11 +92,47 @@ describe("analysis region", () => {
     expect(loading).toHaveAttribute("aria-busy", "true");
     expect(loading).toHaveTextContent(/loading distributions/i);
 
-    scene.replyAggregates(makeRichAggregates({ medianPrice: 99 }));
+    scene.replyAggregates(
+      makeRichAggregates({ listingCount: 240, medianPrice: 99 }),
+    );
 
     expect(queryLoadingStatus()).toBeNull();
     expect(screen.getByText("99")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "240 of 1,000 listings match this view",
+    );
     expect(await axe(scene.container)).toHaveNoViolations();
+  });
+
+  it("compares filtered results with the active neighbourhood total", () => {
+    const scene = setupAnalysis({
+      filter: {
+        roomTypes: ["Entire home/apt"],
+        nbhd: "centre",
+      },
+      framing: {
+        cityListingCount: 1000,
+        neighbourhoodListingCounts: { centre: 200 },
+      },
+    });
+    scene.navigateToCity();
+    scene.finishCityLoad();
+    scene.replyAggregates(makeRichAggregates({ listingCount: 50 }));
+
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "50 of 200 listings match this view",
+    );
+  });
+
+  it("reports an empty filtered result explicitly", () => {
+    const scene = setupAnalysis({ filter: { roomTypes: ["Private room"] } });
+    scene.navigateToCity();
+    scene.finishCityLoad();
+    scene.replyAggregates(makeAggregates({ listingCount: 0 }));
+
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "0 of 1,000 listings match this view",
+    );
   });
 
   it("keeps the last-good numbers (not the skeleton) while a filter change recomputes", () => {
