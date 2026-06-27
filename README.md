@@ -287,8 +287,7 @@ Current focus:
 
 ## License
 
-License is not declared yet. The code remains all-rights-reserved until a
-`LICENSE` file and `package.json` license field are added.
+The Plainsight source code is available under the [MIT License](LICENSE).
 
 The Inside Airbnb data is licensed separately under CC BY 4.0 and is attributed
 independently of the code license.
