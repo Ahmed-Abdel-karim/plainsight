@@ -6,7 +6,7 @@ Plainsight is a frontend-first geospatial analysis app designed around
 persistent map rendering, large client-side datasets, shared calculation logic,
 off-thread analysis, URL-restorable state, and explicit lifecycle orchestration.
 
-The goal was not to build another mostly static portfolio app. I chose a
+The goal was not to build another mostly static app. I chose a
 map-based market explorer because it creates real frontend complexity: a
 client-only map, large local datasets, asynchronous computation, route
 transitions, restored interaction state, and dense responsive UI.
@@ -45,7 +45,7 @@ Live demo: https://plainsight-theta.vercel.app/
 
 A short-term-rental map explorer is visual, data-heavy, interaction-heavy, and
 stateful. It naturally creates product pressures that are difficult to show in a
-simple CRUD portfolio project:
+simple CRUD project:
 
 | Product pressure                   | Why it matters                                                                                      |
 | ---------------------------------- | --------------------------------------------------------------------------------------------------- |
@@ -101,7 +101,7 @@ and server-readable snapshot tiers. The browser owns the interactive analytical
 workspace.
 
 Detailed engineering docs live in [`docs/`](docs/README.md). This case study
-keeps the story at portfolio level instead of repeating every architecture rule.
+keeps the story at case study level instead of repeating every architecture rule.
 
 ---
 

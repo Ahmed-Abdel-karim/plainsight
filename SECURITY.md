@@ -51,7 +51,7 @@ Please do not include secrets, access tokens, private data, or destructive proof
 
 ## Expected Response
 
-This is a solo-maintained portfolio project, so response times may vary. I will make a best effort to:
+This is a solo-maintained case study project, so response times may vary. I will make a best effort to:
 
 - acknowledge valid reports within a reasonable time
 - investigate reproducible issues
