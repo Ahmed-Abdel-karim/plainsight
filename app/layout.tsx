@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
+import { GitHubLogoIcon } from "@radix-ui/react-icons";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
@@ -67,7 +69,25 @@ export default function RootLayout({
           defaultTheme="dark"
           enableSystem={false}
         >
-          <ThemeToggle />
+          <div className="fixed top-4 right-4 z-50 flex gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              asChild
+              className="rounded-full border border-border bg-card text-foreground"
+            >
+              <a
+                href="https://github.com/Ahmed-Abdel-karim/plainsight"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="View Plainsight on GitHub (opens in a new tab)"
+                title="View Plainsight on GitHub (opens in a new tab)"
+              >
+                <GitHubLogoIcon aria-hidden="true" />
+              </a>
+            </Button>
+            <ThemeToggle />
+          </div>
           {children}
           <Toaster />
         </ThemeProvider>

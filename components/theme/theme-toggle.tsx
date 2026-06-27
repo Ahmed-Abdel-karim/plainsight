@@ -21,7 +21,7 @@ export function ThemeToggle() {
       aria-pressed={resolvedTheme === "dark"}
       title={label}
       suppressHydrationWarning
-      className="fixed top-4 right-4 z-50 rounded-full border border-border bg-card"
+      className="rounded-full border border-border bg-card text-foreground"
     >
       {/* Icons are driven by the active `.dark` class, so there is no
           server/client mismatch and no mount-gating effect is needed. */}
