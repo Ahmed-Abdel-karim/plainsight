@@ -1,11 +1,17 @@
 # Plainsight Engineering Docs
 
-This folder contains the official engineering documentation for Plainsight.
+This folder contains the supporting engineering documentation for Plainsight.
 
 The implementation is the source of truth. These docs explain the current system,
 record load-bearing decisions, and define the rules contributors should follow.
 When code and docs drift, update the docs in the same change that updates the
 implementation.
+
+Root [`AGENTS.md`](../AGENTS.md) is the canonical instruction file for coding
+agents, including enforceable repository rules and the precedence between these
+documents. Root `CLAUDE.md` imports it so Codex and Claude receive the same
+guidance. The documents here retain detailed requirements, diagrams, examples,
+and decision rationale; they must not contradict the root agent rules.
 
 ## Documentation model
 
@@ -30,16 +36,14 @@ This follows a lightweight version of these documentation practices:
 
 ## File ownership
 
-| File                       | Owns                                                                                             | Does not own                                           |
-| -------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------ |
-| `project-boundaries.md`    | Functional requirements, non-functional requirements, assumptions, limits, non-goals, known gaps | Implementation design or ADR rationale                 |
-| `architecture.md`          | System shape, module boundaries, data model, runtime ownership, rendering model, safety rules    | Full state-machine diagrams or product requirements    |
-| `runtime-orchestration.md` | Actor diagrams, state diagrams, sequence diagrams, runtime movement                              | Architecture narrative or ADR rationale                |
-| `testing.md`               | Test layers, contracts, mocks, commands, release confidence                                      | Architecture walkthrough                               |
-| `conventions.md`           | Repository rules and contributor conventions                                                     | Requirements or decision history                       |
-| `decisions/`               | Architecture Decision Records                                                                    | General architecture overview                          |
-| `AGENTS.md`                | Short guidance for repo agents                                                                   | Human-facing documentation duplicated from other files |
-| `CLAUDE.md`                | Claude-specific wrapper guidance                                                                 | Shared project rules                                   |
+| File                       | Owns                                                                                             | Does not own                                        |
+| -------------------------- | ------------------------------------------------------------------------------------------------ | --------------------------------------------------- |
+| `project-boundaries.md`    | Functional requirements, non-functional requirements, assumptions, limits, non-goals, known gaps | Implementation design or ADR rationale              |
+| `architecture.md`          | System shape, module boundaries, data model, runtime ownership, rendering model, safety rules    | Full state-machine diagrams or product requirements |
+| `runtime-orchestration.md` | Actor diagrams, state diagrams, sequence diagrams, runtime movement                              | Architecture narrative or ADR rationale             |
+| `testing.md`               | Test layers, contracts, mocks, commands, release confidence                                      | Architecture walkthrough                            |
+| `conventions.md`           | Repository rules and contributor conventions                                                     | Requirements or decision history                    |
+| `decisions/`               | Architecture Decision Records                                                                    | General architecture overview                       |
 
 ## What goes where
 
@@ -57,6 +61,7 @@ Use one canonical home for each idea:
 | URL state semantics                      | ADR 0007 + architecture URL section                             |
 | Test strategy                            | `testing.md`                                                    |
 | Repo conventions                         | `conventions.md`                                                |
+| Canonical coding-agent rules             | Root [`AGENTS.md`](../AGENTS.md)                                |
 
 When another file needs the same idea, use one short sentence and link to the
 canonical home instead of repeating the full explanation.
@@ -79,6 +84,7 @@ change affects:
 - [Architecture](architecture.md)
 - [Runtime orchestration](runtime-orchestration.md)
 - [Project boundaries](project-boundaries.md)
+- [Performance and device support](performance-and-device-support.md)
 - [Testing strategy](testing.md)
 - [Conventions](conventions.md)
 - [Architecture decisions](decisions/README.md)

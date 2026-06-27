@@ -53,14 +53,14 @@ The core journey is:
   scope without configuration and present the city scene as a map plus a market
   panel.
 - **FR-005 — Honest market header:** The scene must identify the active city and
-  country, display the count for the active result context, provide short market
-  framing, and show the snapshot date beside the figures it qualifies.
+  country, provide short market framing, and show the snapshot date beside the
+  figures it qualifies.
 - **FR-006 — Dated-data language:** Snapshot dates and counts must come from the
   city data contract. Product copy must not describe snapshot figures as live,
   current, real-time, estimated, or predictive.
-- **FR-007 — Coherent results:** The active city, scope, room-type filter, and
-  price filter must produce consistent counts and subsets across the header,
-  Analyse summaries, map layers, and Browse results.
+- **FR-007 — Coherent results:** The active scope, room-type filter, and price
+  filter must produce consistent counts and subsets across Analyse summaries,
+  map layers, and Browse results.
 
 ### Analyse
 
@@ -245,8 +245,6 @@ rather than this requirements document.
 - The launch set contains four European cities from September 2025; it is not a
   comprehensive or current view of short-term rentals.
 - Listing imagery is representative, not the source listing's photography.
-- The dataset does not provide booking availability, total stay cost, taxes,
-  fees, licensing status, or a booking action.
 - Published prices and host fields are shown as supplied after preprocessing;
   the application does not infer profitability, legality, or data quality.
 - Browse currently parses and filters the largest point GeoJSON tier on the main
@@ -269,22 +267,24 @@ rather than this requirements document.
   WebGL beyond the explicit fallback.
 - A commercial availability, uptime, data-freshness, or customer-support SLA.
 
-## Known Pre-Release Gaps
+## Known Pre-Release Boundaries
 
-These are implementation gaps, not accepted product limitations:
+These are remaining verification and deployment boundaries for a production-style
+release. They do not block the public portfolio demo, but they document what is
+and is not fully verified.
 
-- Unsupported city routes currently fall through to the framework not-found
-  response instead of the required branded recovery view in FR-003.
-- The current market header count is server-scoped and must be reconciled with
-  client-side filters and neighbourhood scope to satisfy FR-005 and FR-007.
-- Browser verification reports serious color-contrast failures in both themes.
-- On a 390 px viewport, the centered lens switcher overlaps the mobile market
-  drawer trigger.
-- Physical Android, Safari, Firefox, Edge, and iOS Safari verification and the
-  production performance baseline are still pending.
-- Production must override `NEXT_PUBLIC_CITY_ASSET_BASE_URL` when external
-  object storage is used and configure that origin's CORS and immutable cache
-  metadata. The committed `/city-assets` path is the same-origin fallback.
+- Automated serious/critical axe checks pass for primary non-map UI surfaces.
+  Real MapLibre/WebGL canvas contrast and map-overlay readability still require
+  manual or visual-regression verification because axe cannot reliably evaluate
+  pixels behind canvas-rendered map content.
+- Desktop Chrome and physical Android Chrome have been smoke-tested. Desktop is
+  the primary performance target; Android remains usable with acceptable map
+  interaction slowdown on phone-class hardware. Safari, Firefox, Edge, and iOS
+  Safari verification remain pending.
+- If production moves city assets to external object storage, it must override
+  `NEXT_PUBLIC_CITY_ASSET_BASE_URL` and configure that origin's CORS and immutable
+  cache metadata. The committed `/city-assets` path remains the same-origin
+  fallback for the public demo.
 
 ## Clarification Record
 
