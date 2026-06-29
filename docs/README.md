@@ -24,26 +24,16 @@ The docs are intentionally split by reader need:
 - **How do we prove behavior?** See [Testing strategy](testing.md).
 - **How should contributors change code?** See [Conventions](conventions.md).
 
-This follows a lightweight version of these documentation practices:
-
-- Diátaxis: separate documentation by user need — explanation, how-to,
-  reference, and tutorial.
-- C4: keep architecture diagrams small, hierarchical, and audience-focused.
-- arc42: cover goals, constraints, building blocks, runtime behavior, decisions,
-  quality, and known risks without copying the full template.
-- GitHub Mermaid: keep diagrams as code so they are version-controlled and
-  reviewable.
-
 ## File ownership
 
-| File                       | Owns                                                                                             | Does not own                                        |
-| -------------------------- | ------------------------------------------------------------------------------------------------ | --------------------------------------------------- |
-| `project-boundaries.md`    | Functional requirements, non-functional requirements, assumptions, limits, non-goals, known gaps | Implementation design or ADR rationale              |
-| `architecture.md`          | System shape, module boundaries, data model, runtime ownership, rendering model, safety rules    | Full state-machine diagrams or product requirements |
-| `runtime-orchestration.md` | Actor diagrams, state diagrams, sequence diagrams, runtime movement                              | Architecture narrative or ADR rationale             |
-| `testing.md`               | Test layers, contracts, mocks, commands, release confidence                                      | Architecture walkthrough                            |
-| `conventions.md`           | Repository rules and contributor conventions                                                     | Requirements or decision history                    |
-| `decisions/`               | Architecture Decision Records                                                                    | General architecture overview                       |
+| File                       | Owns                                                                                          | Does not own                                        |
+| -------------------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| `project-boundaries.md`    | Capabilities, Quality attributes, assumptions, limits, non-goals, known gaps                  | Implementation design or ADR rationale              |
+| `architecture.md`          | System shape, module boundaries, data model, runtime ownership, rendering model, safety rules | Full state-machine diagrams or product requirements |
+| `runtime-orchestration.md` | Actor diagrams, state diagrams, sequence diagrams, runtime movement                           | Architecture narrative or ADR rationale             |
+| `testing.md`               | Test layers, contracts, mocks, commands, release confidence                                   | Architecture walkthrough                            |
+| `conventions.md`           | Repository rules and contributor conventions                                                  | Requirements or decision history                    |
+| `decisions/`               | Architecture Decision Records                                                                 | General architecture overview                       |
 
 ## What goes where
 

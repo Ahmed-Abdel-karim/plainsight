@@ -1,15 +1,27 @@
 # Plainsight
 
-**A frontend-first geospatial market explorer for short-term-rental data.**
+A geospatial rental-market explorer used as a frontend architecture case study.
 
-Plainsight helps users explore where short-term rentals are concentrated, what
-they cost, and how a market is shaped by room type, neighbourhood, and host
-structure.
+**The constraint.** The map shows a whole city at once — every listing and its
+stats on screen together. A view like that needs the full dataset present, not
+paginated. So all the data already lives in the browser, and filtering and
+aggregation are fastest done on the frontend rather than round-tripping to a
+server.
 
-public, read-only frontend architecture case study built from attributed Inside Airbnb
-snapshots. The data is transformed into static frontend assets so the experience
-is reproducible, reviewable, and deployable without accounts or backend
-infrastructure.
+**The problem.** That means a lot of data in the browser, heavy filtering and
+aggregation, and an expensive map kept alive while the user moves between
+cities — where async results and stale events can leak from one city into
+another.
+
+**The approach.** Heavy work runs off the main thread. An actor system
+coordinates the map, UI, worker, and city lifecycles and drops stale results.
+Calculations share one source of truth, and exploration state lives in the URL.
+
+The domain is rentals (MapLibre, H3, XState), but the focus is the architecture,
+not the domain.
+
+Public, read-only, built from attributed Inside Airbnb snapshots transformed
+into static assets — reproducible and reviewable without accounts or a backend.
 
 **Live demo:** https://plainsight-theta.vercel.app/
 
@@ -26,24 +38,6 @@ infrastructure.
 
 ---
 
-## Why this project exists
-
-I built Plainsight because a map-based analytical app exposes frontend problems
-that a mostly static CRUD demo does not:
-
-- a client-only map that is expensive to mount;
-- large browser-side datasets that need responsive filtering and aggregation;
-- route, map, UI, worker, and city lifecycles that must be coordinated;
-- interaction state that should be shareable and restorable from the URL;
-- a visual map workflow that still needs semantic, keyboard-friendly fallback
-  paths.
-
-The public demo uses curated static snapshots. That is an intentional case study
-boundary: the app can be reviewed consistently without sign-up, uploads,
-storage, moderation, or operational backend concerns.
-
----
-
 ## What you can do
 
 - Explore four curated markets: London, Berlin, Manchester, and Amsterdam.
@@ -55,20 +49,6 @@ storage, moderation, or operational backend concerns.
 - Narrow the selection by room type, price range, and neighbourhood.
 - Inspect how map layers, listing results, and market summaries relate.
 - Share or reopen an exploration through URL state.
-
----
-
-## What this demonstrates
-
-| Area                  | What the project demonstrates                                                            |
-| --------------------- | ---------------------------------------------------------------------------------------- |
-| Geospatial UI         | MapLibre layers, city boundaries, listing points, H3 aggregation, map legends            |
-| Frontend architecture | Next.js App Router, route-persistent scene layout, clear module boundaries               |
-| State orchestration   | XState actor system for route, map, UI, worker, and city lifecycles                      |
-| Performance           | Worker analytics, snapshot tiers, query caching, virtualized Browse list                 |
-| Product correctness   | Dated snapshots, data provenance, shared calculation core, no invented live availability |
-| Accessibility         | Semantic non-map workflows, text alternatives for visual meaning, keyboard paths         |
-| Delivery confidence   | TypeScript strict mode, unit/machine/UI tests, Playwright E2E, CI checks                 |
 
 ---
 
@@ -150,6 +130,28 @@ controls, lists, summaries, loading states, and error states.
 
 ---
 
+## Known gaps & limitations
+
+Two kinds of "not done", kept separate on purpose.
+
+**Limitations — deliberate scope choices, not planned work**
+
+- **Static, prebuilt city snapshots.** Adding a city needs an ingestion pipeline
+  to validate, clean, and format uploaded data into the snapshot shape — a
+  separate concern from the client-side architecture here, so it's out of scope.
+- **No auth or user accounts.** The demo is public and read-only by design;
+  there's nothing to gate, so accounts would be irrelevant, not missing.
+
+**Gaps — real, would improve, deprioritized rather than hidden**
+
+- **No published performance numbers yet.** The architecture is built for
+  performance, but the proof isn't measured and written down. Highest-value next
+  step.
+- **Mobile needs work.** Mobile UI needs refinement. Core flows work and filter performance is acceptable,
+  but the map zoom controls and legends aren't touch-friendly enough yet.
+
+---
+
 ## Tech stack
 
 | Area        | Choice                                                 |
@@ -191,19 +193,14 @@ http://localhost:3000
 
 ## Scripts
 
-| Command             | Purpose                                      |
-| ------------------- | -------------------------------------------- |
-| `pnpm dev`          | Start the development server                 |
-| `pnpm build`        | Build the production app                     |
-| `pnpm start`        | Serve the production build                   |
-| `pnpm test`         | Run unit, machine, and UI integration tests  |
-| `pnpm test:e2e`     | Run Playwright end-to-end tests              |
-| `pnpm lint`         | Run ESLint                                   |
-| `pnpm lint:strict`  | Run ESLint with zero warnings allowed        |
-| `pnpm format`       | Format the repo                              |
-| `pnpm format:check` | Check formatting                             |
-| `pnpm lighthouse`   | Run local Lighthouse script, when configured |
-| `pnpm lhci`         | Run Lighthouse CI script                     |
+```bash
+pnpm dev     # develop
+pnpm build   # production build
+pnpm test    # unit, machine, UI tests
+pnpm test:e2e  # Playwright E2E
+```
+
+Full list (lint, format, Lighthouse) in `package.json`.
 
 ---
 
@@ -263,12 +260,8 @@ is decorative placeholder imagery and does not represent real listing photos.
 
 ## Privacy and analytics
 
-Plainsight has no accounts, sign-up, advertising, session replay, or custom
-event tracking.
-
-The public deployment may use Vercel Analytics and Speed Insights for aggregate
-usage and performance visibility. No application-specific tracking events are
-implemented.
+No accounts, ads, session replay, or custom tracking. The public deploy may use
+Vercel Analytics and Speed Insights for aggregate performance only.
 
 ---
 
@@ -281,7 +274,6 @@ Current focus:
 - accessibility improvements, especially making the map an enhancement rather
   than a workflow blocker;
 - production performance measurements for large city snapshots;
-- design-system polish around spacing, rhythm, and responsive scene layout;
 - keeping documentation, ADRs, and implementation aligned.
 
 ---
