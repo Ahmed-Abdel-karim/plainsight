@@ -286,26 +286,6 @@ and is not fully verified.
   cache metadata. The committed `/city-assets` path remains the same-origin
   fallback for the public demo.
 
-## Clarification Record
-
-### Session 2026-06-19
-
-- Q: Who is the primary user? → A: A research-oriented user exploring market
-  structure and individual listings.
-- Q: How should performance requirements be defined? → A: Benchmark the
-  current application first, then set measurable budgets against a documented
-  reference device and network.
-
-### Session 2026-06-20
-
-- Q: What accessibility boundary should the project adopt? → A: Target WCAG
-  2.2 Level AA for all first-party UI and core workflows.
-- Q: What browsers and devices should the project support? → A: Support
-  current evergreen desktop and mobile browsers with WebGL, with Chrome as the
-  primary automated-test and performance-benchmark target.
-- Q: What production monitoring should the project use? → A: Use Sentry for
-  privacy-conscious error reporting only.
-
 ## Related Documents
 
 - [Architecture](architecture.md)
