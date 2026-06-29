@@ -147,8 +147,8 @@ Two kinds of "not done", kept separate on purpose.
 - **No published performance numbers yet.** The architecture is built for
   performance, but the proof isn't measured and written down. Highest-value next
   step.
-- **Mobile needs work.** Core flows are covered by an E2E mobile check, but the
-  responsive layout and touch ergonomics aren't fully refined yet.
+- **Mobile needs work.** Mobile UI needs refinement. Core flows work and filter performance is acceptable,
+  but the map zoom controls and legends aren't touch-friendly enough yet.
 
 ---
 
