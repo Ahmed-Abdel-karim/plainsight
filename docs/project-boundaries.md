@@ -32,174 +32,111 @@ The core journey is:
 4. Switch to Browse to inspect the matching listings.
 5. Share or reopen the exploration state through its URL.
 
-## Functional Requirements
+## Capabilities
 
-### Market Entry And Navigation
+What the product must do, grouped by area. Each line is a requirement, not a
+description of the implementation.
 
-- **FR-001 — Curated markets:** `/` must present every enabled city from the
-  canonical city index as a selectable card. Each card must show its name,
-  country, market framing, listing count, snapshot label, and representative
-  image without maintaining a second hard-coded city list.
-- **FR-002 — Stable city routes:** Selecting a city must open its stable,
-  human-readable `/${slug}` route in one action. A user must also be able to
-  switch between supported cities from within the scene.
-- **FR-003 — Unsupported routes:** An unsupported city slug must show a clear
-  not-found state with a keyboard-accessible path back to the market picker. It
-  must not render a blank map, raw error, or another city's data.
+### Market entry and navigation
 
-### Market Context And Provenance
+- `/` presents every enabled city from the canonical index as a selectable card
+  showing name, country, framing, listing count, snapshot label, and image — no
+  second hard-coded city list.
+- Selecting a city opens its stable, human-readable `/${slug}` route in one
+  action; cities can also be switched from within the scene.
+- An unsupported slug shows a clear not-found state with a keyboard path back to
+  the picker, never a blank map or another city's data.
 
-- **FR-004 — Default scope:** A supported city route must open at whole-city
-  scope without configuration and present the city scene as a map plus a market
+### Market context and provenance
+
+- A city opens at whole-city scope with no configuration, as a map plus a market
   panel.
-- **FR-005 — Honest market header:** The scene must identify the active city and
-  country, provide short market framing, and show the snapshot date beside the
-  figures it qualifies.
-- **FR-006 — Dated-data language:** Snapshot dates and counts must come from the
-  city data contract. Product copy must not describe snapshot figures as live,
-  current, real-time, estimated, or predictive.
-- **FR-007 — Coherent results:** The active scope, room-type filter, and price
-  filter must produce consistent counts and subsets across Analyse summaries,
-  map layers, and Browse results.
+- The scene names the active city and country, gives short market framing, and
+  shows the snapshot date beside the figures it qualifies.
+- Snapshot dates and counts come from the data contract; copy never calls them
+  live, current, estimated, or predictive.
+- Scope, room-type, and price filters produce consistent counts across Analyse
+  summaries, map layers, and Browse.
 
 ### Analyse
 
-- **FR-008 — Geographic context:** The scene must show recognizable geography,
-  neighbourhood boundaries and labels, map navigation controls, a visible data
-  legend, and required provider attribution.
-- **FR-009 — Price surface:** Analyse must be the default lens and show listings
-  aggregated into equal-area H3 cells, colored by median nightly price. Cell
-  resolution must adapt to map zoom within bounded levels, and empty areas must
-  remain uncolored.
-- **FR-010 — Inspectable evidence:** A user must be able to inspect a rendered
-  hex cell to read its median price and contributing listing count.
-- **FR-011 — Market summaries:** Analyse must expose the active result set's
-  median price, multi-host share, review activity, price distribution, room-type
-  mix, and leading hosts.
+- Shows recognizable geography, neighbourhood boundaries and labels, map
+  controls, a visible legend, and required attribution.
+- Default lens: listings aggregated into equal-area H3 cells colored by median
+  price. Cell resolution adapts to zoom within bounded levels; empty areas stay
+  uncolored.
+- A hex cell can be inspected for its median price and contributing count.
+- Exposes the result set's median price, multi-host share, review activity,
+  price distribution, room-type mix, and leading hosts.
 
-### Filters And Neighbourhood Scope
+### Filters and neighbourhood scope
 
-- **FR-012 — Shared filters:** A user must be able to filter by one or more room
-  types and an inclusive nightly-price range. Applying or resetting filters must
-  update every relevant Analyse and Browse surface from the same filter meaning.
-- **FR-013 — Neighbourhood narrowing:** In Browse, neighbourhood boundaries must
-  remain visible and selectable. Selecting one must narrow the listing results
-  and map dots; clearing it must restore whole-city scope.
-- **FR-014 — Empty results:** A zero-result filter or neighbourhood combination
-  must show an explanatory empty state and a direct reset action rather than an
-  empty or broken panel.
+- Filter by one or more room types and an inclusive price range; applying or
+  resetting updates every Analyse and Browse surface from one filter meaning.
+- In Browse, neighbourhood boundaries stay visible and selectable; selecting one
+  narrows results and map dots, clearing restores whole-city scope.
+- A zero-result combination shows an explanatory empty state and a direct reset,
+  not a broken panel.
 
-### Browse And Listing Inspection
+### Browse and listing inspection
 
-- **FR-015 — Lens switching:** A user must be able to switch between Analyse and
-  Browse without leaving the city or resetting the shared filters, scope, map
-  framing, or theme.
-- **FR-016 — Complete browsable set:** Browse must expose the entire matching
-  result set through a virtualized, scrollable list. Rows must identify the
-  listing, room type, neighbourhood, and nightly price, and the set must support
-  sorting by price, review activity, and review count.
-- **FR-017 — Linked list and map:** Browse must replace the price hexes with one
-  map dot per matching listing. Hover and selection must link a list row with its
-  corresponding dot without relying on color alone.
-- **FR-018 — Listing detail:** Selecting a row or dot must open dismissible
-  detail containing the listing title, room type, neighbourhood, nightly price,
-  host and multi-host status, reviews, minimum nights, and snapshot provenance.
-  Booking availability must not be invented when the dataset does not provide
-  it.
+- Switch between Analyse and Browse without leaving the city or resetting
+  filters, scope, map framing, or theme.
+- The full matching set is browsable through a virtualized list; rows show
+  listing, room type, neighbourhood, and price, sortable by price and review
+  activity.
+- Browse replaces hexes with one dot per listing; hover and selection link a row
+  to its dot without relying on color alone.
+- Selecting a row or dot opens dismissible detail (title, room type,
+  neighbourhood, price, host and multi-host status, reviews, minimum nights,
+  provenance). Booking availability is never invented.
 
-### Restorable State, Theme, And Responsive Presentation
+### Restorable state, theme, and responsive layout
 
-- **FR-019 — Shareable exploration:** The city route and URL query must restore
-  the active lens, neighbourhood scope, room and price filters, and selected
-  listing. Invalid or unavailable URL values must degrade to a valid state. Sort
-  order may remain local view state.
-- **FR-020 — Theme:** Dark must be the deterministic default. A user must be able
-  to select and persist a light theme. The base map, overlays, legends, and UI
-  must switch together without a page reload or loss of city and map framing.
-- **FR-021 — Responsive scene:** Desktop must present the market panel beside the
-  map. Smaller layouts must expose the same core panel content through a bottom
-  drawer while preserving usable, non-overlapping map controls.
-- **FR-022 — Interaction access:** Every non-spatial action must have a complete
-  keyboard path, visible focus, and an understandable accessible name. The map
-  must remain keyboard-pannable whenever scene interaction is enabled.
+- The URL restores lens, neighbourhood scope, room and price filters, and
+  selected listing; invalid values degrade to a valid state.
+- Dark is the deterministic default; light persists. Map, overlays, legends, and
+  UI switch together without reload.
+- Desktop shows the panel beside the map; smaller layouts expose the same panel
+  through a bottom drawer with usable, non-overlapping map controls.
+- Every non-spatial action has a keyboard path, visible focus, and an accessible
+  name; the map stays keyboard-pannable while scene interaction is enabled.
 
-### Loading And Failure Behavior
+### Loading and failure
 
-- **FR-023 — Transition integrity:** During city navigation, the previous city's
-  interactive layers and selections must not remain actionable as if they
-  belonged to the destination. Loading state must identify the incoming city.
-- **FR-024 — Recoverable failures:** Data, analytical computation, map, tile, and
-  image failures must produce bounded fallbacks or concise notifications. A
-  failed recomputation may retain the last good result only when the UI identifies
-  that it may be stale.
+- During navigation, the previous city's layers and selections are never
+  actionable as if they belonged to the destination; loading state names the
+  incoming city.
+- Data, compute, map, tile, and image failures produce bounded fallbacks or
+  concise notifications. A failed recomputation keeps the last good result only
+  when the UI marks it as possibly stale.
 
-## Non-Functional Requirements
+## Quality attributes
 
-### Data Integrity And Reproducibility
-
-- **NFR-001 — Snapshot coherence:** A city version must be immutable after
-  publication. Replacing data means publishing and activating a new version, not
-  mutating files beneath an existing version.
-- **NFR-002 — Traceability:** User-visible figures must be reproducible from the
-  published snapshot and shared data contract. The displayed date must remain
-  attached to the data it qualifies.
-
-### Performance And Capacity
-
-- **NFR-003 — Validated scale:** The application must support at least the
-  current London reference snapshot: 61,963 listings across approximately 51 MB
-  of uncompressed, preprocessed split city data.
-- **NFR-004 — Measured budgets:** Final loading and interaction budgets must be
-  set from a production-build baseline using a documented reference laptop,
-  phone, stable Chrome version, and network profile. Historical unbenchmarked
-  targets are not release guarantees.
-- **NFR-005 — Responsiveness:** Map interaction, filter feedback, lens switching,
-  and list scrolling must remain usable while analytical work and large datasets
-  are loading or recomputing. The UI must expose progress rather than appearing
-  frozen.
-
-### Accessibility
-
-- **NFR-006 — Standard:** First-party UI and core workflows target WCAG 2.2
-  Level AA.
-- **NFR-007 — Verification:** Automated accessibility checks, full keyboard
-  testing, contrast review, focus behavior, screen-reader spot checks, and
-  reduced-motion behavior are release gates. The project must not claim formal
-  WCAG conformance until the deployed experience completes the required manual
-  evaluation.
-- **NFR-008 — Non-visual meaning:** Counts, filter state, listing attributes,
-  loading status, and errors must be conveyed as text or semantics rather than
-  by map position or color alone.
-
-### Browser And Device Support
-
-- **NFR-009 — Primary target:** Current stable Google Chrome on desktop and
-  Android is the primary support, automated-test, and performance-benchmark
-  target. Physical-phone verification is required before claiming Android
-  performance support.
-- **NFR-010 — Compatibility target:** Current stable Edge, Firefox, Safari, and
-  iOS Safari are compatibility targets when WebGL is available. Focused release
-  smoke checks may replace the full Chromium test matrix.
-- **NFR-011 — Capability fallback:** A browser or device that cannot initialize
-  WebGL must receive a clear map-unavailable state rather than a broken or blank
-  scene.
-
-### Reliability, Privacy, And Operations
-
-- **NFR-012 — Graceful degradation:** Failure of an optional detail tier or
-  external image must not corrupt already loaded market context. Retry and error
-  messages must be bounded so one failure does not create repeated notifications.
-- **NFR-013 — Privacy:** The application has no accounts, sign-up, advertising,
-  custom event tracking, behavioral tracking, or session replay. Vercel Analytics
-  and Speed Insights may collect page-level and performance telemetry in
-  production.
-- **NFR-014 — Errors-only monitoring:** Production Sentry use is limited to
-  error reporting. Tracing, log ingestion, replay, profiling, user feedback, and
-  user identity are disabled. Request bodies, query strings, cookies, and
-  sensitive headers must be removed before transmission.
-- **NFR-015 — Release evidence:** A release must pass the automated and manual
-  gates defined in [Testing](testing.md). Architectural and repository rules are
-  defined once in [Conventions](conventions.md), not repeated here.
+- **Scale:** supports at least the London reference snapshot — 61,963 listings,
+  ~51 MB of uncompressed preprocessed city data.
+- **Measured budgets:** loading and interaction budgets are set from a
+  production-build baseline on a documented device and network. Unbenchmarked
+  historical targets are not release guarantees.
+- **Responsiveness:** map, filters, lens switching, and scrolling stay usable
+  while large data loads or recomputes; the UI shows progress, never a frozen
+  screen.
+- **Data integrity:** a published city version is immutable; replacing data
+  means publishing a new version. User-visible figures are reproducible from the
+  snapshot and contract.
+- **Accessibility:** first-party UI targets WCAG 2.2 AA. Automated checks,
+  keyboard testing, contrast, focus, screen-reader spot checks, and
+  reduced-motion are release gates. No formal conformance is claimed until manual
+  evaluation is complete.
+- **Non-visual meaning:** counts, filter state, listing attributes, loading, and
+  errors are conveyed as text or semantics, not by position or color alone.
+- **Browser/device:** stable Chrome on desktop and Android is the primary test
+  and benchmark target. Edge, Firefox, Safari, and iOS Safari are compatibility
+  targets where WebGL is available. No WebGL → a clear map-unavailable state.
+- **Privacy and monitoring:** no accounts, ads, behavioral tracking, or session
+  replay. Sentry is error-reporting only, with request bodies, query strings,
+  cookies, and sensitive headers stripped. Vercel Analytics/Speed Insights cover
+  aggregate performance.
 
 ## Data And Deployment Boundaries
 
