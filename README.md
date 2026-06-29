@@ -142,7 +142,7 @@ Two kinds of "not done", kept separate on purpose.
 - **No auth or user accounts.** The demo is public and read-only by design;
   there's nothing to gate, so accounts would be irrelevant, not missing.
 
-**Gaps — real, would improve**
+**What I'd improve next**
 
 - **Mobile needs work.** Mobile UI needs refinement. Core flows work and filter performance is acceptable,
   but the map zoom controls and legends aren't touch-friendly enough yet.
