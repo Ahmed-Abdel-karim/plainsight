@@ -184,8 +184,9 @@ rather than this requirements document.
 - Listing imagery is representative, not the source listing's photography.
 - Published prices and host fields are shown as supplied after preprocessing;
   the application does not infer profitability, legality, or data quality.
-- Browse currently parses and filters the largest point GeoJSON tier on the main
-  thread. Its physical-phone budget remains to be measured.
+- Browse parses and filters the largest point GeoJSON tier on the main thread.
+  Desktop filter cost is small (~18 ms whole-city, see ADR 0005); the
+  physical-phone budget remains to be measured.
 - The application depends on external snapshot storage, map tiles, and image
   delivery and does not provide an offline mode.
 
