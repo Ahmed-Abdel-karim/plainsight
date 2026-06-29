@@ -103,6 +103,11 @@ jobs:
       - if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: pnpm exec playwright install-deps chromium
       - run: pnpm build
+      # Lighthouse runs as an early-warning signal, not a strict gate.
+      # Bundle size and CLS are hard-failed (stable in CI). Timing metrics
+      # (LCP/TBT/INP) are advisory only — CI hardware is noisy, so the real
+      # verdict is field RUM in Vercel Speed Insights. On a timing warning,
+      # check the dashboard before acting.
       - run: pnpm run lhci
       - if: failure()
         uses: actions/upload-artifact@v7
