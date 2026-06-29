@@ -144,9 +144,6 @@ Two kinds of "not done", kept separate on purpose.
 
 **Gaps — real, would improve, deprioritized rather than hidden**
 
-- **No published performance numbers yet.** The architecture is built for
-  performance, but the proof isn't measured and written down. Highest-value next
-  step.
 - **Mobile needs work.** Mobile UI needs refinement. Core flows work and filter performance is acceptable,
   but the map zoom controls and legends aren't touch-friendly enough yet.
 
