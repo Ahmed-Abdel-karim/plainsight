@@ -47,6 +47,10 @@ export function makePrefetch(
       const worker = system.get(SystemId.WORKER) as
         | WorkerMachineRef
         | undefined;
+      // Resume before loading so the destination is warmed in active mode; the
+      // spawned city still sends its own RESUME, so correctness never depends on
+      // this earlier one (see docs/worker-machine-design.md, consumer contract).
+      worker?.send({ type: "WORKER.RESUME" });
       worker?.send({
         type: "WORKER.REQUEST_LOAD",
         slug,

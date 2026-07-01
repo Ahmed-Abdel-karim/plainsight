@@ -5,7 +5,7 @@ import { makeAggregates } from "@/test/fixtures/dataset";
 
 import type { CityMachineActor } from "../city/machine";
 import type { TransportCommand } from "../worker/transport";
-import { mountFakeMap, setupSceneSystem } from "./utils";
+import { finishLoad, mountFakeMap, setupSceneSystem } from "./utils";
 
 type PostCommand = Extract<TransportCommand, { type: "POST" }>;
 const posts = (commands: TransportCommand[]): PostCommand[] =>
@@ -57,12 +57,7 @@ describe("connected scene system", () => {
     const framing = makeMapCityPayload();
     scene.actor.send({ type: "CITY.CHANGED", payload: framing, filter });
 
-    (scene.city as CityMachineActor).send({
-      type: "WORKER.FETCH_OK",
-      slug: framing.slug,
-      snapshotId: framing.snapshotId,
-      count: 3,
-    });
+    finishLoad(scene, framing);
 
     const types = posts(scene.transport.commands).map((c) => c.message.type);
     expect(types).toContain("hexes");
@@ -74,17 +69,12 @@ describe("connected scene system", () => {
     const framing = makeMapCityPayload();
     scene.actor.send({ type: "CITY.CHANGED", payload: framing, filter });
     const city = scene.city as CityMachineActor;
-    city.send({
-      type: "WORKER.FETCH_OK",
-      slug: framing.slug,
-      snapshotId: framing.snapshotId,
-      count: 3,
-    });
+    finishLoad(scene, framing);
 
     // Settle the converge-time recomputes so the coalescing slots are free and
     // the filter-driven requests post immediately rather than queueing.
-    scene.transport.reply({
-      type: "TRANSPORT.PROCESS_REPLY",
+    scene.transport.response({
+      type: "TRANSPORT.PROCESS_RESPONSE",
       message: {
         status: "success",
         slug: framing.slug,
@@ -92,8 +82,8 @@ describe("connected scene system", () => {
         payload: { type: "hexes", data: [] },
       },
     });
-    scene.transport.reply({
-      type: "TRANSPORT.PROCESS_REPLY",
+    scene.transport.response({
+      type: "TRANSPORT.PROCESS_RESPONSE",
       message: {
         status: "success",
         slug: framing.slug,

@@ -14,6 +14,7 @@ import {
 import { cityMachine } from "../city/machine";
 import { SystemId } from "../constants";
 import { rootMachine } from "../root/machine";
+import type { PrefetchAction } from "../root/prefetch";
 import { workerMachine } from "../worker/machine";
 import type { TransportCommand, TransportInput } from "../worker/transport";
 
@@ -49,30 +50,30 @@ type DistributiveOmit<T, K extends PropertyKey> = T extends unknown
   ? Omit<T, K>
   : never;
 
-/** A process reply a test replays. `requestId` is optional: omitted, it is stamped
+/** A process response a test replays. `requestId` is optional: omitted, it is stamped
  *  with the latest matching POST's id (the current request); supply it explicitly
- *  to replay a stale/cancelled request's reply and assert it is dropped. */
-export type ProcessReplyMessage = DistributiveOmit<
+ *  to replay a stale/cancelled request's response and assert it is dropped. */
+export type TestProcessResponse = DistributiveOmit<
   ProcessResponseMessage,
   "requestId"
 > & {
-  requestId?: number;
+  requestId?: string;
 };
 
-/** The reply events the real transport sends up to the worker machine. */
-export type TransportReply =
-  | { type: "TRANSPORT.LOAD_REPLY"; message: LoadDataResponseMessage }
-  | { type: "TRANSPORT.PROCESS_REPLY"; message: ProcessReplyMessage }
+/** The response events the real transport sends up to the worker machine. */
+export type TransportResponse =
+  | { type: "TRANSPORT.LOAD_RESPONSE"; message: LoadDataResponseMessage }
+  | { type: "TRANSPORT.PROCESS_RESPONSE"; message: TestProcessResponse }
   | { type: "TRANSPORT.WORKER_ERROR"; error: Error };
 
 /**
  * A drop-in replacement for `transportActor`: it records the commands the worker
  * posts (so tests can assert what was requested) and lets a test replay worker
- * replies on demand — no real `Worker`, no timers, fully deterministic.
+ * responses on demand — no real `Worker`, no timers, fully deterministic.
  */
 function createFakeTransport() {
   const commands: TransportCommand[] = [];
-  let sendBack: ((event: TransportReply) => void) | null = null;
+  let sendBack: ((event: TransportResponse) => void) | null = null;
 
   const actor = fromCallback<TransportCommand, TransportInput>(
     ({ sendBack: sb, receive }) => {
@@ -99,16 +100,16 @@ function createFakeTransport() {
     actor,
     /** Commands the worker machine posted to the transport, in order. */
     commands,
-    /** Replay a worker reply (throws if the transport isn't running). */
-    reply(event: TransportReply) {
+    /** Replay a worker response (throws if the transport isn't running). */
+    response(event: TransportResponse) {
       if (!sendBack) throw new Error("fake transport is not running");
-      if (event.type === "TRANSPORT.PROCESS_REPLY") {
+      if (event.type === "TRANSPORT.PROCESS_RESPONSE") {
         const requestId =
           event.message.requestId ??
           latestRequestId(event.message.payload.type);
         sendBack({
-          type: "TRANSPORT.PROCESS_REPLY",
-          message: { ...event.message, requestId: requestId ?? 0 },
+          type: "TRANSPORT.PROCESS_RESPONSE",
+          message: { ...event.message, requestId: requestId ?? "" },
         });
         return;
       }
@@ -126,6 +127,13 @@ function createFakeTransport() {
 export function setupSceneSystem({
   failBrowse = false,
   onSyncUrl = () => {},
+  prefetch,
+}: {
+  failBrowse?: boolean;
+  onSyncUrl?: () => void;
+  /** Real `makePrefetch` result to exercise the nav-window warm path; the
+   *  default keeps `prefetch` a no-op (only the provider wires the real one). */
+  prefetch?: PrefetchAction;
 } = {}) {
   const transport = createFakeTransport();
 
@@ -140,6 +148,7 @@ export function setupSceneSystem({
     },
     actions: {
       syncUrl: onSyncUrl,
+      ...(prefetch ? { prefetch } : {}),
     },
   });
 
@@ -173,6 +182,31 @@ export function setupSceneSystem({
       actor.stop();
     },
   };
+}
+
+/**
+ * Converge a city the way the real worker does: drive a successful load response
+ * through the fake transport so the worker transitions `loading → ready`, routes
+ * `FETCH_OK` to the current city, and flushes any held recomputes. Use this
+ * instead of sending `WORKER.FETCH_OK` straight to the city — the worker only
+ * posts recomputes once it is `ready`.
+ */
+export function finishLoad(
+  scene: ReturnType<typeof setupSceneSystem>,
+  framing: { slug: string; snapshotId: string },
+) {
+  scene.transport.response({
+    type: "TRANSPORT.LOAD_RESPONSE",
+    message: {
+      status: "success",
+      slug: framing.slug,
+      snapshotId: framing.snapshotId,
+      payload: {
+        type: "load",
+        data: { slug: framing.slug, snapshotId: framing.snapshotId },
+      },
+    },
+  });
 }
 
 /**

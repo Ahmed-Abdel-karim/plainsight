@@ -63,6 +63,17 @@ lazily on first command, so entering the scene pays no upfront setup. The proces
 registry covers aggregate (`projectScopeStats`) and hex (`projectCityHexes`)
 projections. Browse list projection runs on the main thread (see Measured Cost).
 
+The worker machine has parallel dataset (`unloaded`, `loading`, `loaded`,
+`error`) and calculation-mode (`suspended`, `active`) regions. It starts
+suspended, but loading remains available for Analyse navigation prefetch.
+Per-process slots retain the latest deterministic request, permit one in-flight
+calculation, and cache the last success. Browse suspension omits new work while
+settling and caching an existing response without delivery. Identity-aware loads
+deduplicate matching work and let a newly spawned city reuse a completed
+destination prefetch. See
+[Runtime orchestration](../runtime-orchestration.md#worker-coordination) for the
+current event and transition contract.
+
 ## Rejected Alternatives
 
 - **Main-thread-only recomputation:** simpler, but blocks map/UI during

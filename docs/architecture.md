@@ -157,7 +157,7 @@ not for every local UI value.
 | `navigation` | scene session | route intent and route commit                                    |
 | `map`        | scene session | MapLibre lifecycle, feature-state painting, map interaction gate |
 | `ui`         | scene session | lens, hover, selected listing, navigation-time UI drop window    |
-| `worker`     | scene session | load/process routing, cancellation, request coalescing           |
+| `worker`     | scene session | dataset lifecycle, calculation mode, request coalescing/cache    |
 | `city`       | active city   | current city filter, lens leg, load status, stale-result guards  |
 
 Root spawns session actors that React needs synchronously and invokes session
@@ -230,8 +230,12 @@ Safety rules:
 
 - root suppresses map/UI on `NAV.STARTED` and resumes on `CITY.READY` or
   `CITY.FAILED`;
-- city replacement cancels old worker work;
-- worker process slots use request ids to drop stale replies;
+- identity-aware worker loads replace active data without cancelling a matching
+  destination prefetch;
+- the worker starts suspended, retains Analyse calculation intent until data is
+  loaded, and permits one in-flight request per process type;
+- worker process slots use deterministic request IDs to coalesce requests,
+  cache completed results, and drop stale replies;
 - city validates slug and snapshot id before accepting worker results;
 - UI structurally drops interaction events while navigating;
 - map interaction has its own suspended state independent of map loading.

@@ -12,40 +12,40 @@ import type {
 /**
  * Drop-in replacement for the worker `transport` — the one boundary that can't
  * run in jsdom (it spawns a real `Worker`). Records the commands the worker posts
- * and lets a test replay replies on demand.
+ * and lets a test replay responses on demand.
  */
 
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown
   ? Omit<T, K>
   : never;
 
-/** A process reply a test replays. `requestId` is optional: omitted, it is stamped
+/** A process response a test replays. `requestId` is optional: omitted, it is stamped
  *  with the latest matching POST's id (the current request); supply it explicitly
- *  to replay a stale/cancelled request's reply and assert it is dropped. */
-export type ProcessReplyMessage = DistributiveOmit<
+ *  to replay a stale/cancelled request's response and assert it is dropped. */
+export type TestProcessResponse = DistributiveOmit<
   ProcessResponseMessage,
   "requestId"
 > & {
-  requestId?: number;
+  requestId?: string;
 };
 
-/** The reply events the real transport sends up to the worker machine. */
-export type TransportReply =
-  | { type: "TRANSPORT.LOAD_REPLY"; message: LoadDataResponseMessage }
-  | { type: "TRANSPORT.PROCESS_REPLY"; message: ProcessReplyMessage }
+/** The response events the real transport sends up to the worker machine. */
+export type TransportResponse =
+  | { type: "TRANSPORT.LOAD_RESPONSE"; message: LoadDataResponseMessage }
+  | { type: "TRANSPORT.PROCESS_RESPONSE"; message: TestProcessResponse }
   | { type: "TRANSPORT.WORKER_ERROR"; error: Error };
 
 export interface FakeTransport {
   actor: ReturnType<typeof fromCallback<TransportCommand, TransportInput>>;
   /** Commands the worker machine posted to the transport, in order. */
   commands: TransportCommand[];
-  /** Replay a worker reply (throws if the transport isn't running). */
-  reply(event: TransportReply): void;
+  /** Replay a worker response (throws if the transport isn't running). */
+  response(event: TransportResponse): void;
 }
 
 export function createFakeTransport(): FakeTransport {
   const commands: TransportCommand[] = [];
-  let sendBack: ((event: TransportReply) => void) | null = null;
+  let sendBack: ((event: TransportResponse) => void) | null = null;
 
   const actor = fromCallback<TransportCommand, TransportInput>(
     ({ sendBack: sb, receive }) => {
@@ -71,17 +71,17 @@ export function createFakeTransport(): FakeTransport {
   return {
     actor,
     commands,
-    reply(event) {
+    response(event) {
       if (!sendBack) throw new Error("fake transport is not running");
-      if (event.type === "TRANSPORT.PROCESS_REPLY") {
+      if (event.type === "TRANSPORT.PROCESS_RESPONSE") {
         const requestId =
           event.message.requestId ??
           latestRequestId(event.message.payload.type);
         sendBack({
-          type: "TRANSPORT.PROCESS_REPLY",
+          type: "TRANSPORT.PROCESS_RESPONSE",
           message: {
             ...event.message,
-            requestId: requestId ?? 0,
+            requestId: requestId ?? "",
           } as ProcessResponseMessage,
         });
         return;
