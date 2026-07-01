@@ -15,7 +15,7 @@ import { cityMachine } from "../city/machine";
 import { SystemId } from "../constants";
 import { rootMachine } from "../root/machine";
 import type { PrefetchAction } from "../root/prefetch";
-import { workerMachine } from "../worker/machine";
+import { workerMachine } from "../worker";
 import type { TransportCommand, TransportInput } from "../worker/transport";
 
 const EMPTY_BROWSE_COLLECTION: BrowseCollection = {

@@ -29,7 +29,7 @@ import { type Lens } from "@/lib/search-params";
 import { createEventAssigner } from "../utils";
 import { SystemId } from "../constants";
 import type { UiMachineActor } from "../ui/machine";
-import type { WorkerMachineRef } from "../worker/machine";
+import type { WorkerMachineRef } from "../worker";
 import * as Context from "./context";
 import type * as Events from "./events";
 import type * as Input from "./input";

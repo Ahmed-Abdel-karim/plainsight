@@ -73,6 +73,14 @@ export interface DataReady {
   readonly type: "DATA.READY";
 }
 
+/** Internal: raised once per process type when data becomes ready, so each slot's
+ *  retained target is dispatched (cache-served, posted, or idle) through guarded
+ *  machine branches rather than a loop. Handled only while active. */
+export interface DispatchTarget {
+  readonly type: "DISPATCH_TARGET";
+  readonly processType: ProcessType;
+}
+
 // --- raw responses from the transport child (a dumb pipe; machine interprets) ---
 
 export interface TransportLoadResponse {
@@ -99,6 +107,7 @@ export type Events =
   | WorkerSuspend
   | WorkerResume
   | DataReady
+  | DispatchTarget
   | TransportLoadResponse
   | TransportProcessResponse
   | TransportWorkerError;

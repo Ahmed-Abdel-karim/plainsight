@@ -13,7 +13,7 @@ import { SystemId } from "../constants";
 import { mapMachine } from "../map/machine";
 import { navigationMachine } from "../navigation/machine";
 import { type UiMachineActor, uiMachine } from "../ui/machine";
-import { workerMachine } from "../worker/machine";
+import { workerMachine } from "../worker";
 import * as Context from "./context";
 import type * as Events from "./events";
 

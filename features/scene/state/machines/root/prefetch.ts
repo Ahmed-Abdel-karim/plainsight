@@ -6,7 +6,7 @@ import { cityAssetUrl } from "@/features/scene/shared/city-asset-url";
 
 import { SystemId } from "../constants";
 import type { UiMachineActor } from "../ui/machine";
-import type { WorkerMachineRef } from "../worker/machine";
+import type { WorkerMachineRef } from "../worker";
 
 /** Immutable slug → snapshot id index, seeded from the server cities list. */
 export type SnapshotById = Record<string, string>;

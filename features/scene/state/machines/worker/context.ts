@@ -13,16 +13,20 @@ export interface DatasetIdentity {
  * One calculation type's bounded coordination slot.
  *
  * `targetRequest` is the latest intent for this type (newest wins, so a burst
- * collapses to one). `isPending` is true while a transport request is in flight —
- * at most one per type; new intent replaces only `targetRequest` until that
- * response settles. `lastCompleted` is the Layer-1 cache: the last successful
+ * collapses to one). `pendingRequestId` is the `requestId` of the transport
+ * request currently in flight (null when idle) — at most one per type; new intent
+ * replaces only `targetRequest` until that response settles. Tracking the id, not
+ * a bare flag, lets a settled slot reject a stale reply: a city switch resets the
+ * slot without cancelling the worker, so an old recompute's response can still
+ * arrive, and only the reply whose `requestId` matches the in-flight one may
+ * settle or repost. `lastCompleted` is the Layer-1 cache: the last successful
  * result with the content `requestId` it was computed for, so an identical
  * request re-delivers without a worker round-trip. The id includes city identity,
  * so an entry from a previous city never falsely matches.
  */
 export interface ProcessSlot {
   targetRequest: ProcessRequestMessage | null;
-  isPending: boolean;
+  pendingRequestId: string | null;
   lastCompleted: { requestId: string; result: ProcessResult } | null;
 }
 
@@ -42,7 +46,7 @@ export interface Context {
   slots: Record<ProcessType, ProcessSlot>;
 }
 
-/** A fresh, idle slot: no target, not pending, no cached result. */
+/** A fresh, idle slot: no target, nothing in flight, no cached result. */
 export function emptySlot(): ProcessSlot {
-  return { targetRequest: null, isPending: false, lastCompleted: null };
+  return { targetRequest: null, pendingRequestId: null, lastCompleted: null };
 }

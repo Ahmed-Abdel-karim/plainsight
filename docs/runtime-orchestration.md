@@ -229,8 +229,8 @@ While active, calculation intent received before `data.loaded` is retained and
 dispatched on `DATA.READY`. At most one transport calculation per process type
 is outstanding; newer intent replaces the target rather than adding synchronous
 worker work to a queue. A current success is cached and delivered, while a
-current failure is delivered without discarding the last successful result. A
-superseded response is omitted and only the latest uncached target is posted.
+current failure is delivered without discarding the last successful result. An
+outdated response is omitted and only the latest uncached target is posted.
 
 While suspended, new calculation requests are omitted. In-flight responses are
 still settled and successful responses are cached, but nothing is delivered and

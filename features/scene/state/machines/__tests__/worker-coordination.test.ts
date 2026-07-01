@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 
+import type { RoomType } from "@/data/contract";
 import { makeMapCityPayload } from "@/test/fixtures/browse";
 import { makeAggregates } from "@/test/fixtures/dataset";
 
@@ -42,7 +43,7 @@ const filter = { roomTypes: [], priceRange: null, nbhd: null };
  *   cache without a transport round-trip. City replacement no longer cancels the
  *   shared worker.
  * - `mode` (`suspended ⇄ active`) gates calculations. While `active`, each type
- *   coalesces (at most one request in flight; newest target wins; a superseded
+ *   coalesces (at most one request in flight; newest target wins; an outdated
  *   response re-posts the latest target), and a cache hit re-delivers without a
  *   round-trip. While `suspended` (the browse leg), new requests are omitted and
  *   in-flight responses settle + cache without being delivered.
@@ -127,7 +128,58 @@ describe("worker calculation coordination", () => {
     ).toBe(true);
   });
 
-  it("drops the dead response of a superseded request and delivers the current one", () => {
+  it("keeps one request in flight after an idle slot posts fresh work", () => {
+    const { framing, city } = convergedCity();
+    const commands = scene!.transport.commands;
+    const aggregatePosts = () =>
+      posts(commands).filter((c) => c.message.type === "aggregates");
+
+    // Settle the converge-time aggregate request so the slot becomes idle.
+    scene!.transport.response({
+      type: "TRANSPORT.PROCESS_RESPONSE",
+      message: {
+        status: "success",
+        slug: framing.slug,
+        snapshotId: framing.snapshotId,
+        payload: { type: "aggregates", data: makeAggregates() },
+      },
+    });
+    const settled = aggregatePosts().length;
+
+    // The first filter posts immediately. The second becomes the latest target
+    // without posting while that new request is in flight.
+    city.send({
+      type: "FILTER.SET_ROOM_TYPES",
+      roomTypes: ["Entire home/apt"],
+    });
+    city.send({
+      type: "FILTER.SET_ROOM_TYPES",
+      roomTypes: ["Private room"],
+    });
+    expect(aggregatePosts()).toHaveLength(settled + 1);
+    expect(
+      scene!.worker?.getSnapshot().context.slots.aggregates.targetRequest,
+    ).toMatchObject({
+      params: { filters: { roomTypes: ["Private room"] } },
+    });
+
+    // Settling the outdated request posts only the latest target.
+    scene!.transport.response({
+      type: "TRANSPORT.PROCESS_RESPONSE",
+      message: {
+        status: "success",
+        slug: framing.slug,
+        snapshotId: framing.snapshotId,
+        payload: { type: "aggregates", data: makeAggregates() },
+      },
+    });
+    expect(aggregatePosts()).toHaveLength(settled + 2);
+    expect(aggregatePosts().at(-1)?.message).toMatchObject({
+      params: { filters: { roomTypes: ["Private room"] } },
+    });
+  });
+
+  it("drops the dead response of an outdated request and delivers the current one", () => {
     const { framing, city } = convergedCity();
     const commands = scene!.transport.commands;
     const staleAggId = firstRequestId(commands, "aggregates");
@@ -162,7 +214,7 @@ describe("worker calculation coordination", () => {
     expect(city.getSnapshot().context.aggregates).not.toBeNull();
   });
 
-  it("settles superseded work without reposting a target already served from cache", () => {
+  it("settles outdated work without reposting a target already served from cache", () => {
     const { framing, city } = convergedCity();
     const commands = scene!.transport.commands;
     const cells = [{ h3: "hex-1", count: 5, medianPrice: 100, ring: [] }];
@@ -195,9 +247,9 @@ describe("worker calculation coordination", () => {
     });
 
     expect(posts(commands)).toHaveLength(postsWithSeven);
-    expect(scene!.worker?.getSnapshot().context.slots.hexes.isPending).toBe(
-      false,
-    );
+    expect(
+      scene!.worker?.getSnapshot().context.slots.hexes.pendingRequestId,
+    ).toBeNull();
   });
 
   it("delivers a process error for the current request and keeps the last result", () => {
@@ -228,7 +280,7 @@ describe("worker calculation coordination", () => {
     expect(city.getSnapshot().context.hexCells).toEqual(cells);
   });
 
-  it("omits a superseded process error and posts only the latest target", () => {
+  it("omits an outdated process error and posts only the latest target", () => {
     const { framing, city } = convergedCity();
     const commands = scene!.transport.commands;
     const staleAggId = firstRequestId(commands, "aggregates");
@@ -306,9 +358,9 @@ describe("worker calculation coordination", () => {
 
     expect(posts(commands)).toHaveLength(before);
     expect(city.getSnapshot().context.hexCells).toBeNull();
-    expect(scene!.worker?.getSnapshot().context.slots.hexes.isPending).toBe(
-      false,
-    );
+    expect(
+      scene!.worker?.getSnapshot().context.slots.hexes.pendingRequestId,
+    ).toBeNull();
   });
 
   it("switching the lens to browse suspends the worker without cancelling the load", () => {
@@ -520,7 +572,7 @@ describe("worker calculation coordination", () => {
     expect(city.getSnapshot().value).toEqual({ analyse: "loading" });
   });
 
-  it("drops a superseded load response and accepts only the current identity", () => {
+  it("drops an outdated load response and accepts only the current identity", () => {
     scene = setupSceneSystem();
     const london = makeMapCityPayload();
     const berlin = makeMapCityPayload({ slug: "berlin" });
@@ -564,8 +616,8 @@ describe("worker calculation coordination", () => {
     expect(slots?.aggregates.targetRequest).toMatchObject({
       slug: framing.slug,
     });
-    expect(slots?.hexes.isPending).toBe(false);
-    expect(slots?.aggregates.isPending).toBe(false);
+    expect(slots?.hexes.pendingRequestId).toBeNull();
+    expect(slots?.aggregates.pendingRequestId).toBeNull();
 
     scene.worker?.send({
       type: "WORKER.REQUEST_LOAD",
@@ -644,5 +696,94 @@ describe("worker calculation coordination", () => {
     // Served from cache — no new worker post, result re-delivered.
     expect(hexPosts()).toHaveLength(before);
     expect(city.getSnapshot().context.hexCells).toEqual(cells);
+  });
+
+  it("drops a previous city's in-flight recompute reply instead of reposting the new city's work", () => {
+    const { framing: london } = convergedCity();
+    const commands = scene!.transport.commands;
+    // The london converge-time hexes recompute is in flight — its reply is never
+    // driven here, and switching cities does not cancel the running worker.
+    const staleHexId = firstRequestId(commands, "hexes");
+
+    // Switch to berlin and converge it: berlin posts its own hexes recompute,
+    // which becomes the slot's in-flight request.
+    const berlin = makeMapCityPayload({ slug: "berlin" });
+    scene!.actor.send({ type: "CITY.CHANGED", payload: berlin, filter });
+    finishLoad(scene!, berlin);
+
+    const hexPosts = () =>
+      posts(commands).filter((c) => c.message.type === "hexes");
+    const before = hexPosts().length;
+    const berlinHexId =
+      scene!.worker?.getSnapshot().context.slots.hexes.pendingRequestId;
+    expect(berlinHexId).not.toBe(staleHexId);
+
+    // The slow london recompute finally responds. It is a stale reply for a
+    // different request; it must be dropped — never settling berlin's in-flight
+    // request nor reposting it (which would double-run the expensive recompute).
+    scene!.transport.response({
+      type: "TRANSPORT.PROCESS_RESPONSE",
+      message: {
+        status: "success",
+        slug: london.slug,
+        snapshotId: london.snapshotId,
+        requestId: staleHexId,
+        payload: { type: "hexes", data: [] },
+      },
+    });
+
+    expect(hexPosts()).toHaveLength(before);
+    expect(
+      scene!.worker?.getSnapshot().context.slots.hexes.pendingRequestId,
+    ).toBe(berlinHexId);
+  });
+
+  it("identifies the in-flight reply by request id, not city alone, on a return visit", () => {
+    // London's converge hexes (empty filter) is in flight; capture its id.
+    const { framing: london } = convergedCity();
+    const commands = scene!.transport.commands;
+    const staleHexId = firstRequestId(commands, "hexes");
+
+    // Away to berlin and back to london — but with a different filter, so london's
+    // new converge hexes is a *different* request than the one still in flight.
+    const berlin = makeMapCityPayload({ slug: "berlin" });
+    scene!.actor.send({ type: "CITY.CHANGED", payload: berlin, filter });
+    finishLoad(scene!, berlin);
+    const revisitFilter = {
+      ...filter,
+      roomTypes: ["Entire home/apt"] as RoomType[],
+    };
+    scene!.actor.send({
+      type: "CITY.CHANGED",
+      payload: london,
+      filter: revisitFilter,
+    });
+    finishLoad(scene!, london);
+
+    const hexPosts = () =>
+      posts(commands).filter((c) => c.message.type === "hexes");
+    const before = hexPosts().length;
+    const inFlightId =
+      scene!.worker?.getSnapshot().context.slots.hexes.pendingRequestId;
+    expect(inFlightId).not.toBe(staleHexId);
+
+    // The original london recompute finally responds. Its slug matches the current
+    // city, so a city-only check would treat it as in-flight and repost the newer
+    // request; the request-id check recognises it as stale and drops it.
+    scene!.transport.response({
+      type: "TRANSPORT.PROCESS_RESPONSE",
+      message: {
+        status: "success",
+        slug: london.slug,
+        snapshotId: london.snapshotId,
+        requestId: staleHexId,
+        payload: { type: "hexes", data: [] },
+      },
+    });
+
+    expect(hexPosts()).toHaveLength(before);
+    expect(
+      scene!.worker?.getSnapshot().context.slots.hexes.pendingRequestId,
+    ).toBe(inFlightId);
   });
 });
