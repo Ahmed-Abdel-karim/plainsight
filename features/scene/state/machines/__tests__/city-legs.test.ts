@@ -6,7 +6,7 @@ import { makeAggregates } from "@/test/fixtures/dataset";
 import type { CityMachineActor } from "../city/machine";
 import type { UiMachineActor } from "../ui/machine";
 import type { TransportCommand } from "../worker/transport";
-import { setupSceneSystem } from "./utils";
+import { finishLoad, setupSceneSystem } from "./utils";
 
 type PostCommand = Extract<TransportCommand, { type: "POST" }>;
 const posts = (commands: TransportCommand[]): PostCommand[] =>
@@ -88,12 +88,22 @@ describe("city machine per-lens legs", () => {
       assetUrl: `/city-assets/${framing.slug}/${framing.snapshotId}/analytics.json`,
     });
 
-    city.send({
-      type: "WORKER.FETCH_OK",
+    // Analyse sends calculation intent immediately, but the worker retains it
+    // until the matching dataset is loaded.
+    expect(posts(scene.transport.commands)).toHaveLength(0);
+    const slots = scene.worker?.getSnapshot().context.slots;
+    expect(slots?.hexes.targetRequest).toMatchObject({
+      type: "hexes",
       slug: framing.slug,
       snapshotId: framing.snapshotId,
-      count: 3,
     });
+    expect(slots?.aggregates.targetRequest).toMatchObject({
+      type: "aggregates",
+      slug: framing.slug,
+      snapshotId: framing.snapshotId,
+    });
+
+    finishLoad(scene, framing);
     expect(city.getSnapshot().value).toEqual({ analyse: "ready" });
     expect(postTypes(scene.transport.commands)).toEqual(
       expect.arrayContaining(["hexes", "aggregates"]),
@@ -104,12 +114,7 @@ describe("city machine per-lens legs", () => {
     scene = setupSceneSystem();
     const framing = navigate();
     const city = scene.city as CityMachineActor;
-    city.send({
-      type: "WORKER.FETCH_OK",
-      slug: framing.slug,
-      snapshotId: framing.snapshotId,
-      count: 3,
-    });
+    finishLoad(scene, framing);
     expect(city.getSnapshot().value).toEqual({ analyse: "ready" });
 
     setLens("browse");
@@ -121,16 +126,11 @@ describe("city machine per-lens legs", () => {
     scene = setupSceneSystem();
     const framing = navigate();
     const city = scene.city as CityMachineActor;
-    city.send({
-      type: "WORKER.FETCH_OK",
-      slug: framing.slug,
-      snapshotId: framing.snapshotId,
-      count: 3,
-    });
+    finishLoad(scene, framing);
 
     // Settle the first compute so the slots are free and `aggregates` is stored.
-    scene.transport.reply({
-      type: "TRANSPORT.PROCESS_REPLY",
+    scene.transport.response({
+      type: "TRANSPORT.PROCESS_RESPONSE",
       message: {
         status: "success",
         slug: framing.slug,
@@ -138,8 +138,8 @@ describe("city machine per-lens legs", () => {
         payload: { type: "hexes", data: [] },
       },
     });
-    scene.transport.reply({
-      type: "TRANSPORT.PROCESS_REPLY",
+    scene.transport.response({
+      type: "TRANSPORT.PROCESS_RESPONSE",
       message: {
         status: "success",
         slug: framing.slug,
@@ -155,12 +155,7 @@ describe("city machine per-lens legs", () => {
     ).length;
 
     setLens("analyse");
-    city.send({
-      type: "WORKER.FETCH_OK",
-      slug: framing.slug,
-      snapshotId: framing.snapshotId,
-      count: 3,
-    });
+    finishLoad(scene, framing);
     expect(city.getSnapshot().value).toEqual({ analyse: "ready" });
 
     const after = postTypes(scene.transport.commands).filter(
@@ -173,16 +168,11 @@ describe("city machine per-lens legs", () => {
     scene = setupSceneSystem();
     const framing = navigate();
     const city = scene.city as CityMachineActor;
-    city.send({
-      type: "WORKER.FETCH_OK",
-      slug: framing.slug,
-      snapshotId: framing.snapshotId,
-      count: 3,
-    });
+    finishLoad(scene, framing);
 
     // Settle the first hex compute so `hexCells` + its key are stored.
-    scene.transport.reply({
-      type: "TRANSPORT.PROCESS_REPLY",
+    scene.transport.response({
+      type: "TRANSPORT.PROCESS_RESPONSE",
       message: {
         status: "success",
         slug: framing.slug,

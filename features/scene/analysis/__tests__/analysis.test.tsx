@@ -6,7 +6,10 @@ vi.mock("next/dynamic", async () => {
 
   return {
     default: (loader: () => Promise<React.ComponentType>) => {
-      const Component = lazy(async () => ({ default: await loader() }));
+      // Start both dynamic imports when the module is evaluated, matching
+      // Next's eager preload behavior and avoiding suite-order-dependent waits.
+      const loaded = loader();
+      const Component = lazy(async () => ({ default: await loaded }));
 
       return function TestDynamicComponent(props: Record<string, unknown>) {
         return createElement(
@@ -92,7 +95,7 @@ describe("analysis region", () => {
     expect(loading).toHaveAttribute("aria-busy", "true");
     expect(loading).toHaveTextContent(/loading distributions/i);
 
-    scene.replyAggregates(
+    scene.responseAggregates(
       makeRichAggregates({ listingCount: 240, medianPrice: 99 }),
     );
 
@@ -117,7 +120,7 @@ describe("analysis region", () => {
     });
     scene.navigateToCity();
     scene.finishCityLoad();
-    scene.replyAggregates(makeRichAggregates({ listingCount: 50 }));
+    scene.responseAggregates(makeRichAggregates({ listingCount: 50 }));
 
     expect(screen.getByRole("status")).toHaveTextContent(
       "50 of 200 listings match this view",
@@ -128,7 +131,7 @@ describe("analysis region", () => {
     const scene = setupAnalysis({ filter: { roomTypes: ["Private room"] } });
     scene.navigateToCity();
     scene.finishCityLoad();
-    scene.replyAggregates(makeAggregates({ listingCount: 0 }));
+    scene.responseAggregates(makeAggregates({ listingCount: 0 }));
 
     expect(screen.getByRole("status")).toHaveTextContent(
       "0 of 1,000 listings match this view",
@@ -139,7 +142,7 @@ describe("analysis region", () => {
     const scene = setupAnalysis({ filter: { roomTypes: ["Entire home/apt"] } });
     scene.navigateToCity();
     scene.finishCityLoad();
-    scene.replyAggregates(makeRichAggregates({ medianPrice: 99 }));
+    scene.responseAggregates(makeRichAggregates({ medianPrice: 99 }));
     expect(screen.getByText("99")).toBeInTheDocument();
 
     scene.setRoomTypes(["Private room"]);
@@ -149,7 +152,7 @@ describe("analysis region", () => {
     expect(queryLoadingStatus()).toBeNull();
     expect(screen.getByText("99")).toBeInTheDocument();
 
-    scene.replyAggregates(makeRichAggregates({ medianPrice: 77 }));
+    scene.responseAggregates(makeRichAggregates({ medianPrice: 77 }));
 
     expect(screen.getByText("77")).toBeInTheDocument();
     expect(screen.queryByText("99")).toBeNull();

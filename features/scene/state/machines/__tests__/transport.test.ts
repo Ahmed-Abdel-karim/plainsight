@@ -71,4 +71,52 @@ describe("transportActor worker lifecycle", () => {
     expect(createWorker).not.toHaveBeenCalled();
     expect(worker.terminate).not.toHaveBeenCalled();
   });
+
+  /** A worker that records its event listeners so a test can fire a crash. */
+  function recordingWorker() {
+    const listeners: Record<string, (event: unknown) => void> = {};
+    const worker = {
+      addEventListener: vi.fn((type: string, cb: (event: unknown) => void) => {
+        listeners[type] = cb;
+      }),
+      postMessage: vi.fn(),
+      terminate: vi.fn(),
+    };
+    return { worker: worker as unknown as Worker, listeners, ...worker };
+  }
+
+  it("releases a failed worker so the next command spawns a fresh one", () => {
+    const first = recordingWorker();
+    const second = recordingWorker();
+    const createWorker = vi
+      .fn()
+      .mockReturnValueOnce(first.worker)
+      .mockReturnValueOnce(second.worker);
+    const actor = createActor(transportActor, { input: { createWorker } });
+    actor.start();
+
+    actor.send({
+      type: "LOAD",
+      slug: "london",
+      snapshotId: "v1",
+      assetUrl: "/x",
+    });
+    expect(createWorker).toHaveBeenCalledTimes(1);
+
+    // A worker-thread crash: the transport terminates and releases the worker.
+    first.listeners.error?.({ message: "boom" });
+    expect(first.terminate).toHaveBeenCalledTimes(1);
+
+    // The next command lazily spawns a fresh connection.
+    actor.send({
+      type: "LOAD",
+      slug: "berlin",
+      snapshotId: "v1",
+      assetUrl: "/y",
+    });
+    expect(createWorker).toHaveBeenCalledTimes(2);
+    expect(second.postMessage).toHaveBeenCalledTimes(1);
+
+    actor.stop();
+  });
 });

@@ -13,7 +13,7 @@ import { SystemId } from "../constants";
 import { mapMachine } from "../map/machine";
 import { navigationMachine } from "../navigation/machine";
 import { type UiMachineActor, uiMachine } from "../ui/machine";
-import { workerMachine } from "../worker/machine";
+import { workerMachine } from "../worker";
 import * as Context from "./context";
 import type * as Events from "./events";
 
@@ -58,13 +58,13 @@ export const rootMachine = setup({
         if (ref) enqueue.sendTo(ref, { type: "RESUME" });
       }
     }),
-    // Replacing the city: cancel any recompute the shared worker still holds for
-    // the outgoing one (a stopped child's own exit actions don't run), then stop
-    // it. No-op on the first spawn, when there is no outgoing city.
-    stopOldCity: enqueueActions(({ context, system, enqueue }) => {
+    // Replacing the city: just stop the outgoing city actor. The worker is no
+    // longer cancelled slug-agnostically — the new city's identity-aware load
+    // replaces old data when needed (preserving a matching destination prefetch),
+    // and any stale recompute response is rejected by request + snapshot identity.
+    // No-op on the first spawn, when there is no outgoing city.
+    stopOldCity: enqueueActions(({ context, enqueue }) => {
       if (!context.cityRef) return;
-      const worker = system.get(SystemId.WORKER);
-      if (worker) enqueue.sendTo(worker, { type: "WORKER.CANCEL" });
       enqueue.stopChild(context.cityRef);
     }),
     startNewCity: assign({

@@ -7,6 +7,10 @@ import type { Listing } from "@/data/contract";
  */
 export type ProcessContext = { listings: Listing[] };
 
+/** The city + snapshot a message is stamped for, so a response that outlived its
+ *  city is dropped (Rule 5.3). Rides on every request and echoes on every response. */
+type CityStamp = { slug: string; snapshotId: string };
+
 /**
  * The extendable process registry. Each entry is one recompute: `execute` takes
  * the client-supplied `params` plus the worker `ctx`. Add a process by adding an
@@ -21,31 +25,20 @@ export type ProcessConfig<T extends string, P = any, O = any, C = any> = {
 };
 
 export type ExtractProcessRequestMessage<T extends ProcessConfig<any>> = {
-  [K in keyof T]: {
+  [K in keyof T]: CityStamp & {
     type: K;
     params: Parameters<T[K]["execute"]>[0];
-    /** The city this request was issued for (stamped by the client). The worker
-     *  echoes it back so a reply that outlived its city is dropped (Rule 5.3). */
-    slug: string;
-    snapshotId: string;
-    /** Per-type request id assigned by the worker machine. The worker echoes it on
-     *  the reply so a superseded/cancelled request's reply can be dropped. */
-    requestId: number;
+    requestId: string;
   };
 }[keyof T];
 
-type SuccessResponseMessage<P> = {
+type SuccessResponseMessage<P> = CityStamp & {
   status: "success";
-  /** The slug this reply is for — the client drops it if it no longer matches. */
-  slug: string;
-  snapshotId: string;
   payload: P;
 };
 
-type ErrorResponseMessage<T> = {
+type ErrorResponseMessage<T> = CityStamp & {
   status: "error";
-  slug: string;
-  snapshotId: string;
   payload: {
     type: T;
     error: Error;
@@ -60,9 +53,9 @@ export type ExtractProcessType<T extends ProcessConfig<any>> = keyof T;
 
 export type ExtractProcessResponseMessage<T extends ProcessConfig<any>> =
   | (SuccessResponseMessage<ExtractProcessSuccessPayload<T>> & {
-      requestId: number;
+      requestId: string;
     })
-  | (ErrorResponseMessage<ExtractProcessType<T>> & { requestId: number });
+  | (ErrorResponseMessage<ExtractProcessType<T>> & { requestId: string });
 
 export type RequestMessageType<T extends string, P> = {
   type: T;

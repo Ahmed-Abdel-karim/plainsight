@@ -13,7 +13,7 @@ import { makeLoadBrowsePoints } from "@/features/scene/shared/browse-points-quer
 import { cityMachine } from "@/features/scene/state/machines/city/machine";
 import { SystemId } from "@/features/scene/state/machines/constants";
 import { rootMachine } from "@/features/scene/state/machines/root/machine";
-import { workerMachine } from "@/features/scene/state/machines/worker/machine";
+import { workerMachine } from "@/features/scene/state/machines/worker";
 import { SceneActorContext } from "@/features/scene/state/provider";
 import { SceneNotifications } from "@/features/scene/scene-notifications";
 import { Toaster } from "@/components/ui/sonner";
