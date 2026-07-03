@@ -99,9 +99,9 @@ export interface SceneSetup extends SceneRenderResult {
   /** Act: switch the active lens via the ui machine. */
   setLens: (lens: Lens) => void;
   /** Act: the worker returns recomputed aggregates for the current scope. */
-  replyAggregates: (data: ScopeAggregates) => void;
+  responseAggregates: (data: ScopeAggregates) => void;
   /** Act: the worker returns recomputed hex cells. */
-  replyHexes: (cells: HexCell[]) => void;
+  responseHexes: (cells: HexCell[]) => void;
   /** Act: the worker's city-data load fails terminally. */
   failCityLoad: () => void;
   /** Act: a recompute fails (the city stays ready on its last good result). */
@@ -158,11 +158,20 @@ export function setupScene(
 
   const finishCityLoad = () =>
     act(() => {
-      getCity().send({
-        type: "WORKER.FETCH_OK",
-        slug: framing.slug,
-        snapshotId: framing.snapshotId,
-        count: 3,
+      result.transport.response({
+        type: "TRANSPORT.LOAD_RESPONSE",
+        message: {
+          status: "success",
+          slug: framing.slug,
+          snapshotId: framing.snapshotId,
+          payload: {
+            type: "load",
+            data: {
+              slug: framing.slug,
+              snapshotId: framing.snapshotId,
+            },
+          },
+        },
       });
     });
 
@@ -171,30 +180,42 @@ export function setupScene(
       ui.send({ type: "UI.SET_LENS", lens });
     });
 
-  const replyAggregates = (data: ScopeAggregates) =>
+  const responseAggregates = (data: ScopeAggregates) =>
     act(() => {
-      result.transport.reply({
-        type: "TRANSPORT.PROCESS_REPLY",
-        message: {
-          status: "success",
-          slug: framing.slug,
-          snapshotId: framing.snapshotId,
-          payload: { type: "aggregates", data },
-        },
+      result.transport.workerReply({
+        status: "success",
+        slug: framing.slug,
+        snapshotId: framing.snapshotId,
+        payload: { type: "aggregates", data },
       });
     });
 
-  const replyHexes = (cells: HexCell[]) =>
+  const responseHexes = (cells: HexCell[]) =>
     act(() => {
-      result.transport.reply({
-        type: "TRANSPORT.PROCESS_REPLY",
-        message: {
+      const postsBefore = result.transport.workerPosts.filter(
+        (message) => message.type === "hexes",
+      ).length;
+      result.transport.workerReply({
+        status: "success",
+        slug: framing.slug,
+        snapshotId: framing.snapshotId,
+        payload: { type: "hexes", data: cells },
+      });
+
+      // Map readiness may supersede the pre-load default resolution while its
+      // synchronous calculation is still pending. Settle that stale response,
+      // then answer the latest request the worker posts as a result.
+      const postsAfter = result.transport.workerPosts.filter(
+        (message) => message.type === "hexes",
+      ).length;
+      if (postsAfter > postsBefore) {
+        result.transport.workerReply({
           status: "success",
           slug: framing.slug,
           snapshotId: framing.snapshotId,
           payload: { type: "hexes", data: cells },
-        },
-      });
+        });
+      }
     });
 
   const failCityLoad = () =>
@@ -224,8 +245,8 @@ export function setupScene(
     navigateToCity,
     finishCityLoad,
     setLens,
-    replyAggregates,
-    replyHexes,
+    responseAggregates,
+    responseHexes,
     failCityLoad,
     failProcess,
     ui,

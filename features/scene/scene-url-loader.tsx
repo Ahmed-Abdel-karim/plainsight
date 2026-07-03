@@ -5,7 +5,7 @@ import { use, useEffect } from "react";
 import type { MapCityPayload } from "@/data/types";
 import { loadScene } from "@/lib/search-params";
 
-import { useChangeCity, useSelectListing, useSetLens } from "./state";
+import { useChangeCity, useSelectListing, useSyncLens } from "./state";
 
 /**
  * Client island that fires CITY.CHANGED into the XState root machine as soon as
@@ -25,19 +25,21 @@ export function SceneUrlLoader({
 }) {
   const city = use(cityPromise);
   const changeCity = useChangeCity();
-  const setLens = useSetLens();
+  const syncLens = useSyncLens();
   const selectListing = useSelectListing();
 
   useEffect(() => {
     const { lens, listing, rooms, price, nbhd } = loadScene(
       typeof window === "undefined" ? "" : window.location.search,
     );
-    // Lens must land on the session `ui` actor BEFORE the city is spawned: the
-    // city reads `ui`'s lens at spawn (`deciding`) to pick its leg, so the
-    // snapshot has to be fresh. On first load `ui` is `active` and accepts this;
-    // on a city switch it's `navigating` and drops it (lens persists), which is
-    // correct — the persisted lens is already the right leg.
-    setLens(lens);
+    // The URL is authoritative for lens. Its value reflects the destination on a
+    // cold load, a forward city switch (the CityLink carries the lens), or a
+    // Back/Forward restore. Lens must land on the session `ui` actor BEFORE the
+    // city is spawned, because the city reads it at spawn (`deciding`) to pick
+    // its leg — so sync it, then change city. UI.SYNC_LENS applies even while
+    // `ui` is suspended mid-switch (unlike UI.SET_LENS), so the restore isn't
+    // dropped.
+    syncLens(lens);
     // Filter rides into the city machine's input so the spawned actor is already
     // filtered when it reaches `ready` — a post-spawn FILTER event would be
     // dropped against `loading`. (On a city switch the URL is the clean new-city
@@ -47,11 +49,11 @@ export function SceneUrlLoader({
       priceRange: price && price.length === 2 ? [price[0], price[1]] : null,
       nbhd,
     });
-    // Selection lives on `ui` too. SELECT after SET_LENS so a
+    // Selection lives on `ui` too. SELECT after the lens sync so a
     // `?lens=browse&listing=…` deep link keeps its listing (switching to
     // `analyse` clears selection; browse does not).
     selectListing(lens === "browse" ? listing : null);
-  }, [city, changeCity, setLens, selectListing]);
+  }, [city, changeCity, syncLens, selectListing]);
 
   return null;
 }

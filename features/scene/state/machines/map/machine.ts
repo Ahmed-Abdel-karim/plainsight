@@ -209,6 +209,18 @@ export const mapMachine = setup({
     // paint is a pure side effect here, valid in any lifecycle/interaction state.
     "MAP.SELECTION_CHANGED": { actions: "paintCurrentSelection" },
     "MAP.STYLE_LOADED": { actions: "applyMapTheme" },
+    // Scene-session reset fanned from root (navigation left `/city`): return the
+    // interaction region to `interactive` and clear transient highlights. Unlike
+    // RESUME it does not re-frame — the city is being replaced on re-show.
+    "SCENE.RESET": {
+      target: ".interaction.interactive",
+      actions: [
+        "clearInteractionState",
+        "resetHexInspect",
+        "resetMapHover",
+        "resetMapSelect",
+      ],
+    },
   },
   type: "parallel",
   states: {

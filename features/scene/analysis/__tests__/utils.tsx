@@ -28,7 +28,7 @@ export interface AnalysisSetup extends SceneRenderResult {
   /** Act: the city's data finishes loading, so it converges to `ready`. */
   finishCityLoad: () => void;
   /** Act: the worker returns recomputed aggregates for the current scope. */
-  replyAggregates: (data: ScopeAggregates) => void;
+  responseAggregates: (data: ScopeAggregates) => void;
   /** Act: the user narrows the room-type filter (a non-default, recompute-triggering change). */
   setRoomTypes: (roomTypes: RoomType[]) => void;
   readonly city: CityMachineActor;
@@ -37,7 +37,7 @@ export interface AnalysisSetup extends SceneRenderResult {
 /**
  * Arrange only — render the analysis cards over the real actor system with the
  * server's `defaultAggregates`, and return the acts (`navigateToCity`,
- * `finishCityLoad`, `replyAggregates`, `setRoomTypes`) for the test to perform.
+ * `finishCityLoad`, `responseAggregates`, `setRoomTypes`) for the test to perform.
  */
 export function setupAnalysis(
   options: AnalysisSetupOptions = {},
@@ -72,25 +72,31 @@ export function setupAnalysis(
 
   const finishCityLoad = () => {
     act(() => {
-      getCity().send({
-        type: "WORKER.FETCH_OK",
-        slug: framing.slug,
-        snapshotId: framing.snapshotId,
-        count: 3,
-      });
-    });
-  };
-
-  const replyAggregates = (data: ScopeAggregates) => {
-    act(() => {
-      result.transport.reply({
-        type: "TRANSPORT.PROCESS_REPLY",
+      result.transport.response({
+        type: "TRANSPORT.LOAD_RESPONSE",
         message: {
           status: "success",
           slug: framing.slug,
           snapshotId: framing.snapshotId,
-          payload: { type: "aggregates", data },
+          payload: {
+            type: "load",
+            data: {
+              slug: framing.slug,
+              snapshotId: framing.snapshotId,
+            },
+          },
         },
+      });
+    });
+  };
+
+  const responseAggregates = (data: ScopeAggregates) => {
+    act(() => {
+      result.transport.workerReply({
+        status: "success",
+        slug: framing.slug,
+        snapshotId: framing.snapshotId,
+        payload: { type: "aggregates", data },
       });
     });
   };
@@ -106,7 +112,7 @@ export function setupAnalysis(
     framing,
     navigateToCity,
     finishCityLoad,
-    replyAggregates,
+    responseAggregates,
     setRoomTypes,
     get city() {
       return getCity();

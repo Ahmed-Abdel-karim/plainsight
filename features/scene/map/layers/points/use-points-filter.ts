@@ -10,14 +10,15 @@
  * keeps `MapCanvas` from re-rendering on every filter/scope change and leaves
  * the points layer the sole owner of its derived render input.
  * `pointsFilterExpression` allocates a fresh array each call, so the selector
- * compares by value (`deepEqual`) — MapLibre only gets a new `setFilter` when
+ * compares by value (`isDeepEqual`) — MapLibre only gets a new `setFilter` when
  * the expression actually changes.
  */
 import type { FilterSpecification } from "maplibre-gl";
 
 import { priceBounds, resolveFilters } from "@/lib/filters/normalize";
-import { createCitySelector, deepEqual } from "@/features/scene/state";
+import { createCitySelector } from "@/features/scene/state";
 import { pointsFilterExpression } from "./points-filter";
+import { isDeepEqual } from "remeda";
 
 export const usePointsFilter = createCitySelector(
   (s): FilterSpecification =>
@@ -28,5 +29,5 @@ export const usePointsFilter = createCitySelector(
       ),
       s?.context.filter.nbhd ?? null,
     ),
-  deepEqual,
+  isDeepEqual,
 );

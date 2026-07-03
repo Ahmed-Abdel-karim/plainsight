@@ -73,7 +73,6 @@ export function setupBrowse(options: BrowseSetupOptions = {}): BrowseSetup {
         type: "WORKER.FETCH_OK",
         slug: framing.slug,
         snapshotId: framing.snapshotId,
-        count: 3,
       });
     });
   };

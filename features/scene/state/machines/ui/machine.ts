@@ -26,8 +26,18 @@ const assignFromEvent = createEventAssigner<Context.Context, Events.Events>();
  *                stale selection/hover from the old city can't leak into the new
  *                city's first render. Mirrors map's interaction.suspended window.
  *
- * SUSPEND enters `navigating` and clears stale selection/hover (lens persists).
- * RESUME exits back to `active`.
+ * SUSPEND enters `navigating` and clears stale selection/hover. RESUME exits back
+ * to `active`.
+ *
+ * The lens has two update paths, distinguished by event, not by comment:
+ *
+ *   UI.SET_LENS  — user interaction (the lens switcher). State-gated: accepted in
+ *                  `active`, dropped in `navigating` (it can be stale).
+ *   UI.SYNC_LENS — authoritative sync from the URL (cold load, a forward city
+ *                  switch whose link carries the lens, or a Back/Forward restore).
+ *                  Handled at the machine root, so it applies in *every* state —
+ *                  the URL is the source of truth for the destination lens, which
+ *                  is navigation state, never stale interaction.
  *
  * Actions are defined inline in setup so they pick up the machine's context +
  * event types — same decision as the map machine.
@@ -41,6 +51,10 @@ export const uiMachine = setup({
   },
   actions: {
     assignLens: assignFromEvent("UI.SET_LENS", "lens", "lens"),
+    // Authoritative lens from the URL. The spawning city reads this lens to pick
+    // its leg (see city `raiseInitialLens`), so the loader sends UI.SYNC_LENS
+    // before CITY.CHANGED; forwarding to the outgoing city here is needless.
+    syncLens: assignFromEvent("UI.SYNC_LENS", "lens", "lens"),
     assignHover: assignFromEvent("UI.SET_HOVER", "hoveredListing", (event) =>
       event.id ? { id: event.id, source: event.source } : null,
     ),
@@ -75,6 +89,14 @@ export const uiMachine = setup({
   id: "ui",
   context: Context.Context,
   initial: "active",
+  // Scene-session reset fanned from root (navigation left `/city`): return to the
+  // initial `active` state and clear transient selection/hover. Lens is restored
+  // from the URL on re-show, so it is left alone.
+  on: {
+    "SCENE.RESET": { target: ".active", actions: "clearSelectionAndHover" },
+    // Suppression-immune: the URL is authoritative for lens in every state.
+    "UI.SYNC_LENS": { actions: "syncLens" },
+  },
   states: {
     active: {
       on: {

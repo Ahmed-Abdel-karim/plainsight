@@ -13,6 +13,15 @@ export interface SetLens {
   readonly lens: Lens;
 }
 
+/** Authoritative lens sync from the URL (cold load, a forward city switch whose
+ *  link carries the lens, or a Back/Forward restore). Unlike UI.SET_LENS (user
+ *  interaction) it is honored in every state — the URL is the source of truth for
+ *  the destination lens, which is navigation state, not stale interaction. */
+export interface SyncLens {
+  readonly type: "UI.SYNC_LENS";
+  readonly lens: Lens;
+}
+
 export interface Select {
   readonly type: "UI.SELECT";
   readonly id: number | null;
@@ -33,4 +42,18 @@ export interface Resume {
   readonly type: "RESUME";
 }
 
-export type Events = Init | SetLens | Select | SetHover | Suspend | Resume;
+/** Scene-session reset, fanned from root when navigation leaves `/city`. Returns
+ *  to `active` and clears selection + hover. */
+export interface SceneReset {
+  readonly type: "SCENE.RESET";
+}
+
+export type Events =
+  | Init
+  | SetLens
+  | SyncLens
+  | Select
+  | SetHover
+  | Suspend
+  | Resume
+  | SceneReset;

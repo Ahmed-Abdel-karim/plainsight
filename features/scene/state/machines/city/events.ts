@@ -46,7 +46,6 @@ export interface WorkerFetchOk {
   readonly type: "WORKER.FETCH_OK";
   readonly slug: string;
   readonly snapshotId: string;
-  readonly count: number;
 }
 /** Terminal load failure — city exits loading → error. Slug-stamped (Rule 5.3). */
 export interface WorkerFetchError {

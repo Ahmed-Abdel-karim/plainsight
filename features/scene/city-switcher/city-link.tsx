@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 
-import { useStartNav } from "../state";
+import { serializeScene } from "@/lib/search-params";
+
+import { useLens, useStartNav } from "../state";
 
 type CityLinkProps = Omit<React.ComponentProps<typeof Link>, "href"> & {
   slug: string;
@@ -24,10 +26,17 @@ type CityLinkProps = Omit<React.ComponentProps<typeof Link>, "href"> & {
  */
 export function CityLink({ slug, isActive, onClick, ...rest }: CityLinkProps) {
   const startNav = useStartNav();
+  const lens = useLens();
+  // Carry the active lens into the link so a forward city switch is a real,
+  // restorable history entry — the URL is authoritative, so Back/Forward lands
+  // the destination on the lens its entry records. `analyse` is the default and
+  // serializes away, keeping the URL clean. Selection/filters are per-city and
+  // deliberately not carried.
+  const href = `/${slug}${serializeScene("", { lens })}`;
   return (
     <Link
       {...rest}
-      href={`/${slug}`}
+      href={href}
       aria-current={isActive ? "page" : undefined}
       onClick={(event) => {
         onClick?.(event);

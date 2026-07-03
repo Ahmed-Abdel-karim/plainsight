@@ -35,14 +35,14 @@ jobs:
         with: { node-version: 24 }
       - run: npm install --global vercel@latest
       - run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-      - name: Verify production observability env
+      - name: Verify required production env
         shell: bash
         run: |
           set -euo pipefail
           env_file=".vercel/.env.production.local"
           missing=()
 
-          for key in NEXT_PUBLIC_SENTRY_DSN SENTRY_AUTH_TOKEN; do
+          for key in NEXT_PUBLIC_SITE_URL NEXT_PUBLIC_SENTRY_DSN SENTRY_AUTH_TOKEN; do
             if ! grep -Eq "^${key}=.+$" "$env_file" || grep -Eq "^${key}=(\"\"|'')?$" "$env_file"; then
               missing+=("$key")
             fi

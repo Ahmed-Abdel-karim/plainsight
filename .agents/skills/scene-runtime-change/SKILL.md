@@ -25,8 +25,16 @@ XState logic or React integration.
 - Preserve the scene session in `app/(scene)/layout.tsx`; do not recreate the
   map, query cache, worker, or session actors on city navigation.
 - Use invoked actors for work scoped to a state and spawned actors for dynamic
-  or explicitly managed lifetimes. Follow current implementation and tests for
-  exposure through stable refs or system IDs; do not apply a blanket rule.
+  or explicitly managed lifetimes.
+- Expose a spawned actor to React through its **ref in root context**, never
+  `system.get()`. A React-facing accessor hook reads
+  `SceneActorContext.useSelector((s) => s.context.xRef)` (see `map/use-map.ts`,
+  `ui/use-ui.ts`, `city/use-city.ts`). A context-spawned ref exists at actor
+  creation, but `system.get()` is `null` on the first render/commit, so the first
+  event (e.g. `NAV.INTENT`) is silently dropped. Use the reactive `useSelector`
+  form for any ref that can change (e.g. the per-navigation `cityRef`); a stable
+  session ref may also be read via `getSnapshot().context.xRef`. `system.get()`
+  stays for actor-to-actor lookups *inside* machines, resolved at event time.
 - Keep event, input, context, and output contracts typed. Define implementations
   through `setup(...)` and keep actor communication explicit.
 - Treat navigation, worker replies, and URL writes as concurrent boundaries.

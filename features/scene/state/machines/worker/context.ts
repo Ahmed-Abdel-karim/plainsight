@@ -1,12 +1,18 @@
+/** The city + snapshot a load is for. Identity is content-derived, not a counter,
+ *  so a request and its response match by equality. */
+export interface DatasetIdentity {
+  readonly slug: string;
+  readonly snapshotId: string;
+}
+
 /**
- * Worker machine context. A single monotonic `nextRequestId` plus the id each
- * per-type region last issued (`hexesId` / `aggregatesId`). The region matches a
- * reply against its stored id to drop the stale reply of a superseded request;
- * `0` means "nothing in flight" (ids start at 1). There is no `slug`: the worker
- * is shared across cities and the slug rides on each request/reply.
+ * Worker machine context — the data region only. It tracks the `requestedDataset`
+ * (identity of the load in flight or settled), the `loadedDataset` (identity of
+ * the rows available for calculation), and the latest load `error`. Calculation
+ * coordination lives entirely in the transport actor's controller, not here.
  */
 export interface Context {
-  nextRequestId: number;
-  hexesId: number;
-  aggregatesId: number;
+  requestedDataset: DatasetIdentity | null;
+  loadedDataset: DatasetIdentity | null;
+  error: Error | null;
 }

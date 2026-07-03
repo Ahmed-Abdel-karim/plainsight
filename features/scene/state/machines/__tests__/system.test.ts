@@ -4,14 +4,13 @@ import { makeMapCityPayload } from "@/test/fixtures/browse";
 import { makeAggregates } from "@/test/fixtures/dataset";
 
 import type { CityMachineActor } from "../city/machine";
-import type { TransportCommand } from "../worker/transport";
-import { mountFakeMap, setupSceneSystem } from "./utils";
-
-type PostCommand = Extract<TransportCommand, { type: "POST" }>;
-const posts = (commands: TransportCommand[]): PostCommand[] =>
-  commands.filter((c): c is PostCommand => c.type === "POST");
+import type { UiMachineActor } from "../ui/machine";
+import { finishLoad, mountFakeMap, setupSceneSystem } from "./utils";
 
 const filter = { roomTypes: [], priceRange: null, nbhd: null };
+
+/** Flush microtask + macrotask queues so the browse readiness promise settles. */
+const tick = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 
 /**
  * Connected scene system — the real root + map + ui + worker + navigation actors,
@@ -46,9 +45,11 @@ describe("connected scene system", () => {
     expect(scene.city).toBeDefined();
     expect(scene.transport.commands).toContainEqual({
       type: "LOAD",
-      slug: framing.slug,
-      snapshotId: framing.snapshotId,
-      assetUrl: `/city-assets/${framing.slug}/${framing.snapshotId}/analytics.json`,
+      payload: {
+        slug: framing.slug,
+        snapshotId: framing.snapshotId,
+        assetUrl: `/city-assets/${framing.slug}/${framing.snapshotId}/analytics.json`,
+      },
     });
   });
 
@@ -57,14 +58,9 @@ describe("connected scene system", () => {
     const framing = makeMapCityPayload();
     scene.actor.send({ type: "CITY.CHANGED", payload: framing, filter });
 
-    (scene.city as CityMachineActor).send({
-      type: "WORKER.FETCH_OK",
-      slug: framing.slug,
-      snapshotId: framing.snapshotId,
-      count: 3,
-    });
+    finishLoad(scene, framing);
 
-    const types = posts(scene.transport.commands).map((c) => c.message.type);
+    const types = scene.transport.workerPosts.map((p) => p.type);
     expect(types).toContain("hexes");
     expect(types).toContain("aggregates");
   });
@@ -74,47 +70,36 @@ describe("connected scene system", () => {
     const framing = makeMapCityPayload();
     scene.actor.send({ type: "CITY.CHANGED", payload: framing, filter });
     const city = scene.city as CityMachineActor;
-    city.send({
-      type: "WORKER.FETCH_OK",
+    finishLoad(scene, framing);
+
+    // Settle the converge-time recomputes so the coalescing channels are free
+    // and the filter-driven requests post immediately rather than queueing.
+    scene.transport.workerReply({
+      status: "success",
       slug: framing.slug,
       snapshotId: framing.snapshotId,
-      count: 3,
+      payload: { type: "hexes", data: [] },
+    });
+    scene.transport.workerReply({
+      status: "success",
+      slug: framing.slug,
+      snapshotId: framing.snapshotId,
+      payload: { type: "aggregates", data: makeAggregates() },
     });
 
-    // Settle the converge-time recomputes so the coalescing slots are free and
-    // the filter-driven requests post immediately rather than queueing.
-    scene.transport.reply({
-      type: "TRANSPORT.PROCESS_REPLY",
-      message: {
-        status: "success",
-        slug: framing.slug,
-        snapshotId: framing.snapshotId,
-        payload: { type: "hexes", data: [] },
-      },
-    });
-    scene.transport.reply({
-      type: "TRANSPORT.PROCESS_REPLY",
-      message: {
-        status: "success",
-        slug: framing.slug,
-        snapshotId: framing.snapshotId,
-        payload: { type: "aggregates", data: makeAggregates() },
-      },
-    });
-
-    const settled = posts(scene.transport.commands).length;
+    const settled = scene.transport.workerPosts.length;
     city.send({
       type: "FILTER.SET_ROOM_TYPES",
       roomTypes: ["Entire home/apt"],
     });
 
-    const fresh = posts(scene.transport.commands).slice(settled);
-    expect(fresh.map((c) => c.message.type)).toEqual(
+    const fresh = scene.transport.workerPosts.slice(settled);
+    expect(fresh.map((p) => p.type)).toEqual(
       expect.arrayContaining(["hexes", "aggregates"]),
     );
-    expect(
-      fresh.every((c) => c.message.params.filters.roomTypes.length === 1),
-    ).toBe(true);
+    expect(fresh.every((p) => p.params.filters.roomTypes.length === 1)).toBe(
+      true,
+    );
   });
 
   // The coordinator translates the lifecycle inputs into the shared suppression
@@ -166,6 +151,52 @@ describe("connected scene system", () => {
       });
 
       interactive(scene);
+    });
+  });
+
+  // The URL is authoritative for lens. UI.SET_LENS (user interaction) is dropped
+  // while a switch suppresses `ui`, but UI.SYNC_LENS (the URL seed) must land in
+  // every state — otherwise Back/Forward would show the last lens, not the URL's.
+  describe("URL-authoritative lens sync (Back/Forward restore)", () => {
+    it("applies UI.SYNC_LENS while navigating, where UI.SET_LENS is dropped", () => {
+      expect.hasAssertions();
+      scene = setupSceneSystem();
+      const ui = scene.ui as UiMachineActor;
+
+      scene.actor.send({ type: "NAV.STARTED", path: "/berlin" });
+      expect(ui.getSnapshot().value).toBe("navigating");
+
+      // User interaction is suppressed mid-switch.
+      ui.send({ type: "UI.SET_LENS", lens: "browse" });
+      expect(ui.getSnapshot().context.lens).toBe("analyse");
+
+      // The authoritative URL seed is not.
+      ui.send({ type: "UI.SYNC_LENS", lens: "browse" });
+      expect(ui.getSnapshot().context.lens).toBe("browse");
+    });
+
+    it("lands the spawned city on the leg synced mid-switch (restore to browse)", async () => {
+      scene = setupSceneSystem();
+      mountFakeMap(scene);
+
+      // A Back/Forward city switch: suppression starts, then the loader syncs the
+      // restored URL's lens and spawns the city — the order SceneUrlLoader uses.
+      scene.actor.send({ type: "NAV.STARTED", path: "/berlin" });
+      (scene.ui as UiMachineActor).send({
+        type: "UI.SYNC_LENS",
+        lens: "browse",
+      });
+      scene.actor.send({
+        type: "CITY.CHANGED",
+        payload: makeMapCityPayload({ slug: "berlin" }),
+        filter,
+      });
+      await tick();
+
+      const city = scene.city as CityMachineActor;
+      expect(city.getSnapshot().matches("browse")).toBe(true);
+      // Browse converges on points alone — the worker is never asked to load.
+      expect(scene.transport.commands).toEqual([]);
     });
   });
 
@@ -250,6 +281,84 @@ describe("connected scene system", () => {
         scene.map?.getSnapshot().matches({ interaction: "interactive" }),
       ).toBe(true);
       expect(scene.ui?.getSnapshot().value).toBe("active");
+    });
+  });
+
+  // SCENE.RESET is fired from the RouteListener cleanup when `cacheComponents`
+  // hides the scene subtree (navigation left `/city`). It returns every session
+  // actor to its initial resting state so the preserved XState snapshot rehydrates
+  // clean and the next load on re-show is real, not a stale dedupe/cached ack.
+  describe("scene reset (SCENE.RESET)", () => {
+    const berlin = makeMapCityPayload({ slug: "berlin" });
+
+    const loadedScene = () => {
+      const s = setupSceneSystem();
+      mountFakeMap(s);
+      s.actor.send({ type: "CITY.CHANGED", payload: berlin, filter });
+      finishLoad(s, berlin);
+      return s;
+    };
+
+    it("returns the worker to unloaded/suspended and resets the transport controller", () => {
+      scene = loadedScene();
+      expect(scene.worker?.getSnapshot().matches({ data: "loaded" })).toBe(
+        true,
+      );
+
+      scene.actor.send({ type: "SCENE.RESET" });
+
+      const worker = scene.worker!.getSnapshot();
+      expect(worker.matches({ data: "unloaded" })).toBe(true);
+      expect(worker.matches({ mode: "suspended" })).toBe(true);
+      expect(worker.context.loadedDataset).toBeNull();
+      expect(scene.transport.commands).toContainEqual({ type: "RESET" });
+    });
+
+    it("returns navigation to idle and clears currentPath", () => {
+      scene = loadedScene();
+      scene.navigation?.send({ type: "NAV.COMMIT", path: "/berlin" });
+      expect(scene.navigation?.getSnapshot().context.currentPath).toBe(
+        "/berlin",
+      );
+
+      scene.actor.send({ type: "SCENE.RESET" });
+
+      const nav = scene.navigation!.getSnapshot();
+      expect(nav.value).toBe("idle");
+      expect(nav.context.currentPath).toBeNull();
+      expect(nav.context.pendingPath).toBeNull();
+    });
+
+    it("returns root to settled and resumes map + ui", () => {
+      scene = loadedScene();
+      scene.actor.send({ type: "NAV.STARTED", path: "/london" });
+      expect(
+        scene.map?.getSnapshot().matches({ interaction: "suspended" }),
+      ).toBe(true);
+
+      scene.actor.send({ type: "SCENE.RESET" });
+
+      expect(scene.actor.getSnapshot().value).toBe("settled");
+      expect(
+        scene.map?.getSnapshot().matches({ interaction: "interactive" }),
+      ).toBe(true);
+      expect(scene.ui?.getSnapshot().value).toBe("active");
+    });
+
+    it("makes a re-dispatched same-city load a real reload, not a stale dedupe", () => {
+      scene = loadedScene();
+      const loadsBefore = scene.transport.commands.filter(
+        (c) => c.type === "LOAD",
+      ).length;
+
+      scene.actor.send({ type: "SCENE.RESET" });
+      // Re-show: the page re-dispatches CITY.CHANGED for the same slug.
+      scene.actor.send({ type: "CITY.CHANGED", payload: berlin, filter });
+
+      const loadsAfter = scene.transport.commands.filter(
+        (c) => c.type === "LOAD",
+      ).length;
+      expect(loadsAfter).toBeGreaterThan(loadsBefore);
     });
   });
 });

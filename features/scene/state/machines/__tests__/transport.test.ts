@@ -1,13 +1,21 @@
 import { describe, expect, it, vi } from "vitest";
 import { createActor } from "xstate";
 
-import { transportActor } from "../worker/transport";
+import type { ProcessRequestMessage } from "@/lib/listings";
+
+import { transportActor } from "../worker/controller/transport-actor";
+
+const LOAD = {
+  type: "LOAD" as const,
+  payload: { slug: "london", snapshotId: "v1", assetUrl: "/x" },
+};
 
 /**
  * The worker actor is session-lifetime inside the scene layout. The transport
  * must still defer the real `new Worker()` until a city actually sends a command,
  * so entering the scene shell never pays for a worker thread before it is needed.
- * These tests pin that timing via the `createWorker` seam.
+ * These tests pin that timing via the `createWorker` seam, plus the command → worker
+ * wiring through the real controller.
  */
 describe("transportActor worker lifecycle", () => {
   function fakeWorker() {
@@ -26,12 +34,7 @@ describe("transportActor worker lifecycle", () => {
     actor.start();
     expect(createWorker).not.toHaveBeenCalled();
 
-    actor.send({
-      type: "LOAD",
-      slug: "london",
-      snapshotId: "v1",
-      assetUrl: "/x",
-    });
+    actor.send(LOAD);
     expect(createWorker).toHaveBeenCalledTimes(1);
     expect(worker.postMessage).toHaveBeenCalledTimes(1);
   });
@@ -42,18 +45,8 @@ describe("transportActor worker lifecycle", () => {
     const actor = createActor(transportActor, { input: { createWorker } });
     actor.start();
 
-    actor.send({
-      type: "LOAD",
-      slug: "london",
-      snapshotId: "v1",
-      assetUrl: "/x",
-    });
-    actor.send({
-      type: "LOAD",
-      slug: "london",
-      snapshotId: "v1",
-      assetUrl: "/x",
-    });
+    actor.send(LOAD);
+    actor.send(LOAD);
     expect(createWorker).toHaveBeenCalledTimes(1);
     expect(worker.postMessage).toHaveBeenCalledTimes(2);
 
@@ -70,5 +63,72 @@ describe("transportActor worker lifecycle", () => {
     actor.stop();
     expect(createWorker).not.toHaveBeenCalled();
     expect(worker.terminate).not.toHaveBeenCalled();
+  });
+
+  it("posts a calculation request to the worker once its dataset is ready", () => {
+    const worker = fakeWorker();
+    const createWorker = vi.fn(() => worker);
+    const actor = createActor(transportActor, { input: { createWorker } });
+    actor.start();
+
+    actor.send({
+      type: "DATA_READY",
+      dataset: { slug: "london", snapshotId: "v1" },
+    });
+    actor.send({
+      type: "REQUEST",
+      message: {
+        type: "hexes",
+        slug: "london",
+        snapshotId: "v1",
+        requestId: "h1",
+        params: {},
+      } as unknown as ProcessRequestMessage,
+    });
+
+    expect(worker.postMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "hexes", requestId: "h1" }),
+    );
+  });
+
+  /** A worker that records its event listeners so a test can fire a crash. */
+  function recordingWorker() {
+    const listeners: Record<string, (event: unknown) => void> = {};
+    const worker = {
+      addEventListener: vi.fn((type: string, cb: (event: unknown) => void) => {
+        listeners[type] = cb;
+      }),
+      postMessage: vi.fn(),
+      terminate: vi.fn(),
+    };
+    return { worker: worker as unknown as Worker, listeners, ...worker };
+  }
+
+  it("releases a failed worker so the next command spawns a fresh one", () => {
+    const first = recordingWorker();
+    const second = recordingWorker();
+    const createWorker = vi
+      .fn()
+      .mockReturnValueOnce(first.worker)
+      .mockReturnValueOnce(second.worker);
+    const actor = createActor(transportActor, { input: { createWorker } });
+    actor.start();
+
+    actor.send(LOAD);
+    expect(createWorker).toHaveBeenCalledTimes(1);
+
+    // A worker-thread crash: the transport terminates and releases the worker.
+    first.listeners.error?.({ message: "boom" });
+    expect(first.terminate).toHaveBeenCalledTimes(1);
+
+    // The next command lazily spawns a fresh connection.
+    actor.send({
+      type: "LOAD",
+      payload: { slug: "berlin", snapshotId: "v1", assetUrl: "/y" },
+    });
+    expect(createWorker).toHaveBeenCalledTimes(2);
+    expect(second.postMessage).toHaveBeenCalledTimes(1);
+
+    actor.stop();
   });
 });

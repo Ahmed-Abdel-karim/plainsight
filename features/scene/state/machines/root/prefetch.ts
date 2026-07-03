@@ -6,7 +6,7 @@ import { cityAssetUrl } from "@/features/scene/shared/city-asset-url";
 
 import { SystemId } from "../constants";
 import type { UiMachineActor } from "../ui/machine";
-import type { WorkerMachineRef } from "../worker/machine";
+import type { WorkerMachineRef } from "../worker";
 
 /** Immutable slug → snapshot id index, seeded from the server cities list. */
 export type SnapshotById = Record<string, string>;
@@ -47,6 +47,10 @@ export function makePrefetch(
       const worker = system.get(SystemId.WORKER) as
         | WorkerMachineRef
         | undefined;
+      // Resume before loading so the destination is warmed in active mode; the
+      // spawned city still sends its own RESUME, so correctness never depends on
+      // this earlier one (see docs/worker-machine-design.md, consumer contract).
+      worker?.send({ type: "WORKER.RESUME" });
       worker?.send({
         type: "WORKER.REQUEST_LOAD",
         slug,

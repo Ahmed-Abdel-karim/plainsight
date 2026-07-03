@@ -157,7 +157,7 @@ not for every local UI value.
 | `navigation` | scene session | route intent and route commit                                    |
 | `map`        | scene session | MapLibre lifecycle, feature-state painting, map interaction gate |
 | `ui`         | scene session | lens, hover, selected listing, navigation-time UI drop window    |
-| `worker`     | scene session | load/process routing, cancellation, request coalescing           |
+| `worker`     | scene session | dataset lifecycle, calculation mode, request coalescing/cache    |
 | `city`       | active city   | current city filter, lens leg, load status, stale-result guards  |
 
 Root spawns session actors that React needs synchronously and invokes session
@@ -171,16 +171,16 @@ recorded in
 
 ## State ownership
 
-| State                                 | Owner                                                |
-| ------------------------------------- | ---------------------------------------------------- |
-| active city slug and snapshot framing | city actor input/context                             |
-| current lens                          | UI actor, forwarded to city                          |
-| filters and neighbourhood scope       | city actor                                           |
-| selected listing and hover            | UI actor, mirrored to map for feature-state painting |
-| MapLibre readiness and loaded sources | map actor                                            |
-| worker request ids and process slots  | worker actor                                         |
-| query cache for public assets         | TanStack Query                                       |
-| URL serialization                     | root action reading live UI/city snapshots           |
+| State                                    | Owner                                                |
+| ---------------------------------------- | ---------------------------------------------------- |
+| active city slug and snapshot framing    | city actor input/context                             |
+| current lens                             | UI actor, forwarded to city                          |
+| filters and neighbourhood scope          | city actor                                           |
+| selected listing and hover               | UI actor, mirrored to map for feature-state painting |
+| MapLibre readiness and loaded sources    | map actor                                            |
+| worker request ids and calc coordination | transport controller (in worker actor)               |
+| query cache for public assets            | TanStack Query                                       |
+| URL serialization                        | root action reading live UI/city snapshots           |
 
 Local component-only state should remain local. Server/cache data should remain
 in Next.js or TanStack Query. Actors own lifecycle coordination and race-prone
@@ -224,17 +224,48 @@ The actor system protects these failure-prone edges:
 - worker replies arrive after cancellation or after city replacement;
 - MapLibre source data reloads and clears feature-state;
 - URL writes happen while city-switch defaults are being cleared;
-- Analyse recomputation fails while the last good result is still visible.
+- Analyse recomputation fails while the last good result is still visible;
+- a hidden `<Activity>` subtree strands an in-flight coordination gate (below).
 
 Safety rules:
 
 - root suppresses map/UI on `NAV.STARTED` and resumes on `CITY.READY` or
   `CITY.FAILED`;
-- city replacement cancels old worker work;
-- worker process slots use request ids to drop stale replies;
+- identity-aware worker loads replace active data without cancelling a matching
+  destination prefetch;
+- the worker starts suspended, retains Analyse calculation intent until data is
+  loaded, and permits one in-flight request per process type;
+- the transport controller (not the machine) uses deterministic request IDs to
+  coalesce requests, cache completed results per type, and drop stale replies;
 - city validates slug and snapshot id before accepting worker results;
 - UI structurally drops interaction events while navigating;
 - map interaction has its own suspended state independent of map loading.
+
+### Activity preserves state but disconnects listeners
+
+This app runs with Next.js `cacheComponents`, and the scene uses React
+`<Activity>` (both at the route level for back/forward and in `LensActivity` for
+the Analyse/Browse toggle). A hidden Activity subtree **keeps component and actor
+state but tears down the effect layer** — subscriptions, request triggers, and
+route listeners are disconnected while hidden and reconnected on show.
+
+The hazard this creates: an async operation started before hide, whose completion
+is delivered through the disconnected effect layer, can be **orphaned**. Any
+machine that gates future work on that completion then strands — a per-type
+`hasRequestInFlight` flag never clears, a `loading`/`navigating`/`switching` state
+never advances — and on return the next request queues behind a reply that will
+never arrive. The stall cascades: a stuck worker channel stalls the city's
+`loading` leg, which never reports `CITY.READY`, which leaves root in `switching`
+with map/UI suspended.
+
+**Rule for future work:** any machine that waits on an orphanable completion must
+support a **navigation-reset broadcast**. A single `SCENE.RESET` reaches root and
+is fanned to every machine (the `fanSuspend`/`fanResume` pattern); each machine
+resets only its own _transient/orphanable_ state and returns to a re-requestable
+resting state. Each machine must **preserve identity and earned results** —
+active city slug/snapshot, committed route, user filters, and content-addressed
+caches — and drop only what a reconnecting subtree will re-request. Design new
+waiting states to declare which side of that line they fall on.
 
 ## Rendering model
 

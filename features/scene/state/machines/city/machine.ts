@@ -21,7 +21,6 @@ import {
 } from "@/lib/filters/normalize";
 import type { HexCell, HexResolution } from "@/lib/hex/types";
 import {
-  listingSelectionKey,
   resolveListingSelection,
   type ResolvedListingSelection,
 } from "@/lib/listings";
@@ -30,7 +29,7 @@ import { type Lens } from "@/lib/search-params";
 import { createEventAssigner } from "../utils";
 import { SystemId } from "../constants";
 import type { UiMachineActor } from "../ui/machine";
-import type { WorkerMachineRef } from "../worker/machine";
+import type { WorkerMachineRef } from "../worker";
 import * as Context from "./context";
 import type * as Events from "./events";
 import type * as Input from "./input";
@@ -85,22 +84,6 @@ const hexesRequest = (context: Context.Context, resolution: HexResolution) =>
     hexResolution: resolution,
   }) as const;
 
-/** Stable signature of the hex inputs — resolved filters + the bucketed
- *  `HexResolution` (not raw zoom). The hex request and its staleness check both
- *  derive from this, so they can never drift apart; a zoom out-and-back within the
- *  same resolution band yields the same key and skips a redundant recompute. */
-const hexesKey = (
-  context: Context.Context,
-  resolution: HexResolution,
-): string => {
-  const filters = resolveFilters(context.filter, priceBounds(context.framing));
-  return JSON.stringify({
-    roomTypes: [...filters.roomTypes].sort(),
-    priceRange: filters.priceRange,
-    resolution,
-  });
-};
-
 export const cityMachine = setup({
   types: {
     input: {} as Input.Input,
@@ -123,7 +106,7 @@ export const cityMachine = setup({
     }),
   },
   guards: {
-    // The worker is shared across cities; drop a reply addressed to a slug we've
+    // The worker is shared across cities; drop a response addressed to a slug we've
     // since navigated away from (Rule 5.3). FETCH_* and PROCESS_ERROR carry
     // `slug`/`snapshotId` at the top level; PROCESS_RESULT carries it on `result`.
     fetchIsCurrent: ({ context, event }) =>
@@ -186,56 +169,30 @@ export const cityMachine = setup({
 
     // --- worker send actions (to the session worker, slug-stamped) ---
     // Ask the worker to ensure this city's listings are loaded; a previously
-    // visited city is a cache hit and replies near-instantly.
-    requestLoad: sendTo(toWorker, ({ context }) => ({
-      type: "WORKER.REQUEST_LOAD" as const,
-      slug: context.framing!.slug,
-      snapshotId: context.framing!.snapshotId,
-      assetUrl: cityAssetUrl(
-        context.framing!.slug,
-        context.framing!.snapshotId,
-        "analytics",
-      ),
-    })),
-    // Sends the request AND records the signature it was issued for, so
-    // `requestHexesIfStale` can later tell whether a recompute is needed.
-    requestHexes: enqueueActions(({ context, system, enqueue }) => {
-      const resolution = hexResolutionOf(system);
-      enqueue.sendTo(toWorker({ system }), hexesRequest(context, resolution));
-      enqueue.assign({ hexesFilterKey: hexesKey(context, resolution) });
+    // visited city is a cache hit and responses near-instantly.
+    requestLoad: sendTo(toWorker, ({ context }) => {
+      // ensure worker is spawned before sending request
+      return {
+        type: "WORKER.REQUEST_LOAD" as const,
+        slug: context.framing!.slug,
+        snapshotId: context.framing!.snapshotId,
+        assetUrl: cityAssetUrl(
+          context.framing!.slug,
+          context.framing!.snapshotId,
+          "analytics",
+        ),
+      };
     }),
-    // Entry-time variant: recompute only if absent or the inputs (filters or the
-    // resolution band) changed since — e.g. a filter or zoom moved while in the
-    // browse leg, which doesn't recompute.
-    requestHexesIfStale: enqueueActions(({ context, system, enqueue }) => {
-      const resolution = hexResolutionOf(system);
-      const key = hexesKey(context, resolution);
-      if (context.hexCells !== null && context.hexesFilterKey === key) return;
-      enqueue.sendTo(toWorker({ system }), hexesRequest(context, resolution));
-      enqueue.assign({ hexesFilterKey: key });
-    }),
-    // Sends the request AND records the signature it was issued for, so
-    // `requestAggregatesIfStale` can later tell whether a recompute is needed.
-    requestAggregates: enqueueActions(({ context, system, enqueue }) => {
-      enqueue.sendTo(toWorker({ system }), aggregatesRequest(context));
-      enqueue.assign({
-        aggregatesFilterKey: listingSelectionKey(citySelection(context)),
-      });
-    }),
-    // Entry-time variant: recompute only if absent or the selection changed since
-    // (e.g. a filter/scope set while in the browse leg, which doesn't recompute).
-    requestAggregatesIfStale: enqueueActions(({ context, system, enqueue }) => {
-      if (
-        context.aggregates !== null &&
-        context.aggregatesFilterKey ===
-          listingSelectionKey(citySelection(context))
-      )
-        return;
-      enqueue.sendTo(toWorker({ system }), aggregatesRequest(context));
-      enqueue.assign({
-        aggregatesFilterKey: listingSelectionKey(citySelection(context)),
-      });
-    }),
+    // Ask the worker to (re)compute hexes for the current filters + resolution.
+    // The worker owns idempotency: an unchanged request re-delivers its cached
+    // result, so the city always sends and never tracks a "last requested" key.
+    requestHexes: sendTo(toWorker, ({ context, system }) =>
+      hexesRequest(context, hexResolutionOf(system)),
+    ),
+    // Ask the worker to (re)compute aggregates for the current selection.
+    requestAggregates: sendTo(toWorker, ({ context }) =>
+      aggregatesRequest(context),
+    ),
 
     // Price drags arrive per-tick (the slider is machine-controlled); assign each
     // immediately for a smooth slider, but defer the recompute — re-arm a single
@@ -252,10 +209,9 @@ export const cityMachine = setup({
       enqueue.cancel("price-settle"),
     ),
 
-    // Abort any in-flight recompute the worker still holds for this city — fired
-    // when the analyse leg is left (→ browse) or the city is replaced, so the
-    // worker doesn't keep computing a result no one will use.
-    cancelWorker: sendTo(toWorker, { type: "WORKER.CANCEL" as const }),
+    resumeWorker: sendTo(toWorker, { type: "WORKER.RESUME" as const }),
+
+    suspendWorker: sendTo(toWorker, { type: "WORKER.SUSPEND" as const }),
 
     markAnalyticsLoaded: assign({ analyticsLoaded: true }),
 
@@ -341,6 +297,7 @@ export const cityMachine = setup({
       entry: "raiseInitialLens",
     },
     browse: {
+      entry: "suspendWorker",
       initial: "loading",
       states: {
         loading: {
@@ -368,14 +325,18 @@ export const cityMachine = setup({
 
     analyse: {
       initial: "loading",
-      // Leaving analyse (→ browse) — cancel the recomputes browse won't use, plus
-      // any pending price-settle so a late drag can't recompute after we've left.
-      exit: ["cancelWorker", "cancelPriceRecompute"],
+      entry: "resumeWorker",
+      exit: ["cancelPriceRecompute"],
       states: {
         loading: {
-          entry: "requestLoad",
+          entry: ["requestLoad", "requestHexes", "requestAggregates"],
           on: {
-            "WORKER.FETCH_OK": [{ guard: "fetchIsCurrent", target: "ready" }],
+            "WORKER.FETCH_OK": [
+              {
+                guard: "fetchIsCurrent",
+                target: "ready",
+              },
+            ],
             "WORKER.FETCH_ERROR": {
               guard: "fetchIsCurrent",
               target: "error",
@@ -387,8 +348,8 @@ export const cityMachine = setup({
           entry: [
             "markAnalyticsLoaded",
             "notifyCityReady",
-            "requestHexesIfStale",
-            "requestAggregatesIfStale",
+            "requestHexes",
+            "requestAggregates",
           ],
           on: {
             "FILTER.SET_ROOM_TYPES": {
@@ -400,12 +361,9 @@ export const cityMachine = setup({
             "FILTER.PRICE_SETTLED": {
               actions: ["requestHexes", "requestAggregates"],
             },
-            // nbhd changes scope only — no effect on hex filters.
             "FILTER.SET_NBHD": {
               actions: ["assignNbhd", "requestAggregates"],
             },
-            // Trigger a re-request when zoom changes resolution; value read
-            // from map snapshot inside requestHexes, not stored here.
             "MAP.RESOLUTION_CHANGED": {
               actions: ["requestHexes"],
             },
