@@ -1,22 +1,18 @@
 import type { MapRef } from "react-map-gl/maplibre";
-import { createActor, fromCallback, fromPromise } from "xstate";
+import { createActor, fromPromise } from "xstate";
 
 import type { BrowseCollection } from "@/data/contract";
-import type {
-  LoadDataResponseMessage,
-  ProcessResponseMessage,
-} from "@/lib/listings";
 import {
   createFakeMaplibreMap,
   type FakeMaplibreMap,
 } from "@/test/scene/fake-map";
+import { createFakeTransport } from "@/test/scene/fake-transport";
 
 import { cityMachine } from "../city/machine";
 import { SystemId } from "../constants";
 import { rootMachine } from "../root/machine";
 import type { PrefetchAction } from "../root/prefetch";
 import { workerMachine } from "../worker";
-import type { TransportCommand, TransportInput } from "../worker/transport";
 
 const EMPTY_BROWSE_COLLECTION: BrowseCollection = {
   type: "FeatureCollection",
@@ -39,90 +35,13 @@ const failingBrowseReady = fromPromise<
 });
 
 /**
- * Boots the *real* connected actor system (root + map + ui + worker), substituting
- * only the one un-runnable boundary: the worker `transport`, which would otherwise
- * spawn a real Web Worker (impossible in node/jsdom). Injection happens at the
- * transport level rather than via the `createWorker` seam — see
- * `docs/testing-strategy.md`.
- */
-
-type DistributiveOmit<T, K extends PropertyKey> = T extends unknown
-  ? Omit<T, K>
-  : never;
-
-/** A process response a test replays. `requestId` is optional: omitted, it is stamped
- *  with the latest matching POST's id (the current request); supply it explicitly
- *  to replay a stale/cancelled request's response and assert it is dropped. */
-export type TestProcessResponse = DistributiveOmit<
-  ProcessResponseMessage,
-  "requestId"
-> & {
-  requestId?: string;
-};
-
-/** The response events the real transport sends up to the worker machine. */
-export type TransportResponse =
-  | { type: "TRANSPORT.LOAD_RESPONSE"; message: LoadDataResponseMessage }
-  | { type: "TRANSPORT.PROCESS_RESPONSE"; message: TestProcessResponse }
-  | { type: "TRANSPORT.WORKER_ERROR"; error: Error };
-
-/**
- * A drop-in replacement for `transportActor`: it records the commands the worker
- * posts (so tests can assert what was requested) and lets a test replay worker
- * responses on demand — no real `Worker`, no timers, fully deterministic.
- */
-function createFakeTransport() {
-  const commands: TransportCommand[] = [];
-  let sendBack: ((event: TransportResponse) => void) | null = null;
-
-  const actor = fromCallback<TransportCommand, TransportInput>(
-    ({ sendBack: sb, receive }) => {
-      sendBack = sb;
-      receive((command) => {
-        commands.push(command);
-      });
-      return () => {
-        sendBack = null;
-      };
-    },
-  );
-
-  const latestRequestId = (type: ProcessResponseMessage["payload"]["type"]) => {
-    for (let i = commands.length - 1; i >= 0; i--) {
-      const command = commands[i];
-      if (command.type === "POST" && command.message.type === type)
-        return command.message.requestId;
-    }
-    return undefined;
-  };
-
-  return {
-    actor,
-    /** Commands the worker machine posted to the transport, in order. */
-    commands,
-    /** Replay a worker response (throws if the transport isn't running). */
-    response(event: TransportResponse) {
-      if (!sendBack) throw new Error("fake transport is not running");
-      if (event.type === "TRANSPORT.PROCESS_RESPONSE") {
-        const requestId =
-          event.message.requestId ??
-          latestRequestId(event.message.payload.type);
-        sendBack({
-          type: "TRANSPORT.PROCESS_RESPONSE",
-          message: { ...event.message, requestId: requestId ?? "" },
-        });
-        return;
-      }
-      sendBack(event);
-    },
-  };
-}
-
-/**
  * Start the connected scene system for a test. Returns the root actor, the fake
  * transport controller, lazy accessors for the session child actors, and a
- * `stop()` for teardown. The `syncUrl` action is no-oped so a test never touches
- * the URL; `prefetch` is a no-op by default (only the provider overrides it).
+ * `stop()` for teardown. Only the worker `transport` is substituted — with the
+ * real `ProcessController` running behind a faked Worker (see
+ * `@/test/scene/fake-transport`). The `syncUrl` action is no-oped so a test never
+ * touches the URL; `prefetch` is a no-op by default (only the provider overrides
+ * it).
  */
 export function setupSceneSystem({
   failBrowse = false,
@@ -186,10 +105,10 @@ export function setupSceneSystem({
 
 /**
  * Converge a city the way the real worker does: drive a successful load response
- * through the fake transport so the worker transitions `loading → ready`, routes
- * `FETCH_OK` to the current city, and flushes any held recomputes. Use this
- * instead of sending `WORKER.FETCH_OK` straight to the city — the worker only
- * posts recomputes once it is `ready`.
+ * through the fake transport so the worker transitions `loading → loaded` and
+ * routes `FETCH_OK` to the current city (which advances its analyse leg to
+ * `ready`). Use this instead of sending `WORKER.FETCH_OK` straight to the city.
+ * Calculation results are replayed separately via `transport.workerReply(...)`.
  */
 export function finishLoad(
   scene: ReturnType<typeof setupSceneSystem>,

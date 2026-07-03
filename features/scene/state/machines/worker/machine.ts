@@ -1,42 +1,38 @@
-import { type ActorRefFrom, and, setup } from "xstate";
+import { type ActorRefFrom, setup } from "xstate";
 
 import { workerActions } from "./actions";
 import type * as Context from "./context";
-import { emptySlot } from "./context";
+import { transportActor } from "./controller/transport-actor";
 import type * as Events from "./events";
 import { workerGuards } from "./guards";
 import type * as Input from "./input";
-import { transportActor } from "./transport";
 
 /**
  * Worker machine — a **session-lifetime** actor invoked by the root alongside the
- * spawned map/ui actors, shared across every city. It invokes a thin `transport`
- * child for the raw `postMessage` pipe.
+ * spawned map/ui actors, shared across every city. It invokes the `transport`
+ * actor, which owns the raw worker pipe *and* the calculation controller
+ * (coalescing, per-type caching, and the hold-until-loaded gate). The machine
+ * itself only tracks load lifecycle and gates delivery by mode.
  *
  * Two parallel regions run independently:
  *
  * - **`data`** (`unloaded → loading → loaded`, with `error`) tracks the current
  *   analytics dataset. A *different* load replaces the active dataset; an
- *   *identical* one is deduplicated (while loading) or acknowledged from cache
- *   (while loaded, no round-trip) so a newly spawned city actor need not wait on
- *   data the session worker already holds. `WORKER.CANCEL_LOAD` cancels loading
- *   only; a worker crash is global — it records the failure and enters `error`
- *   while preserving each slot's completed cache for recovery.
+ *   *identical* one is deduplicated (while loading) or acknowledged from the
+ *   controller's cache (while loaded, no round-trip). On a current-dataset load
+ *   success it sends `DATA_READY` so the controller flushes held calculations. A
+ *   worker crash is global: it records the failure, enters `error`, and routes a
+ *   fatal to the city (the transport actor already reset the controller).
  *
  * - **`mode`** (`suspended ⇄ active`, initial `suspended`) gates calculations.
- *   While `active`, each calculation type owns one bounded slot: intent sets the
- *   `targetRequest` (newest wins), at most one transport request is in flight per
- *   type (`pendingRequestId`), a request matching the slot's `lastCompleted` cache
- *   is re-delivered without a round-trip, and an outdated response dispatches the
- *   latest target instead of being delivered. Only the reply matching a slot's
- *   `pendingRequestId` may settle it, so a stale reply from a replaced city (whose
- *   worker was never cancelled) is dropped. While `suspended`, new requests are
- *   omitted and in-flight responses settle (and cache) without delivery.
+ *   While `active`, calculation requests are forwarded to the controller and
+ *   delivered results are routed to the current city. While `suspended`, both are
+ *   omitted — the controller keeps caching, so resuming re-requests serve from
+ *   cache. Data loading is independent of mode.
  *
- * Data loading is independent of mode, so Analyse prefetch can load before the
- * scene is ready. Because the worker is shared, the slug + snapshot ride on every
- * request; the worker routes responses to whichever city is current, and that
- * city drops any response whose identity does not match its own.
+ * The worker is shared, so the slug + snapshot ride on every request; the
+ * controller drops replies that no longer match, and the city drops any result
+ * whose identity is not its own.
  */
 export const workerMachine = setup({
   types: {
@@ -55,30 +51,40 @@ export const workerMachine = setup({
     requestedDataset: null,
     loadedDataset: null,
     error: null,
-    slots: { hexes: emptySlot(), aggregates: emptySlot() },
   }),
   invoke: {
     id: "transport",
     src: "transport",
     input: {},
   },
+  // Scene-session reset fanned from root (navigation left `/city`): return both
+  // regions to their initial state and reset the transport controller, so a
+  // fresh `WORKER.REQUEST_LOAD` on re-show performs a real load (the re-created
+  // worker thread holds nothing) rather than a stale dedupe/cached ack.
+  on: {
+    // Not `reenter: true`: re-entering the parallel root would restart the
+    // invoked `transport`, and `sendReset` targets it — we reset the controller
+    // in place instead. The region targets alone return data/mode to initial.
+    "SCENE.RESET": {
+      target: [".data.unloaded", ".mode.suspended"],
+      actions: ["clearDatasets", "sendReset"],
+    },
+  },
   type: "parallel",
   states: {
     // Tracks the current analytics dataset, independent of mode.
     data: {
-      initial: "unloaded",
-      // A worker crash is global: record + report, settle pending, keep cache.
       on: {
         "TRANSPORT.WORKER_ERROR": {
           target: ".error",
           actions: [
             "captureWorkerError",
             "recordFatalError",
-            "settleAllPending",
             "routeWorkerFatal",
           ],
         },
       },
+      initial: "unloaded",
       states: {
         unloaded: {
           on: {
@@ -90,79 +96,48 @@ export const workerMachine = setup({
         },
         loading: {
           on: {
-            "WORKER.REQUEST_LOAD": [
-              {
-                guard: "isCurrentCityLoadingRequest",
-                actions: () => {
-                  // do nothing
-                },
-              },
-              // else
-              {
-                actions: [
-                  "cancelTransportLoad",
-                  "resetSlots",
-                  "sendLoadDataRequest",
-                ],
-              },
-            ],
+            "WORKER.REQUEST_LOAD": {
+              guard: "isNewCityLoadingRequest",
+              actions: ["cancelTransportLoad", "sendLoadDataRequest"],
+            },
             "WORKER.CANCEL_LOAD": {
               target: "unloaded",
-              actions: [
-                "cancelTransportLoad",
-                "clearRequestedCityData",
-                "resetSlots",
-              ],
+              actions: ["cancelTransportLoad", "clearRequestedCityData"],
             },
             "TRANSPORT.LOAD_RESPONSE": [
               {
                 guard: "loadSucceeded",
                 target: "loaded",
-                actions: ["markLoaded", "routeLoadOk", "raiseDataReady"],
+                actions: ["markLoaded", "routeLoadOk", "sendDataReady"],
               },
               {
                 guard: "loadFailed",
                 target: "error",
-                actions: [
-                  "recordLoadError",
-                  "settleAllPending",
-                  "routeLoadError",
-                ],
+                actions: ["recordLoadError", "routeLoadError"],
               },
-              // A response for an outdated identity is omitted (no branch).
             ],
           },
         },
         loaded: {
           on: {
             "WORKER.REQUEST_LOAD": [
-              // Identical to the loaded dataset — acknowledge from cache, no
-              // transport round-trip (a newly spawned city need not wait).
-              { guard: "loadMatchesLoaded", actions: "ackCachedLoad" },
-              // Different dataset: reset coordination (keep cache) and load.
+              {
+                guard: "loadMatchesLoaded",
+                actions: ["ackCachedLoad"],
+              },
               {
                 target: "loading",
-                actions: ["resetSlots", "sendLoadDataRequest"],
+                actions: ["sendLoadDataRequest"],
               },
             ],
-            // No load is current, so CANCEL_LOAD and load responses are omitted.
           },
         },
         error: {
           on: {
-            "WORKER.REQUEST_LOAD": [
-              // Same-dataset retry preserves calculation targets.
-              {
-                guard: "isCurrentCityLoadingRequest",
-                target: "loading",
-                actions: "sendLoadDataRequest",
-              },
-              // Different dataset resets coordination first.
-              {
-                target: "loading",
-                actions: ["resetSlots", "sendLoadDataRequest"],
-              },
-            ],
+            "WORKER.REQUEST_LOAD": {
+              target: "loading",
+              actions: "sendLoadDataRequest",
+            },
           },
         },
       },
@@ -175,87 +150,14 @@ export const workerMachine = setup({
         suspended: {
           on: {
             "WORKER.RESUME": { target: "active" },
-            "TRANSPORT.PROCESS_RESPONSE": {
-              guard: "responseIsInFlight",
-              actions: "settleResponse",
-            },
           },
         },
         active: {
           on: {
             "WORKER.SUSPEND": { target: "suspended" },
-            // Each request first records its slot target (newest wins); the guards
-            // then decide whether it also serves from cache, dispatches fresh work,
-            // or only holds the target (slot pending, or data not yet loaded).
-            "WORKER.REQUEST_HEXES": [
-              {
-                guard: and(["dataLoaded", "requestServedFromCache"]),
-                actions: ["setTarget", "deliverCachedResult"],
-              },
-              {
-                guard: and(["dataLoaded", "shouldPostFreshRequest"]),
-                actions: ["setTarget", "postTarget"],
-              },
-              { actions: "setTarget" },
-            ],
-            "WORKER.REQUEST_AGGREGATES": [
-              {
-                guard: and(["dataLoaded", "requestServedFromCache"]),
-                actions: ["setTarget", "deliverCachedResult"],
-              },
-              {
-                guard: and(["dataLoaded", "shouldPostFreshRequest"]),
-                actions: ["setTarget", "postTarget"],
-              },
-              { actions: "setTarget" },
-            ],
-            // Only the reply for the slot's in-flight request (`responseIsInFlight`)
-            // is acted on; a stale reply from a previous city matches no branch and
-            // is dropped, so it can neither settle nor repost the current request.
-            "TRANSPORT.PROCESS_RESPONSE": [
-              {
-                guard: and([
-                  "dataLoaded",
-                  "responseIsInFlight",
-                  "processResponseIsCurrent",
-                  "processResponseSucceeded",
-                ]),
-                actions: ["clearPending", "cacheResult", "deliverResult"],
-              },
-              {
-                guard: and([
-                  "dataLoaded",
-                  "responseIsInFlight",
-                  "processResponseIsCurrent",
-                ]),
-                actions: ["clearPending", "deliverProcessError"],
-              },
-              {
-                guard: and([
-                  "dataLoaded",
-                  "responseIsInFlight",
-                  "shouldRepostLatestTarget",
-                ]),
-                actions: ["clearPending", "flushStoredProcessRequests"],
-              },
-              {
-                guard: and(["dataLoaded", "responseIsInFlight"]),
-                actions: "clearPending",
-              },
-            ],
-            "DATA.READY": { actions: "raiseDispatchTargets" },
-            // Each retained target: serve from cache, post fresh work, or (no
-            // branch) stay idle — pending, cached-and-served, or a foreign city.
-            DISPATCH_TARGET: [
-              {
-                guard: "targetServedFromCache",
-                actions: "deliverTargetResult",
-              },
-              {
-                guard: "shouldPostRetainedTarget",
-                actions: "flushStoredProcessRequests",
-              },
-            ],
+            "WORKER.REQUEST_HEXES": { actions: "forwardCalcRequest" },
+            "WORKER.REQUEST_AGGREGATES": { actions: "forwardCalcRequest" },
+            "TRANSPORT.PROCESS_RESULT": { actions: "routeProcessResult" },
           },
         },
       },

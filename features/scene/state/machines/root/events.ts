@@ -35,10 +35,18 @@ export interface UrlSync {
   readonly type: "URL.SYNC";
 }
 
+/** Scene-session reset — dispatched when navigation leaves `/city` (Activity
+ *  hides the scene). Root returns to `settled`, resumes map/UI, and fans
+ *  `SCENE.RESET` to the worker + navigation actors. */
+export interface SceneReset {
+  readonly type: "SCENE.RESET";
+}
+
 export type Events =
   | Init
   | CityChanged
   | NavStarted
   | CityReady
   | CityFailed
-  | UrlSync;
+  | UrlSync
+  | SceneReset;

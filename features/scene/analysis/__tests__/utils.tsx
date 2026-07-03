@@ -92,14 +92,11 @@ export function setupAnalysis(
 
   const responseAggregates = (data: ScopeAggregates) => {
     act(() => {
-      result.transport.response({
-        type: "TRANSPORT.PROCESS_RESPONSE",
-        message: {
-          status: "success",
-          slug: framing.slug,
-          snapshotId: framing.snapshotId,
-          payload: { type: "aggregates", data },
-        },
+      result.transport.workerReply({
+        status: "success",
+        slug: framing.slug,
+        snapshotId: framing.snapshotId,
+        payload: { type: "aggregates", data },
       });
     });
   };

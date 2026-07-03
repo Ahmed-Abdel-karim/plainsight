@@ -25,7 +25,6 @@ export function NeighbourhoodsLayers({
 }: NeighbourhoodsLayersProps) {
   const listeners = useNeighbourhoodsListeners();
   const suppressed = useMapIsSuppressed();
-
   const city = useCityFraming();
   const boundaries = useCityBoundaries(
     city?.slug ?? null,

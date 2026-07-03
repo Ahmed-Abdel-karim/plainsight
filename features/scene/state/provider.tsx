@@ -13,15 +13,7 @@ import { makePrefetch, type SnapshotById } from "./machines/root/prefetch";
 import { RouteListener } from "./machines/navigation/route-listener";
 import { SystemId } from "./machines/constants";
 
-/**
- * SceneProvider is mounted by `app/(scene)/layout.tsx`, not the root app layout.
- * `createActorContext` creates one root actor for this provider lifetime: it
- * persists across city-to-city navigation inside `(scene)` and is torn down when
- * leaving the route group. The `city` machine is spawned fresh per slug from a
- * page-level `CITY.CHANGED` dispatch.
- */
 export const SceneActorContext = createActorContext(rootMachine);
-
 export function SceneProvider({
   children,
   snapshotById,

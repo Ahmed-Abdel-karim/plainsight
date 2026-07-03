@@ -67,36 +67,32 @@ export interface WorkerResume {
   readonly type: "WORKER.RESUME";
 }
 
-/** Internal: raised when a matching load succeeds so active mode can dispatch each
- *  slot's retained calculation target. Handled only while active. */
-export interface DataReady {
-  readonly type: "DATA.READY";
-}
-
-/** Internal: raised once per process type when data becomes ready, so each slot's
- *  retained target is dispatched (cache-served, posted, or idle) through guarded
- *  machine branches rather than a loop. Handled only while active. */
-export interface DispatchTarget {
-  readonly type: "DISPATCH_TARGET";
-  readonly processType: ProcessType;
-}
-
-// --- raw responses from the transport child (a dumb pipe; machine interprets) ---
+// --- responses up from the transport actor ---
 
 export interface TransportLoadResponse {
   readonly type: "TRANSPORT.LOAD_RESPONSE";
   readonly message: LoadDataResponseMessage;
 }
 
-export interface TransportProcessResponse {
-  readonly type: "TRANSPORT.PROCESS_RESPONSE";
-  readonly message: ProcessResponseMessage;
+/** A calculation result the controller has already decided is current; the machine
+ *  routes it (success → PROCESS_RESULT, error → PROCESS_ERROR) to the current city
+ *  while active, and drops it while suspended. */
+export interface TransportProcessResult {
+  readonly type: "TRANSPORT.PROCESS_RESULT";
+  readonly response: ProcessResponseMessage;
 }
 
 /** Worker-level failure (the `error` event, not a message response) — terminal. */
 export interface TransportWorkerError {
   readonly type: "TRANSPORT.WORKER_ERROR";
   readonly error: Error;
+}
+
+/** Scene-session reset, fanned from root when navigation leaves `/city`. Returns
+ *  the data + mode regions to their initial state and resets the transport's
+ *  controller, so a fresh load re-establishes the (now-empty) worker. */
+export interface SceneReset {
+  readonly type: "SCENE.RESET";
 }
 
 export type Events =
@@ -106,11 +102,10 @@ export type Events =
   | WorkerCancelLoad
   | WorkerSuspend
   | WorkerResume
-  | DataReady
-  | DispatchTarget
   | TransportLoadResponse
-  | TransportProcessResponse
-  | TransportWorkerError;
+  | TransportProcessResult
+  | TransportWorkerError
+  | SceneReset;
 
 /** The process types the machine routes by (one parallel region per type). */
 export type ProcessType = ProcessRequestMessage["type"];

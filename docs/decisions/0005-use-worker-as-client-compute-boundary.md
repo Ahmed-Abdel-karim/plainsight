@@ -66,8 +66,8 @@ projections. Browse list projection runs on the main thread (see Measured Cost).
 The worker machine has parallel dataset (`unloaded`, `loading`, `loaded`,
 `error`) and calculation-mode (`suspended`, `active`) regions. It starts
 suspended, but loading remains available for Analyse navigation prefetch.
-Per-process slots retain the latest deterministic request, permit one in-flight
-calculation, and cache the last success. Browse suspension omits new work while
+The transport controller retains the latest deterministic request per process
+type, permits one in-flight calculation, and caches the last success. Browse suspension omits new work while
 settling and caching an existing response without delivery. Identity-aware loads
 deduplicate matching work and let a newly spawned city reuse a completed
 destination prefetch. See

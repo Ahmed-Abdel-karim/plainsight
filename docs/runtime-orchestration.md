@@ -170,73 +170,80 @@ mode, so Analyse navigation may prefetch a destination dataset before its city
 actor exists. The transport creates the Web Worker lazily on its first command
 and releases a failed thread so a later load can recreate it.
 
+The machine tracks only the load lifecycle and gates delivery by mode. The
+transport actor it invokes owns both the raw worker pipe and a **calculation
+controller** — the coalescing, per-type caching, and the hold-until-loaded gate
+all live there, not in the machine.
+
 ### Data lifecycle
 
 - `WORKER.REQUEST_LOAD` from `unloaded` or `error` records the requested
   slug/snapshot and starts transport loading.
-- An identical request in `loading` is deduplicated. A different request
-  cancels the old transport load, resets slot targets/pending flags while
-  preserving completed caches, and loads the new dataset.
+- An identical request in `loading` is deduplicated (it falls through as a
+  no-op). A different request cancels the old transport load and loads the new
+  dataset. No calculation state is reset on a city switch — the controller needs
+  none (see below).
 - `WORKER.CANCEL_LOAD` applies only in `loading`; there is no unload event and no
   combined worker-cancel event.
 - Only a load response matching the requested slug/snapshot can enter `loaded`
   or `error`. Other load responses are omitted.
 - A matching success records the loaded identity, sends `WORKER.FETCH_OK`, and
-  raises internal `DATA.READY`. `WORKER.FETCH_OK` contains only slug and snapshot
-  ID.
+  sends `DATA_READY` to the transport so the controller flushes any held
+  calculations. `WORKER.FETCH_OK` contains only slug and snapshot ID.
 - An identical load request in `loaded` immediately acknowledges the current
   city without a transport round-trip. This is how city replacement reuses a
   completed destination prefetch.
-- A load or transport failure enters `error`, clears pending flags, and preserves
-  calculation targets and completed caches for retry.
+- A load failure enters `error`; held calculation intent and completed caches are
+  preserved for a same-dataset retry. A worker-thread crash
+  (`TRANSPORT.WORKER_ERROR`) enters `error`, routes a fatal to the city, and — in
+  the transport actor, before the machine sees the event — resets the controller
+  (channels cleared and loaded-dataset forgotten, cache kept for instant
+  recovery).
 
-### Calculation slots
+### Calculation coordination (controller)
 
-Hexes and aggregates each own one bounded slot:
+While `active`, the machine forwards each `WORKER.REQUEST_*` to the transport as
+a `REQUEST` command and routes delivered results to the current city. The
+controller keeps one channel per process type (hexes, aggregates):
 
 ```text
-targetRequest  latest deterministic request for this process type
-isPending      whether one transport calculation is outstanding
-lastCompleted  latest successful request ID and result
+latestRequestedMessage  the newest request the city wants (also the reply match-key)
+hasRequestInFlight      whether one worker calculation is physically outstanding
 ```
 
-The request ID is deterministic over process type, slug, snapshot ID, and
-normalized calculation parameters. It is both the deduplication key and the
-response identity.
+plus a per-type result cache and the current loaded-dataset identity. The request
+ID is deterministic over process type, slug, snapshot ID, and normalized
+parameters — both the deduplication key and the reply identity. Because it
+encodes city identity, a cached entry or reply from a previous city never falsely
+matches.
 
 ```mermaid
 flowchart TD
-  request["calculation intent"] --> target["replace targetRequest"]
-  target --> loaded{"matching data loaded?"}
-  loaded -- no --> hold["retain until DATA.READY"]
-  loaded -- yes --> cached{"target cached?"}
-  cached -- yes --> deliver["deliver cached result"]
-  cached -- no --> pending{"request pending?"}
-  pending -- yes --> hold
-  pending -- no --> post["POST target; mark pending"]
+  request["REQUEST (forwarded while active)"] --> cache{"result cached for this id?"}
+  cache -- yes --> deliver["deliver cached; abandon channel target"]
+  cache -- no --> latest["set as latest wanted"]
+  latest --> ready{"dataset loaded AND channel free?"}
+  ready -- no --> hold["hold (flushed on DATA_READY or when the channel frees)"]
+  ready -- yes --> post["post to worker; mark in flight"]
 
-  response["transport response"] --> current{"response ID = target ID?"}
-  current -- yes --> settle["cache success; settle; deliver while active"]
-  current -- no --> omit["omit stale response"]
-  omit --> latest{"latest target already cached?"}
-  latest -- yes --> idle["settle without delivery"]
-  latest -- no --> stillLoaded{"matching data still loaded?"}
-  stillLoaded -- yes --> post
-  stillLoaded -- no --> hold
+  response["worker reply"] --> match{"reply id = latest wanted?"}
+  match -- yes --> settle["cache success; deliver up"]
+  match -- no --> drop["drop (superseded/abandoned); post latest if ready"]
 ```
 
-While active, calculation intent received before `data.loaded` is retained and
-dispatched on `DATA.READY`. At most one transport calculation per process type
-is outstanding; newer intent replaces the target rather than adding synchronous
-worker work to a queue. A current success is cached and delivered, while a
-current failure is delivered without discarding the last successful result. An
-outdated response is omitted and only the latest uncached target is posted.
+At most one calculation per type is outstanding; newer intent replaces the target
+rather than queuing worker work. A request whose dataset is not yet loaded is held
+and flushed on `DATA_READY`. A city switch needs no explicit reset: newest-wins
+overwrites the target, the loaded-dataset gate holds a stale target, the reply-id
+match drops the old city's in-flight reply, and the city's own slug check is the
+backstop. Because the worker is single-threaded, a shared channel serializes the
+new city's calculation behind the old city's in-flight one (equivalent
+wall-clock; only the timing of the post differs).
 
-While suspended, new calculation requests are omitted. In-flight responses are
-still settled and successful responses are cached, but nothing is delivered and
-no replacement calculation is posted. Suspension never clears slot state.
-Resuming changes mode only; the Analyse city leg sends current calculation
-intent again, allowing cache delivery or a fresh request.
+Delivery is gated by `mode`. While `suspended` the machine forwards no requests
+and drops delivered results, but the controller keeps settling and caching, so
+resuming and re-requesting serves from cache. Only a worker crash resets the
+controller.
 
 ### Consumer sequence
 

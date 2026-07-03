@@ -170,16 +170,19 @@ export const cityMachine = setup({
     // --- worker send actions (to the session worker, slug-stamped) ---
     // Ask the worker to ensure this city's listings are loaded; a previously
     // visited city is a cache hit and responses near-instantly.
-    requestLoad: sendTo(toWorker, ({ context }) => ({
-      type: "WORKER.REQUEST_LOAD" as const,
-      slug: context.framing!.slug,
-      snapshotId: context.framing!.snapshotId,
-      assetUrl: cityAssetUrl(
-        context.framing!.slug,
-        context.framing!.snapshotId,
-        "analytics",
-      ),
-    })),
+    requestLoad: sendTo(toWorker, ({ context }) => {
+      // ensure worker is spawned before sending request
+      return {
+        type: "WORKER.REQUEST_LOAD" as const,
+        slug: context.framing!.slug,
+        snapshotId: context.framing!.snapshotId,
+        assetUrl: cityAssetUrl(
+          context.framing!.slug,
+          context.framing!.snapshotId,
+          "analytics",
+        ),
+      };
+    }),
     // Ask the worker to (re)compute hexes for the current filters + resolution.
     // The worker owns idempotency: an unchanged request re-delivers its cached
     // result, so the city always sends and never tracks a "last requested" key.
@@ -206,12 +209,8 @@ export const cityMachine = setup({
       enqueue.cancel("price-settle"),
     ),
 
-    // Enter active worker mode before loading, so retained calculation intent is
-    // dispatched once data is ready. Sent on analyse entry, ahead of requestLoad.
     resumeWorker: sendTo(toWorker, { type: "WORKER.RESUME" as const }),
-    // Enter suspended worker mode on the browse leg: new recomputes are omitted
-    // and any in-flight response settles + caches without delivery. The data load
-    // (if any) still completes; returning to analyse re-requests current results.
+
     suspendWorker: sendTo(toWorker, { type: "WORKER.SUSPEND" as const }),
 
     markAnalyticsLoaded: assign({ analyticsLoaded: true }),
@@ -298,8 +297,6 @@ export const cityMachine = setup({
       entry: "raiseInitialLens",
     },
     browse: {
-      // Suspend worker calculations for the browse leg (data load, if any, still
-      // completes and caches). Returning to analyse re-requests current results.
       entry: "suspendWorker",
       initial: "loading",
       states: {
@@ -328,22 +325,18 @@ export const cityMachine = setup({
 
     analyse: {
       initial: "loading",
-      // Resume active worker mode on entering the analyse leg — before load and
-      // before the ready-entry recomputes (consumer contract order:
-      // RESUME → LOAD → HEXES → AGGREGATES). On the entry runs here whether we
-      // enter via `.loading` or jump straight to `.ready` (analyticsLoaded).
       entry: "resumeWorker",
-      // Leaving analyse (→ browse) — cancel any pending price-settle so a late drag
-      // can't recompute after we've left. Browse entry suspends the worker.
       exit: ["cancelPriceRecompute"],
       states: {
         loading: {
-          // Send calculation intent immediately after RESUME + LOAD. The worker
-          // retains it until DATA.READY, so pre-calculation does not wait for the
-          // city or map readiness path.
           entry: ["requestLoad", "requestHexes", "requestAggregates"],
           on: {
-            "WORKER.FETCH_OK": [{ guard: "fetchIsCurrent", target: "ready" }],
+            "WORKER.FETCH_OK": [
+              {
+                guard: "fetchIsCurrent",
+                target: "ready",
+              },
+            ],
             "WORKER.FETCH_ERROR": {
               guard: "fetchIsCurrent",
               target: "error",
@@ -352,9 +345,6 @@ export const cityMachine = setup({
           },
         },
         ready: {
-          // Re-request on every ready entry. On the initial load these requests
-          // dedupe against the targets dispatched by DATA.READY; on Analyse
-          // re-entry they re-deliver cache or request the latest inputs.
           entry: [
             "markAnalyticsLoaded",
             "notifyCityReady",
@@ -371,12 +361,9 @@ export const cityMachine = setup({
             "FILTER.PRICE_SETTLED": {
               actions: ["requestHexes", "requestAggregates"],
             },
-            // nbhd changes scope only — no effect on hex filters.
             "FILTER.SET_NBHD": {
               actions: ["assignNbhd", "requestAggregates"],
             },
-            // Trigger a re-request when zoom changes resolution; value read
-            // from map snapshot inside requestHexes, not stored here.
             "MAP.RESOLUTION_CHANGED": {
               actions: ["requestHexes"],
             },

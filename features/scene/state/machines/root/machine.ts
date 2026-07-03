@@ -18,9 +18,9 @@ import * as Context from "./context";
 import type * as Events from "./events";
 
 /**
- * Root coordinator. It spawns the persistent `map`/`ui` actors in context (the
- * refs the React tree reads) and invokes the `worker`/`navigation` session
- * machines, then translates the two lifecycle inputs into the shared map/ui
+ * Root coordinator. It spawns the persistent `map`/`ui`/`navigation`/`worker`
+ * actors in context (the refs the React tree reads), then translates the two
+ * lifecycle inputs into the shared map/ui
  * suppression pair: `NAV.STARTED` (from `navigation`) → `SUSPEND`;
  * `CITY.READY`/`CITY.FAILED` (from `city`) → `RESUME`. It owns the `city` actor's
  * spawn/stop and mirrors settled selection to the URL. Its two states gate that
@@ -57,6 +57,16 @@ export const rootMachine = setup({
         const ref = system.get(id);
         if (ref) enqueue.sendTo(ref, { type: "RESUME" });
       }
+    }),
+    // Scene reset fan-out: forward SCENE.RESET to every session actor so each
+    // returns itself to its initial resting state (map/ui/worker/navigation own
+    // their own reset). The city is replaced on re-show by the page's CITY.CHANGED.
+    fanReset: enqueueActions(({ context, system, enqueue }) => {
+      enqueue.sendTo(context.mapRef, { type: "SCENE.RESET" });
+      enqueue.sendTo(context.uiRef, { type: "SCENE.RESET" });
+      enqueue.sendTo(context.navigationRef, { type: "SCENE.RESET" });
+      const worker = system.get(SystemId.WORKER);
+      if (worker) enqueue.sendTo(worker, { type: "SCENE.RESET" });
     }),
     // Replacing the city: just stop the outgoing city actor. The worker is no
     // longer cancelled slug-agnostically — the new city's identity-aware load
@@ -95,18 +105,13 @@ export const rootMachine = setup({
   },
 }).createMachine({
   id: "scene",
-  // Spawned in the initial context factory (not `entry`) so the refs exist at
-  // actor creation — before `start()` and on the server — closing the gap where
-  // a React render/SSR read of an invoked child's `system.get` ref sees nothing.
   context: ({ spawn }) => ({
     mapRef: spawn("map", { systemId: SystemId.MAP, input: {} }),
     uiRef: spawn("ui", { systemId: SystemId.UI, input: {} }),
+    navigationRef: spawn("navigation", { systemId: SystemId.NAVIGATION }),
     cityRef: null,
   }),
-  invoke: [
-    { src: "worker", systemId: SystemId.WORKER, input: {} },
-    { src: "navigation", systemId: SystemId.NAVIGATION },
-  ],
+  invoke: [{ src: "worker", systemId: SystemId.WORKER, input: {} }],
   initial: "settled",
   states: {
     settled: {
@@ -130,6 +135,13 @@ export const rootMachine = setup({
   },
   on: {
     "CITY.CHANGED": { actions: ["stopOldCity", "startNewCity"] },
+    // Navigation left `/city` (Activity hides the scene): return to the resting
+    // window and fan the reset to every session actor so the preserved snapshot
+    // rehydrates clean. The city is re-driven on re-show by CITY.CHANGED.
+    "SCENE.RESET": {
+      target: ".settled",
+      actions: "fanReset",
+    },
   },
 });
 

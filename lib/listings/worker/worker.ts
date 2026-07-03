@@ -119,7 +119,6 @@ async function handleProcess(message: ProcessRequestMessage) {
 
 ctx.onmessage = async (event: MessageEvent<RequestMessage>) => {
   const message = event.data;
-
   switch (message.type) {
     case "cancelLoad": {
       void queryClient.cancelQueries({ queryKey: ["listings"] });

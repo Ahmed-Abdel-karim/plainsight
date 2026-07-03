@@ -8,7 +8,13 @@ export interface NavCommit {
   readonly path: string;
 }
 
-export type Events = NavIntent | NavCommit;
+/** Scene-session reset, fanned from root when navigation leaves `/city` (the
+ *  Activity-hide recovery). Returns the machine to its initial resting state. */
+export interface SceneReset {
+  readonly type: "SCENE.RESET";
+}
+
+export type Events = NavIntent | NavCommit | SceneReset;
 
 export interface NavStarted {
   readonly type: "NAV.STARTED";

@@ -3,13 +3,12 @@
 import { useCallback } from "react";
 
 import { SceneActorContext } from "../../provider";
-import { SystemId } from "../constants";
 import { createMachineStateSelector } from "../utils";
 import type { NavigationMachineActor } from "./machine";
 
 function useNavigationRef() {
   const root = SceneActorContext.useActorRef();
-  return root.system.get(SystemId.NAVIGATION) as
+  return root.getSnapshot().context.navigationRef as
     | NavigationMachineActor
     | undefined;
 }
@@ -29,9 +28,27 @@ export function useStartNav() {
 export function useCommitRoute() {
   const nav = useNavigationRef();
   return useCallback(
-    (path: string) => nav?.send({ type: "NAV.COMMIT", path }),
+    (path: string) => {
+      nav?.send({ type: "NAV.COMMIT", path });
+    },
     [nav],
   );
+}
+
+/**
+ * Scene-session reset, dispatched to root. Wired to a layout-effect cleanup so it
+ * fires when the scene subtree is Activity-hidden (navigation left `/city`),
+ * quiescing the machines before `@xstate/react` snapshots them — so the preserved
+ * snapshot rehydrates clean instead of stranding mid-load. See RouteListener.
+ */
+export function useSceneReset() {
+  const root = SceneActorContext.useActorRef();
+  return useCallback(() => {
+    // No-op before any city exists: dev StrictMode runs the cleanup on the first
+    // mount, and resetting a never-navigated scene is needless churn.
+    if (root.getSnapshot().context.cityRef === null) return;
+    root.send({ type: "SCENE.RESET" });
+  }, [root]);
 }
 
 export const useIsNavigating = createNavSelector(

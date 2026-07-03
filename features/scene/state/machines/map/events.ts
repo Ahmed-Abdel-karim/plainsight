@@ -78,6 +78,13 @@ export interface Resume {
   readonly type: "RESUME";
 }
 
+/** Scene-session reset, fanned from root when navigation leaves `/city`. Returns
+ *  the interaction region to `interactive` and clears transient hover/selection —
+ *  distinct from RESUME, which also re-frames the (now-stale) city. */
+export interface SceneReset {
+  readonly type: "SCENE.RESET";
+}
+
 export type Events =
   | Init
   | MapMounted
@@ -91,4 +98,5 @@ export type Events =
   | MapResolutionChanged
   | MapStyleLoaded
   | Suspend
-  | Resume;
+  | Resume
+  | SceneReset;

@@ -118,14 +118,11 @@ describe("city machine error signals", () => {
 
     // A worker process error for the current city — deliverProcess must carry
     // its slug/snapshotId through so the city's guard accepts it.
-    scene.transport.response({
-      type: "TRANSPORT.PROCESS_RESPONSE",
-      message: {
-        status: "error",
-        slug: framing.slug,
-        snapshotId: framing.snapshotId,
-        payload: { type: "hexes", error: new Error("compute failed") },
-      },
+    scene.transport.workerReply({
+      status: "error",
+      slug: framing.slug,
+      snapshotId: framing.snapshotId,
+      payload: { type: "hexes", error: new Error("compute failed") },
     });
 
     expect(emitted).toEqual([

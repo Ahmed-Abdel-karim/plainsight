@@ -70,6 +70,7 @@
     "@lhci/cli": "^0.15.1",
     "@mapgrab/playwright": "^0.0.4",
     "@playwright/test": "^1.61.0",
+    "@statelyai/inspect": "^0.7.2",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",

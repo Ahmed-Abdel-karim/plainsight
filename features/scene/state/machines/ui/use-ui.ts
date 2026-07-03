@@ -29,6 +29,16 @@ export function useSetLens() {
   );
 }
 
+/** Authoritative lens sync from the URL — honored even mid-switch. See
+ *  UI.SYNC_LENS; used by SceneUrlLoader on every city mount. */
+export function useSyncLens() {
+  const send = useUiSend();
+  return useCallback(
+    (lens: Lens) => send({ type: "UI.SYNC_LENS", lens }),
+    [send],
+  );
+}
+
 export function useSelectListing() {
   const send = useUiSend();
   return useCallback(
